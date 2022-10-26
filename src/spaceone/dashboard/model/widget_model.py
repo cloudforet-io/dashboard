@@ -3,36 +3,23 @@ from mongoengine import *
 from spaceone.core.model.mongo_model import MongoModel
 
 
-class Period(EmbeddedDocument):
+class DateRange(EmbeddedDocument):
+    period_type = StringField(max_length=255, choices=('AUTO', 'FIXED'))
     start = StringField(required=True)
     end = StringField(required=True)
-
-    def to_dict(self):
-        return dict(self.to_mongo())
-
-
-class DateRange(EmbeddedDocument):
-    enabled = BooleanField()
-    period_type = StringField(max_length=255, choices=('AUTO', 'FIXED'))
-    period = EmbeddedDocumentField(Period)
-
-
-class Currency(EmbeddedDocument):
-    enabled = BooleanField()
 
 
 class Options(EmbeddedDocument):
     date_range = EmbeddedDocumentField(DateRange, default=DateRange)
-    currency = EmbeddedDocumentField(Currency, default=Currency)
 
 
-class ProjectDashboard(MongoModel):
-    project_dashboard_id = StringField(max_length=40, generate_id='project-dash', unique=True)
+class Widget(MongoModel):
+    widget_id = StringField(max_length=40, generate_id='widget', unique=True)
     name = StringField(max_length=255)
-    scope = StringField(max_length=255, choices=('PROJECT', 'USER'))
-    layouts = ListField(default=[])
+    view_mode = StringField(max_length=255, choices=('AUTO', 'FULL'))
     options = EmbeddedDocumentField(Options, default=Options)
-    default_variables = DictField(default={})
+    variables = DictField(default={})
+    schema = DictField(default={})
     labels = ListField(default=[])
     tags = DictField(default={})
     user_id = StringField(max_length=40)
@@ -44,11 +31,11 @@ class ProjectDashboard(MongoModel):
         'updatable_fields': [
         ],
         'minimal_fields': [
-            'project_dashboard_id',
+            'widget_id',
             'name',
-            'scope',
+            'view_mode',
             'options',
-            'default_variables',
+            'variables',
             'labels',
             'user_id',
             'domain_id'
