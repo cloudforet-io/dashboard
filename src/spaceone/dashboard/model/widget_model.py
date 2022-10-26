@@ -20,7 +20,7 @@ class Widget(MongoModel):
     options = EmbeddedDocumentField(Options, default=Options)
     variables = DictField(default={})
     schema = DictField(default={})
-    labels = ListField(default=[])
+    labels = ListField(StringField, default=[])
     tags = DictField(default={})
     user_id = StringField(max_length=40)
     domain_id = StringField(max_length=40)
