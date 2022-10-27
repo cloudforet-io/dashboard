@@ -42,6 +42,12 @@ class ProjectDashboard(MongoModel):
 
     meta = {
         'updatable_fields': [
+            'name',
+            'layouts',
+            'options',
+            'default_variables',
+            'labels',
+            'tags'
         ],
         'minimal_fields': [
             'project_dashboard_id',
@@ -55,5 +61,10 @@ class ProjectDashboard(MongoModel):
         ],
         'ordering': ['-created_at'],
         'indexes': [
+            'name',
+            'scope',
+            'labels',
+            'user_id',
+            'domain_id'
         ]
     }
