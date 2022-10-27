@@ -83,6 +83,7 @@ class TestDomainDashboardService(unittest.TestCase):
         self.transaction.method = 'update'
         domain_dashboard_svc = DomainDashboardService(transaction=self.transaction)
         domain_dashboard_vo = domain_dashboard_svc.update(params.copy())
+        print_data(domain_dashboard_vo.to_dict(), 'test_update_project_dashboard')
 
         self.assertIsInstance(domain_dashboard_vo, DomainDashboard)
         self.assertEqual(params['name'], domain_dashboard_vo.name)

@@ -83,6 +83,7 @@ class TestProjectDashboardService(unittest.TestCase):
         self.transaction.method = 'update'
         project_dashboard_svc = ProjectDashboardService(transaction=self.transaction)
         project_dashboard_vo = project_dashboard_svc.update(params.copy())
+        print_data(project_dashboard_vo.to_dict(), 'test_update_project_dashboard')
 
         self.assertIsInstance(project_dashboard_vo, ProjectDashboard)
         self.assertEqual(params['name'], project_dashboard_vo.name)
