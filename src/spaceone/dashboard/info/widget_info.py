@@ -12,7 +12,7 @@ def WidgetInfo(widget_vo: Widget, minimal=False):
         'widget_id': widget_vo.widget_id,
         'name': widget_vo.name,
         'view_mode': widget_vo.view_mode,
-        'options': change_struct_type(widget_vo.options),
+        'options': _WidgetOptionsInfo(widget_vo.options),
         'variables': change_struct_type(widget_vo.variables),
         'labels': change_list_value_type(widget_vo.labels),
         'user_id': widget_vo.user_id,
@@ -31,5 +31,28 @@ def WidgetInfo(widget_vo: Widget, minimal=False):
 
 
 def WidgetsInfo(widget_vos, total_count, **kwargs):
-    return widget_pb2.WidgetInfo(results=list(
+    return widget_pb2.WidgetsInfo(results=list(
         map(functools.partial(WidgetInfo, **kwargs), widget_vos)), total_count=total_count)
+
+
+def _DateRangeInfo(date_range):
+    if date_range:
+        info = {
+            'period_type': date_range.period_type,
+            'start': date_range.start,
+            'end': date_range.end
+        }
+        return widget_pb2.WidgetDateRange(**info)
+    else:
+        return None
+
+
+def _WidgetOptionsInfo(options):
+    if options:
+        info = {
+            'date_range': _DateRangeInfo(options.date_range)
+        }
+        return widget_pb2.WidgetOptions(**info)
+    else:
+        return None
+

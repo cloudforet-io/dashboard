@@ -5,8 +5,11 @@ from spaceone.core.model.mongo_model import MongoModel
 
 class DateRange(EmbeddedDocument):
     period_type = StringField(max_length=255, choices=('AUTO', 'FIXED'))
-    start = StringField(required=True)
-    end = StringField(required=True)
+    start = StringField()
+    end = StringField()
+
+    def to_dict(self):
+        return dict(self.to_mongo())
 
 
 class Options(EmbeddedDocument):
@@ -20,7 +23,7 @@ class Widget(MongoModel):
     options = EmbeddedDocumentField(Options, default=Options)
     variables = DictField(default={})
     schema = DictField(default={})
-    labels = ListField(StringField, default=[])
+    labels = ListField(default=[])
     tags = DictField(default={})
     user_id = StringField(max_length=40)
     domain_id = StringField(max_length=40)
@@ -29,6 +32,13 @@ class Widget(MongoModel):
 
     meta = {
         'updatable_fields': [
+            'name',
+            'view_mode',
+            'options',
+            'variables',
+            'schema',
+            'labels',
+            'tags'
         ],
         'minimal_fields': [
             'widget_id',
@@ -42,5 +52,6 @@ class Widget(MongoModel):
         ],
         'ordering': ['-created_at'],
         'indexes': [
+
         ]
     }

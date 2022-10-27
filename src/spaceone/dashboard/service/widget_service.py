@@ -18,15 +18,18 @@ class WidgetService(BaseService):
         self.widget_mgr: WidgetManager = self.locator.get_manager('WidgetManager')
 
     @transaction(append_meta={'authorization.scope': 'USER'})
-    @check_required(['name', 'view_mode', 'options', 'domain_id'])  # TODO: labels is optional
-    @change_date_value(['start', 'end'])
+    @check_required(['name', 'view_mode', 'domain_id'])
     def create(self, params):
         """Register widget
 
         Args:
             params (dict): {
                 'name': 'str',
+                'view_mode': 'str',
                 'options': 'str',
+                'variables': 'str',
+                'schema': 'dict',
+                'labels': 'list',
                 'tags': 'dict',
                 'domain_id': 'str'
             }
@@ -47,8 +50,13 @@ class WidgetService(BaseService):
 
         Args:
             params (dict): {
+                'widget_id': 'str',
                 'name': 'str',
+                'view_mode': 'str',
                 'options': 'str',
+                'variables': 'dict',
+                'schema': 'dict',
+                'labels': 'list',
                 'tags': 'dict',
                 'domain_id': 'str'
             }
@@ -70,9 +78,7 @@ class WidgetService(BaseService):
 
         Args:
             params (dict): {
-                'name': 'str',
-                'options': 'str',
-                'tags': 'dict',
+                'widget_id': 'str',
                 'domain_id': 'str'
             }
 
@@ -88,9 +94,8 @@ class WidgetService(BaseService):
 
         Args:
             params (dict): {
-                'name': 'str',
-                'options': 'str',
-                'tags': 'dict',
+                'widget_id': 'str',
+                'only': 'list',
                 'domain_id': 'str'
             }
 
@@ -109,9 +114,11 @@ class WidgetService(BaseService):
 
         Args:
             params (dict): {
+                'widget_id': 'str',
                 'name': 'str',
-                'options': 'str',
-                'tags': 'dict',
+                'labels': 'list',
+                'user_id': 'str',
+                'query': 'dict',
                 'domain_id': 'str'
             }
 
@@ -139,3 +146,4 @@ class WidgetService(BaseService):
         """
         query = params.get('query', {})
         return self.widget_mgr.stat_widgets(query)
+
