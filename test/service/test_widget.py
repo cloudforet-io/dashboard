@@ -51,6 +51,8 @@ class TestWidgetService(unittest.TestCase):
         widget_vo = widget_svc.create(params.copy())
 
         print_data(widget_vo.to_dict(), 'test_create_widget')
+        print(">>>>>>")
+        print(widget_vo.tags)
         WidgetInfo(widget_vo)
 
         self.assertIsInstance(widget_vo, Widget)

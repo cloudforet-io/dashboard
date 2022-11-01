@@ -9,6 +9,7 @@ from parameterized import parameterized
 from spaceone.dashboard.info import ProjectDashboardInfo, ProjectDashboardsInfo, StatisticsInfo
 from spaceone.dashboard.model import ProjectDashboard
 from spaceone.dashboard.service import ProjectDashboardService
+from spaceone.dashboard.error import *
 from test.factory import ProjectDashboardFactory
 from test.lib import *
 
@@ -61,6 +62,7 @@ class TestProjectDashboardService(unittest.TestCase):
             params.update({key: value})
 
         self.transaction.method = 'create'
+        self.transaction.set_meta('user_id', 'cloudforet@gmail.com')
         project_dashboard_svc = ProjectDashboardService(transaction=self.transaction)
         project_dashboard_vo = project_dashboard_svc.create(params.copy())
 
@@ -70,6 +72,29 @@ class TestProjectDashboardService(unittest.TestCase):
         self.assertIsInstance(project_dashboard_vo, ProjectDashboard)
         self.assertEqual(params['name'], project_dashboard_vo.name)
         self.assertEqual(params['options']['currency']['enabled'], project_dashboard_vo.options.currency.enabled)
+
+    def test_create_project_dashboard_invalid_user_id(self):
+        params = {
+            'name': 'test',
+            'domain_id': 'domain-12345',
+            'options': {
+                'date_range': {
+                    'enabled': True,
+                    'period_type': 'AUTO',
+                    'period': {'start': '2021-11', 'end': '2021-12'}
+                },
+                'currency': {
+                    'enabled': True,
+                }
+            },
+            'user_id': 'cloudforet2@gmail.com'
+        }
+
+        self.transaction.method = 'create'
+        self.transaction.set_meta('user_id', 'cloudforet@gmail.com')
+        project_dashboard_svc = ProjectDashboardService(transaction=self.transaction)
+        with self.assertRaises(ERROR_INVALID_USER_ID):
+            project_dashboard_svc.create(params.copy())
 
     def test_update_project_dashboard(self):
         project_dashboard_vo = ProjectDashboardFactory(domain_id=self.domain_id)

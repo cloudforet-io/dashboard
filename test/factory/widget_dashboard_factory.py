@@ -10,7 +10,6 @@ class WidgetFactory(factory.mongoengine.MongoEngineFactory):
 
     widget_id = factory.LazyAttribute(lambda o: utils.generate_id('widget'))
     name = factory.LazyAttribute(lambda o: utils.random_string())
-    view_mode = 'AUTO'
     variables = {
         'group_by': 'product',
         'project_id': []

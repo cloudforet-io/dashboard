@@ -9,6 +9,7 @@ from parameterized import parameterized
 from spaceone.dashboard.info import DomainDashboardInfo, DomainDashboardsInfo, StatisticsInfo
 from spaceone.dashboard.model import DomainDashboard
 from spaceone.dashboard.service.domain_dashboard_service import DomainDashboardService
+from spaceone.dashboard.error import *
 from test.factory import DomainDashboardFactory
 from test.lib import *
 
@@ -61,6 +62,7 @@ class TestDomainDashboardService(unittest.TestCase):
             params.update({key: value})
 
         self.transaction.method = 'create'
+        self.transaction.set_meta('user_id', 'cloudforet@gmail.com')
         domain_dashboard_svc = DomainDashboardService(transaction=self.transaction)
         domain_dashboard_vo = domain_dashboard_svc.create(params.copy())
 
@@ -70,6 +72,29 @@ class TestDomainDashboardService(unittest.TestCase):
         self.assertIsInstance(domain_dashboard_vo, DomainDashboard)
         self.assertEqual(params['name'], domain_dashboard_vo.name)
         self.assertEqual(params['options']['currency']['enabled'], domain_dashboard_vo.options.currency.enabled)
+
+    def test_create_domain_dashboard_invalid_user_id(self):
+        params = {
+            'name': 'test',
+            'domain_id': 'domain-12345',
+            'options': {
+                'date_range': {
+                    'enabled': True,
+                    'period_type': 'AUTO',
+                    'period': {'start': '2021-11', 'end': '2021-12'}
+                },
+                'currency': {
+                    'enabled': True,
+                }
+            },
+            'user_id': 'cloudforet2@gmail.com'
+        }
+
+        self.transaction.method = 'create'
+        self.transaction.set_meta('user_id', 'cloudforet@gmail.com')
+        domain_dashboard_svc = DomainDashboardService(transaction=self.transaction)
+        with self.assertRaises(ERROR_INVALID_USER_ID):
+            domain_dashboard_svc.create(params.copy())
 
     def test_update_domain_dashboard(self):
         domain_dashboard_vo = DomainDashboardFactory(domain_id=self.domain_id)
