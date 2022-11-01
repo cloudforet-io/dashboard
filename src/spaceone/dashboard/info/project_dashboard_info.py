@@ -12,8 +12,6 @@ def ProjectDashboardInfo(project_dashboard_vo: ProjectDashboard, minimal=False):
         'project_dashboard_id': project_dashboard_vo.project_dashboard_id,
         'name': project_dashboard_vo.name,
         'scope': project_dashboard_vo.scope,
-        'options': _ProjectDashboardOptionsInfo(project_dashboard_vo.options),
-        'default_variables': change_struct_type(project_dashboard_vo.default_variables),
         'labels': change_list_value_type(project_dashboard_vo.labels),
         'user_id': project_dashboard_vo.user_id,
         'domain_id': project_dashboard_vo.domain_id
@@ -21,6 +19,8 @@ def ProjectDashboardInfo(project_dashboard_vo: ProjectDashboard, minimal=False):
 
     if not minimal:
         info.update({
+            'options': _ProjectDashboardOptionsInfo(project_dashboard_vo.options),
+            'default_variables': change_struct_type(project_dashboard_vo.default_variables),
             'tags': change_struct_type(project_dashboard_vo.tags),
             'layouts': change_list_value_type(
                 project_dashboard_vo.layouts) if project_dashboard_vo.layouts else None,
