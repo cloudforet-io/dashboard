@@ -3,6 +3,7 @@ import logging
 from spaceone.core.service import *
 from spaceone.dashboard.manager import DomainDashboardManager
 from spaceone.dashboard.model import DomainDashboard
+from spaceone.dashboard.error import *
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -38,14 +39,13 @@ class DomainDashboardService(BaseService):
             domain_dashboard_vo (object)
         """
 
-        if params.get('user_id'):
-            params['scope'] = 'USER'
+        if 'user_id' in params:
+            if params['user_id'] != self.transaction.get_meta('user_id'):
+                raise ERROR_INVALID_USER_ID
+            else:
+                params['scope'] = 'USER'
         else:
             params['scope'] = 'DOMAIN'
-
-        if default_variables := params.get('default_variables'):
-            for widget in params.get('layouts', []):
-                widget['variable'] = default_variables
 
         return self.domain_dashboard_mgr.create_domain_dashboard(params)
 
@@ -72,13 +72,6 @@ class DomainDashboardService(BaseService):
 
         domain_dashboard_id = params['domain_dashboard_id']
         domain_id = params['domain_id']
-        layouts = params.get('layouts', [])
-        options = params.get('options')
-        default_variables = params.get('default_variables')
-
-        if default_variables:
-            for widget in layouts:
-                widget['variable'] = default_variables
 
         domain_dashboard_vo: DomainDashboard = self.domain_dashboard_mgr.get_domain_dashboard(domain_dashboard_id,
                                                                                               domain_id)
@@ -122,7 +115,7 @@ class DomainDashboardService(BaseService):
 
     @transaction(append_meta={'authorization.scope': 'DOMAIN_OR_USER'})
     @check_required(['domain_id'])
-    @append_query_filter(['domain_dashboard_id', 'name', 'labels', 'user_id', 'domain_id'])
+    @append_query_filter(['domain_dashboard_id', 'name', 'scope', 'user_id', 'domain_id'])
     @append_keyword_filter(['domain_dashboard_id', 'name'])
     def list(self, params):
         """ List public_dashboards
@@ -132,7 +125,6 @@ class DomainDashboardService(BaseService):
                 'domain_dashboard_id': 'str',
                 'name': 'str',
                 'scope': 'str',
-                'labels': 'list',
                 'user_id': 'str'
                 'domain_id': 'str',
                 'query': 'dict (spaceone.api.core.v1.Query)'

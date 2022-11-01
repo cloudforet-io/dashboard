@@ -25,7 +25,6 @@ class ProjectDashboardService(BaseService):
         Args:
             params (dict): {
                 'name': 'str',
-                'scope': 'str',
                 'layouts': 'list',
                 'options': 'dict',
                 'default_variables': 'dict',
@@ -39,14 +38,13 @@ class ProjectDashboardService(BaseService):
             project_dashboard_vo (object)
         """
 
-        if params.get('user_id'):
-            params['scope'] = 'USER'
+        if 'user_id' in params:
+            if params['user_id'] != self.transaction.get_meta('user_id'):
+                raise ValueError
+            else:
+                params['scope'] = 'USER'
         else:
             params['scope'] = 'PROJECT'
-
-        if default_variables := params.get('default_variables'):
-            for widget in params.get('layouts', []):
-                widget['variable'] = default_variables
 
         return self.project_dashboard_mgr.create_project_dashboard(params)
 
@@ -73,13 +71,6 @@ class ProjectDashboardService(BaseService):
 
         project_dashboard_id = params['project_dashboard_id']
         domain_id = params['domain_id']
-        layouts = params.get('layouts', [])
-        options = params.get('options')
-        default_variables = params.get('default_variables')
-
-        if default_variables:
-            for widget in layouts:
-                widget['variable'] = default_variables
 
         project_dashboard_vo: ProjectDashboard = self.project_dashboard_mgr.get_project_dashboard(project_dashboard_id,
                                                                                                   domain_id)
@@ -124,7 +115,7 @@ class ProjectDashboardService(BaseService):
 
     @transaction(append_meta={'authorization.scope': 'PROJECT_OR_USER'})
     @check_required(['domain_id'])
-    @append_query_filter(['project_dashboard_id', 'name', 'labels', 'user_id', 'domain_id'])
+    @append_query_filter(['project_dashboard_id', 'name', 'scope', 'user_id', 'domain_id'])
     @append_keyword_filter(['project_dashboard_id', 'name'])
     def list(self, params):
         """ List project_dashboards
@@ -134,7 +125,6 @@ class ProjectDashboardService(BaseService):
                 'project_dashboard_id': 'str',
                 'name': 'str',
                 'scope': 'str',
-                'labels': 'list',
                 'user_id': 'str'
                 'domain_id': 'str',
                 'query': 'dict (spaceone.api.core.v1.Query)'
