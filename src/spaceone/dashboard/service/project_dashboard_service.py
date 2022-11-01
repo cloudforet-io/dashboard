@@ -3,6 +3,7 @@ import logging
 from spaceone.core.service import *
 from spaceone.dashboard.manager import ProjectDashboardManager
 from spaceone.dashboard.model import ProjectDashboard
+from spaceone.dashboard.error import *
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -39,8 +40,10 @@ class ProjectDashboardService(BaseService):
         """
 
         if 'user_id' in params:
-            if params['user_id'] != self.transaction.get_meta('user_id'):
-                raise ValueError
+            user_id = params['user_id']
+            tnx_user_id = self.transaction.get_meta('user_id')
+            if user_id != tnx_user_id:
+                raise ERROR_INVALID_USER_ID(user_id=user_id, tnx_user_id=tnx_user_id)
             else:
                 params['scope'] = 'USER'
         else:

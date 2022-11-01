@@ -33,7 +33,7 @@ class Widget(MongoModel):
     variables = DictField(default={})
     schema = DictField(default={})
     labels = ListField(StringField())
-    tags = ListField(StringField())
+    tags = DictField(default={})
     user_id = StringField(max_length=40)
     domain_id = StringField(max_length=40)
     created_at = DateTimeField(auto_now_add=True)
