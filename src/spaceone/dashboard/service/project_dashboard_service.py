@@ -19,16 +19,18 @@ class ProjectDashboardService(BaseService):
         self.project_dashboard_mgr: ProjectDashboardManager = self.locator.get_manager('ProjectDashboardManager')
 
     @transaction(append_meta={'authorization.scope': 'PROJECT_OR_USER'})
-    @check_required(['name', 'domain_id'])
+    @check_required(['project_id', 'name', 'domain_id'])
     def create(self, params):
         """Register project_dashboard
 
         Args:
             params (dict): {
+                'project_id': 'str',
                 'name': 'str',
                 'layouts': 'list',
-                'options': 'dict',
-                'default_variables': 'dict',
+                'dashboard_options': 'dict',
+                'settings': 'dict',
+                'dashboard_options_schema': 'dict',
                 'labels': 'list',
                 'tags': 'dict',
                 'user_id': 'str',
@@ -61,8 +63,9 @@ class ProjectDashboardService(BaseService):
                 'project_dashboard_id': 'str',
                 'name': 'str',
                 'layouts': 'list',
-                'options': 'dict',
-                'default_variables': 'dict',
+                'dashboard_options': 'dict',
+                'settings': 'dict',
+                'dashboard_options_schema': 'dict',
                 'labels': 'list',
                 'tags': 'dict',
                 'domain_id': 'str'
@@ -118,7 +121,7 @@ class ProjectDashboardService(BaseService):
 
     @transaction(append_meta={'authorization.scope': 'PROJECT_OR_USER'})
     @check_required(['domain_id'])
-    @append_query_filter(['project_dashboard_id', 'name', 'scope', 'user_id', 'domain_id'])
+    @append_query_filter(['project_dashboard_id', 'project_id', 'name', 'scope', 'user_id', 'domain_id'])
     @append_keyword_filter(['project_dashboard_id', 'name'])
     def list(self, params):
         """ List project_dashboards
@@ -126,6 +129,7 @@ class ProjectDashboardService(BaseService):
         Args:
             params (dict): {
                 'project_dashboard_id': 'str',
+                'project_id': 'str',
                 'name': 'str',
                 'scope': 'str',
                 'user_id': 'str'
