@@ -3,25 +3,15 @@ from mongoengine import *
 from spaceone.core.model.mongo_model import MongoModel
 
 
-class Period(EmbeddedDocument):
-    start = StringField(required=True)
-    end = StringField(required=True)
-
-    def to_dict(self):
-        return dict(self.to_mongo())
-
-
 class DateRange(EmbeddedDocument):
     enabled = BooleanField()
-    period_type = StringField(max_length=255, choices=('AUTO', 'FIXED'))
-    period = EmbeddedDocumentField(Period)
 
 
 class Currency(EmbeddedDocument):
     enabled = BooleanField()
 
 
-class Options(EmbeddedDocument):
+class Settings(EmbeddedDocument):
     date_range = EmbeddedDocumentField(DateRange, default=DateRange)
     currency = EmbeddedDocumentField(Currency, default=Currency)
 
@@ -31,8 +21,9 @@ class DomainDashboard(MongoModel):
     name = StringField(max_length=255)
     scope = StringField(max_length=255, choices=('DOMAIN', 'USER'))
     layouts = ListField(DictField(default={}))
-    options = EmbeddedDocumentField(Options, default=Options)
-    default_variables = DictField(default={})
+    dashboard_options = DictField(default={})
+    settings = EmbeddedDocumentField(Settings, default=Settings)
+    dashboard_options_schema = DictField(default={})
     labels = ListField(StringField())
     tags = DictField(default={})
     user_id = StringField(max_length=40)
@@ -44,8 +35,9 @@ class DomainDashboard(MongoModel):
         'updatable_fields': [
             'name',
             'layouts',
-            'options',
-            'default_variables',
+            'dashboard_options',
+            'settings',
+            'dashboard_options_schema',
             'labels',
             'tags'
         ],

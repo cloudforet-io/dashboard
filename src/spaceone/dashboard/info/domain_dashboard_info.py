@@ -19,11 +19,12 @@ def DomainDashboardInfo(domain_dashboard_vo: DomainDashboard, minimal=False):
 
     if not minimal:
         info.update({
-            'options': _DomainDashboardOptionsInfo(domain_dashboard_vo.options),
-            'default_variables': change_struct_type(domain_dashboard_vo.default_variables),
-            'tags': change_struct_type(domain_dashboard_vo.tags),
             'layouts': change_list_value_type(
                 domain_dashboard_vo.layouts) if domain_dashboard_vo.layouts else None,
+            'dashboard_options': change_struct_type(domain_dashboard_vo.dashboard_options),
+            'settings': _DomainDashboardSettingsInfo(domain_dashboard_vo.settings),
+            'dashboard_options_schema': change_struct_type(domain_dashboard_vo.dashboard_options_schema),
+            'tags': change_struct_type(domain_dashboard_vo.tags),
             'created_at': utils.datetime_to_iso8601(domain_dashboard_vo.created_at),
             'updated_at': utils.datetime_to_iso8601(domain_dashboard_vo.updated_at)
         })
@@ -36,23 +37,10 @@ def DomainDashboardsInfo(domain_dashboard_vos, total_count, **kwargs):
         map(functools.partial(DomainDashboardInfo, **kwargs), domain_dashboard_vos)), total_count=total_count)
 
 
-def _PeriodInfo(period):
-    if period:
-        info = {
-            'start': period.start,
-            'end': period.end
-        }
-        return domain_dashboard_pb2.DomainDashboardPeriod(**info)
-    else:
-        return None
-
-
 def _DateRangeInfo(date_range):
     if date_range:
         info = {
             'enabled': date_range.enabled,
-            'period_type': date_range.period_type,
-            'period': _PeriodInfo(date_range.period)
         }
         return domain_dashboard_pb2.DomainDashboardDateRange(**info)
     else:
@@ -69,13 +57,13 @@ def _CurrencyInfo(currency):
         return None
 
 
-def _DomainDashboardOptionsInfo(options):
+def _DomainDashboardSettingsInfo(options):
     if options:
         info = {
             'date_range': _DateRangeInfo(options.date_range),
             'currency': _CurrencyInfo(options.currency)
         }
 
-        return domain_dashboard_pb2.DomainDashboardOptions(**info)
+        return domain_dashboard_pb2.DomainDashboardSettings(**info)
     else:
         return None

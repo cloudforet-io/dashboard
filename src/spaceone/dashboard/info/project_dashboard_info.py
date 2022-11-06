@@ -13,17 +13,19 @@ def ProjectDashboardInfo(project_dashboard_vo: ProjectDashboard, minimal=False):
         'name': project_dashboard_vo.name,
         'scope': project_dashboard_vo.scope,
         'labels': change_list_value_type(project_dashboard_vo.labels),
+        'project_id': project_dashboard_vo.project_id,
         'user_id': project_dashboard_vo.user_id,
         'domain_id': project_dashboard_vo.domain_id
     }
 
     if not minimal:
         info.update({
-            'options': _ProjectDashboardOptionsInfo(project_dashboard_vo.options),
-            'default_variables': change_struct_type(project_dashboard_vo.default_variables),
-            'tags': change_struct_type(project_dashboard_vo.tags),
             'layouts': change_list_value_type(
                 project_dashboard_vo.layouts) if project_dashboard_vo.layouts else None,
+            'dashboard_options': change_struct_type(project_dashboard_vo.dashboard_options),
+            'settings': _ProjectDashboardSettingsInfo(project_dashboard_vo.settings),
+            'dashboard_options_schema': change_struct_type(project_dashboard_vo.dashboard_options_schema),
+            'tags': change_struct_type(project_dashboard_vo.tags),
             'created_at': utils.datetime_to_iso8601(project_dashboard_vo.created_at),
             'updated_at': utils.datetime_to_iso8601(project_dashboard_vo.updated_at)
         })
@@ -36,23 +38,10 @@ def ProjectDashboardsInfo(project_dashboard_vos, total_count, **kwargs):
         map(functools.partial(ProjectDashboardInfo, **kwargs), project_dashboard_vos)), total_count=total_count)
 
 
-def _PeriodInfo(period):
-    if period:
-        info = {
-            'start': period.start,
-            'end': period.end
-        }
-        return project_dashboard_pb2.ProjectDashboardPeriod(**info)
-    else:
-        return None
-
-
 def _DateRangeInfo(date_range):
     if date_range:
         info = {
             'enabled': date_range.enabled,
-            'period_type': date_range.period_type,
-            'period': _PeriodInfo(date_range.period)
         }
         return project_dashboard_pb2.ProjectDashboardDateRange(**info)
     else:
@@ -69,13 +58,13 @@ def _CurrencyInfo(currency):
         return None
 
 
-def _ProjectDashboardOptionsInfo(options):
+def _ProjectDashboardSettingsInfo(options):
     if options:
         info = {
             'date_range': _DateRangeInfo(options.date_range),
             'currency': _CurrencyInfo(options.currency)
         }
 
-        return project_dashboard_pb2.ProjectDashboardOptions(**info)
+        return project_dashboard_pb2.ProjectDashboardSettings(**info)
     else:
         return None

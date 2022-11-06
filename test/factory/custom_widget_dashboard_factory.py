@@ -1,23 +1,25 @@
 import factory
 from spaceone.core import utils
 
-from spaceone.dashboard.model import Widget
+from spaceone.dashboard.model import CustomWidget
 
 
-class WidgetFactory(factory.mongoengine.MongoEngineFactory):
+class CustomWidgetFactory(factory.mongoengine.MongoEngineFactory):
     class Meta:
-        model = Widget
+        model = CustomWidget
 
+    custom_widget_id = factory.LazyAttribute(lambda o: utils.generate_id('custom-widget'))
     widget_id = factory.LazyAttribute(lambda o: utils.generate_id('widget'))
     name = factory.LazyAttribute(lambda o: utils.random_string())
-    variables = {
+    version = 'v1'
+    widget_options = {
         'group_by': 'product',
-        'project_id': []
     }
-    schema = {}
+    inherit_options = {
+        'group_by': {'enabled': True}
+    }
     tags = {'type': 'test',
             'env': 'dev'}
-    labels = ['a', 'b', 'c']
     user_id = 'cloudforet@gmail.com'
     domain_id = factory.LazyAttribute(lambda o: utils.generate_id('domain'))
     created_at = factory.Faker('date_time')

@@ -27,8 +27,9 @@ class DomainDashboardService(BaseService):
             params (dict): {
                 'name': 'str',
                 'layouts': 'list',
-                'options': 'dict',
-                'default_variables': 'dict',
+                'dashboard_options': 'dict',
+                'settings': 'dict',
+                'dashboard_options_schema': 'dict',
                 'labels': 'list',
                 'tags': 'dict',
                 'user_id': 'str',
@@ -61,8 +62,9 @@ class DomainDashboardService(BaseService):
                 'domain_dashboard_id': 'str',
                 'name': 'str',
                 'layouts': 'list',
-                'options': 'dict',
-                'default_variables': 'dict',
+                'dashboard_options': 'dict',
+                'settings': 'dict',
+                'dashboard_options_schema': 'list',
                 'labels': 'list',
                 'tags': 'dict',
                 'domain_id': 'str'

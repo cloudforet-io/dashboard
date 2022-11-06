@@ -46,15 +46,12 @@ class TestDomainDashboardService(unittest.TestCase):
         params = {
             'name': 'test',
             'domain_id': 'domain-12345',
-            'options': {
-                'date_range': {
-                    'enabled': True,
-                    'period_type': 'AUTO',
-                    'period': {'start': '2021-11', 'end': '2021-12'}
-                },
-                'currency': {
-                    'enabled': True,
-                }
+            'dashboard_options': {
+                'project_id': 'project-1234'
+            },
+            'settings': {
+                'date_range': {'enabled': False},
+                'currency': {'enabled': False}
             }
         }
 
@@ -71,21 +68,19 @@ class TestDomainDashboardService(unittest.TestCase):
 
         self.assertIsInstance(domain_dashboard_vo, DomainDashboard)
         self.assertEqual(params['name'], domain_dashboard_vo.name)
-        self.assertEqual(params['options']['currency']['enabled'], domain_dashboard_vo.options.currency.enabled)
+        self.assertEqual(params['dashboard_options']['project_id'],
+                         domain_dashboard_vo.dashboard_options.get('project_id'))
 
     def test_create_domain_dashboard_invalid_user_id(self):
         params = {
             'name': 'test',
             'domain_id': 'domain-12345',
-            'options': {
-                'date_range': {
-                    'enabled': True,
-                    'period_type': 'AUTO',
-                    'period': {'start': '2021-11', 'end': '2021-12'}
-                },
-                'currency': {
-                    'enabled': True,
-                }
+            'dashboard_options': {
+                'project_id': 'project-1234'
+            },
+            'settings': {
+                'date_range': {'enabled': False},
+                'currency': {'enabled': False}
             },
             'user_id': 'cloudforet2@gmail.com'
         }
@@ -102,6 +97,11 @@ class TestDomainDashboardService(unittest.TestCase):
         params = {
             'domain_dashboard_id': domain_dashboard_vo.domain_dashboard_id,
             'name': 'update domain dashboard test',
+            'settings': {
+                'date_range': {'enabled': False},
+                'currency': {'enabled': False}
+            },
+            'tags': {'a': 'b'},
             'domain_id': self.domain_id
         }
 
