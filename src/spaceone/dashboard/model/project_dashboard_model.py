@@ -4,11 +4,11 @@ from spaceone.core.model.mongo_model import MongoModel
 
 
 class DateRange(EmbeddedDocument):
-    enabled = BooleanField()
+    enabled = BooleanField(default=False)
 
 
 class Currency(EmbeddedDocument):
-    enabled = BooleanField()
+    enabled = BooleanField(default=False)
 
 
 class Settings(EmbeddedDocument):
