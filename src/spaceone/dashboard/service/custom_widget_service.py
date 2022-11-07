@@ -18,16 +18,17 @@ class CustomWidgetService(BaseService):
         self.custom_widget_mgr: CustomWidgetManager = self.locator.get_manager('CustomWidgetManager')
 
     @transaction(append_meta={'authorization.scope': 'USER'})
-    @check_required(['name', 'widget_id', 'widget_options', 'domain_id'])
+    @check_required(['widget_name', 'title', 'widget_options', 'domain_id'])
     def create(self, params):
         """Register widget
 
         Args:
             params (dict): {
-                'name': 'str',
-                'widget_id': 'str',
+                'widget_name': 'str',
+                'title': 'str',
                 'widget_options': 'dict',
                 'inherit_options': 'dict',
+                'labels': 'list',
                 'tags': 'dict',
                 'domain_id': 'str'
             }
@@ -48,9 +49,10 @@ class CustomWidgetService(BaseService):
         Args:
             params (dict): {
                 'custom_widget_id': 'str',
-                'name': 'str',
+                'title': 'str',
                 'widget_options': 'dict',
                 'inherit_option': 'dict',
+                'labels': 'list',
                 'tags': 'dict',
                 'domain_id': 'str'
             }
@@ -102,16 +104,16 @@ class CustomWidgetService(BaseService):
 
     @transaction(append_meta={'authorization.scope': 'USER'})
     @check_required(['domain_id'])
-    @append_query_filter(['custom_widget_id', 'widget_id', 'name', 'user_id', 'domain_id'])
-    @append_keyword_filter(['custom_widget_id', 'name'])
+    @append_query_filter(['custom_widget_id', 'widget_name', 'title', 'user_id', 'domain_id'])
+    @append_keyword_filter(['custom_widget_id', 'title'])
     def list(self, params):
         """List widget
 
         Args:
             params (dict): {
                 'custom_widget_id': 'str',
-                'widget_id': 'str',
-                'name': 'str',
+                'widget_name': 'str',
+                'title': 'str',
                 'user_id': 'str',
                 'query': 'dict',
                 'domain_id': 'str'
@@ -126,7 +128,7 @@ class CustomWidgetService(BaseService):
     @transaction(append_meta={'authorization.scope': 'USER'})
     @check_required(['query', 'domain_id'])
     @append_query_filter(['domain_id'])
-    @append_keyword_filter(['custom_widget_id', 'name'])
+    @append_keyword_filter(['custom_widget_id', 'title'])
     def stat(self, params):
         """
         Args:

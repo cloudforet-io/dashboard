@@ -14,7 +14,7 @@ class CustomWidgetManager(BaseManager):
     def create_custom_widget(self, params):
         def _rollback(custom_widget_vo):
             _LOGGER.info(f'[create_custom_widget._rollback] '
-                         f'Delete custom_widget_vo : {custom_widget_vo.name} '
+                         f'Delete custom_widget_vo : {custom_widget_vo.title} '
                          f'({custom_widget_vo.custom_widget_id})')
             custom_widget_vo.delete()
 

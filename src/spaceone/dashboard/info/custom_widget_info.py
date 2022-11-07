@@ -9,9 +9,9 @@ __all__ = ['CustomWidgetInfo', 'CustomWidgetsInfo']
 
 def CustomWidgetInfo(custom_widget_vo: CustomWidget, minimal=False):
     info = {
-        'custom_widget_id': custom_widget_vo.widget_id,
-        'widget_id': custom_widget_vo.widget_id,
-        'name': custom_widget_vo.name,
+        'custom_widget_id': custom_widget_vo.custom_widget_id,
+        'widget_name': custom_widget_vo.widget_name,
+        'title': custom_widget_vo.title,
         'version': custom_widget_vo.version,
         'user_id': custom_widget_vo.user_id,
         'domain_id': custom_widget_vo.domain_id
@@ -21,6 +21,7 @@ def CustomWidgetInfo(custom_widget_vo: CustomWidget, minimal=False):
         info.update({
             'widget_options': change_struct_type(custom_widget_vo.widget_options),
             'inherit_options': change_struct_type(custom_widget_vo.inherit_options),
+            'labels': change_list_value_type(custom_widget_vo.labels),
             'tags': change_struct_type(custom_widget_vo.tags),
             'created_at': utils.datetime_to_iso8601(custom_widget_vo.created_at),
             'updated_at': utils.datetime_to_iso8601(custom_widget_vo.updated_at)
