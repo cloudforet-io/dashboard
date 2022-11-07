@@ -18,7 +18,7 @@ class CustomWidgetService(BaseService):
         self.custom_widget_mgr: CustomWidgetManager = self.locator.get_manager('CustomWidgetManager')
 
     @transaction(append_meta={'authorization.scope': 'USER'})
-    @check_required(['name', 'domain_id'])
+    @check_required(['name', 'widget_id', 'widget_options', 'domain_id'])
     def create(self, params):
         """Register widget
 
