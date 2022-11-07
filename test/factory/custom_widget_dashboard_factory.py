@@ -9,8 +9,8 @@ class CustomWidgetFactory(factory.mongoengine.MongoEngineFactory):
         model = CustomWidget
 
     custom_widget_id = factory.LazyAttribute(lambda o: utils.generate_id('custom-widget'))
-    widget_id = factory.LazyAttribute(lambda o: utils.generate_id('widget'))
-    name = factory.LazyAttribute(lambda o: utils.random_string())
+    widget_name = factory.LazyAttribute(lambda o: utils.random_string())
+    title = factory.LazyAttribute(lambda o: utils.random_string())
     version = 'v1'
     widget_options = {
         'group_by': 'product',

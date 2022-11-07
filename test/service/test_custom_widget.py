@@ -41,8 +41,8 @@ class TestCustomWidgetService(unittest.TestCase):
 
     def test_create_custom_widget(self):
         params = {
-            'widget_id': 'widget-12345',
-            'name': 'test',
+            'widget_name': 'widget-name',
+            'title': 'test',
             'version': 'v1',
             'widget_options': {'group_by': 'product'},
             'inherit_options': {'a': {'enabled': True}},
@@ -58,14 +58,14 @@ class TestCustomWidgetService(unittest.TestCase):
         CustomWidgetInfo(custom_widget_vo)
 
         self.assertIsInstance(custom_widget_vo, CustomWidget)
-        self.assertEqual(params['name'], custom_widget_vo.name)
+        self.assertEqual(params['title'], custom_widget_vo.title)
 
     def test_update_custom_widget(self):
         custom_widget_vo = CustomWidgetFactory(domain_id=self.domain_id)
 
         params = {
             'custom_widget_id': custom_widget_vo.custom_widget_id,
-            'name': 'update widget test',
+            'title': 'update widget test',
             'widget_options': {'group_by': 'product2'},
             'inherit_options': {'b': {'enabled': True}},
             'tags': {'type': 'test from params'},
@@ -78,7 +78,7 @@ class TestCustomWidgetService(unittest.TestCase):
         print_data(updated_custom_widget_vo.to_dict(), 'test_update_custom_widget')
 
         self.assertIsInstance(updated_custom_widget_vo, CustomWidget)
-        self.assertEqual(params['name'], updated_custom_widget_vo.name)
+        self.assertEqual(params['title'], updated_custom_widget_vo.title)
 
     def test_get_custom_widget(self):
         custom_widget_vo = CustomWidgetFactory(domain_id=self.domain_id)
@@ -96,7 +96,7 @@ class TestCustomWidgetService(unittest.TestCase):
         CustomWidgetInfo(get_custom_widget_vo)
 
         self.assertIsInstance(get_custom_widget_vo, CustomWidget)
-        self.assertEqual(custom_widget_vo.name, get_custom_widget_vo.name)
+        self.assertEqual(custom_widget_vo.title, get_custom_widget_vo.title)
         self.assertEqual(custom_widget_vo.custom_widget_id, get_custom_widget_vo.custom_widget_id)
 
     def test_list_custom_widgets(self):
