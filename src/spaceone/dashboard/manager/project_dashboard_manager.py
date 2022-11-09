@@ -52,3 +52,7 @@ class ProjectDashboardManager(BaseManager):
 
     def stat_project_dashboards(self, query):
         return self.project_dashboard_model.stat(**query)
+
+    @staticmethod
+    def increase_version(project_dashboard_vo):
+        project_dashboard_vo.increment('version')

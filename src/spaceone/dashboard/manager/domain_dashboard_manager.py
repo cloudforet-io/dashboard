@@ -51,3 +51,7 @@ class DomainDashboardManager(BaseManager):
 
     def stat_domain_dashboards(self, query):
         return self.domain_dashboard_model.stat(**query)
+
+    @staticmethod
+    def increase_version(domain_dashboard_vo):
+        domain_dashboard_vo.increment('version')

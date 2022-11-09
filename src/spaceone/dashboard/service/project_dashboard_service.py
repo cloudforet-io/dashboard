@@ -1,7 +1,7 @@
 import logging
 
 from spaceone.core.service import *
-from spaceone.dashboard.manager import ProjectDashboardManager
+from spaceone.dashboard.manager import ProjectDashboardManager, ProjectDashboardVersionManager
 from spaceone.dashboard.model import ProjectDashboard
 from spaceone.dashboard.error import *
 
@@ -17,6 +17,7 @@ class ProjectDashboardService(BaseService):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.project_dashboard_mgr: ProjectDashboardManager = self.locator.get_manager('ProjectDashboardManager')
+        self.version_mgr: ProjectDashboardVersionManager = self.locator.get_manager('ProjectDashboardVersionManager')
 
     @transaction(append_meta={'authorization.scope': 'PROJECT_OR_USER'})
     @check_required(['project_id', 'name', 'domain_id'])
@@ -118,6 +119,85 @@ class ProjectDashboardService(BaseService):
         domain_id = params['domain_id']
 
         return self.project_dashboard_mgr.get_project_dashboard(project_dashboard_id, domain_id, params.get('only'))
+
+    @transaction(append_meta={'authorization.scope': 'PROJECT_OR_USER'})
+    @check_required(['project_dashboard_id', 'version', 'domain_id'])
+    def delete_version(self, params):
+        """ Delete version of project dashboard
+
+        Args:
+            params (dict): {
+                'project_dashboard_id': 'str',
+                'version': 'int',
+                'domain_id': 'str',
+            }
+
+        Returns:
+            None
+        """
+        pass
+
+    @transaction(append_meta={'authorization.scope': 'PROJECT_OR_USER'})
+    @check_required(['project_dashboard_id', 'version', 'domain_id'])
+    def revert_version(self, params):
+        """ Revert version of project dashboard
+
+        Args:
+            params (dict): {
+                'project_dashboard_id': 'str',
+                'version': 'int',
+                'domain_id': 'str',
+            }
+
+        Returns:
+            project_dashboard_vo (object)
+        """
+        pass
+
+    @transaction(append_meta={'authorization.scope': 'PROJECT_OR_USER'})
+    @check_required(['project_dashboard_id', 'version', 'domain_id'])
+    def get_version(self, params):
+        """ Get version of project dashboard
+
+        Args:
+            params (dict): {
+                'project_dashboard_id': 'str',
+                'version': 'int',
+                'domain_id': 'str',
+                'only': 'list
+            }
+
+        Returns:
+            project_dashboard_version_vo (object)
+        """
+
+        project_dashboard_id = params['project_dashboard_id']
+        version = params['version']
+        domain_id = params['domain_id']
+
+        return self.version_mgr.get_version(project_dashboard_id, version, domain_id)
+
+    @transaction(append_meta={'authorization.scope': 'PROJECT_OR_USER'})
+    @check_required(['domain_dashboard_id', 'domain_id'])
+    @append_query_filter(['domain_dashboard_id', 'version', 'domain_id'])
+    @append_keyword_filter(['domain_dashboard_id', 'version'])
+    def list_versions(self, params):
+        """ List versions of project dashboard
+
+        Args:
+            params (dict): {
+                'project_dashboard_id': 'str',
+                'version': 'int',
+                'domain_id': 'str',
+                'query': 'dict (spaceone.api.core.v1.Query)'
+            }
+
+        Returns:
+            project_dashboard_version_vos (object)
+            total_count
+        """
+        query = params.get('query', {})
+        return self.version_mgr.list_versions(query)
 
     @transaction(append_meta={'authorization.scope': 'PROJECT_OR_USER'})
     @check_required(['domain_id'])

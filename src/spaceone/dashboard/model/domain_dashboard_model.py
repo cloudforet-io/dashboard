@@ -20,6 +20,7 @@ class DomainDashboard(MongoModel):
     domain_dashboard_id = StringField(max_length=40, generate_id='domain-dash', unique=True)
     name = StringField(max_length=255)
     scope = StringField(max_length=255, choices=('DOMAIN', 'USER'))
+    version = IntField(default=1)
     layouts = ListField(DictField(default={}))
     dashboard_options = DictField(default={})
     settings = EmbeddedDocumentField(Settings, default=Settings)
@@ -45,6 +46,7 @@ class DomainDashboard(MongoModel):
             'domain_dashboard_id',
             'name',
             'scope',
+            'version',
             'user_id',
             'domain_id'
         ],

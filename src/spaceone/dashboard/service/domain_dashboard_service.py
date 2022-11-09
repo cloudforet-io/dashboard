@@ -1,8 +1,8 @@
 import logging
 
 from spaceone.core.service import *
-from spaceone.dashboard.manager import DomainDashboardManager
-from spaceone.dashboard.model import DomainDashboard
+from spaceone.dashboard.manager import DomainDashboardManager, DomainDashboardVersionManager
+from spaceone.dashboard.model import DomainDashboard, DomainDashboardVersion
 from spaceone.dashboard.error import *
 
 _LOGGER = logging.getLogger(__name__)
@@ -17,6 +17,7 @@ class DomainDashboardService(BaseService):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.domain_dashboard_mgr: DomainDashboardManager = self.locator.get_manager('DomainDashboardManager')
+        self.version_mgr: DomainDashboardVersionManager = self.locator.get_manager('DomainDashboardVersionManager')
 
     @transaction(append_meta={'authorization.scope': 'DOMAIN_OR_USER'})
     @check_required(['name', 'domain_id'])
@@ -79,6 +80,11 @@ class DomainDashboardService(BaseService):
 
         domain_dashboard_vo: DomainDashboard = self.domain_dashboard_mgr.get_domain_dashboard(domain_dashboard_id,
                                                                                               domain_id)
+
+        version_change_keys = ['layouts', 'dashboard_options', 'dashboard_options_schema']
+        if self._check_version_change(domain_dashboard_vo, params, version_change_keys):
+            self.domain_dashboard_mgr.increase_version(domain_dashboard_vo)
+
         return self.domain_dashboard_mgr.update_domain_dashboard_by_vo(params, domain_dashboard_vo)
 
     @transaction(append_meta={'authorization.scope': 'DOMAIN_OR_USER'})
@@ -116,6 +122,106 @@ class DomainDashboardService(BaseService):
         domain_id = params['domain_id']
 
         return self.domain_dashboard_mgr.get_domain_dashboard(domain_dashboard_id, domain_id, params.get('only'))
+
+    @transaction(append_meta={'authorization.scope': 'DOMAIN_OR_USER'})
+    @check_required(['domain_dashboard_id', 'version', 'domain_id'])
+    def delete_version(self, params):
+        """ delete version of domain dashboard
+
+        Args:
+            params (dict): {
+                'domain_dashboard_id': 'str',
+                'version': 'int',
+                'domain_id': 'str',
+            }
+
+        Returns:
+            None
+        """
+
+        domain_dashboard_id = params['domain_dashboard_id']
+        version = params['version']
+        domain_id = params['domain_id']
+
+        # TODO: if version is latest, Don't delete version
+        # TODO: info에 field를 추가한 후 latest처리
+
+        return self.version_mgr.delete_version(domain_dashboard_id, version, domain_id)
+
+    @transaction(append_meta={'authorization.scope': 'DOMAIN_OR_USER'})
+    @check_required(['domain_dashboard_id', 'version', 'domain_id'])
+    def revert_version(self, params):
+        """ Revert version of domain dashboard
+
+        Args:
+            params (dict): {
+                'domain_dashboard_id': 'str',
+                'version': 'int',
+                'domain_id': 'str',
+            }
+
+        Returns:
+            domain_dashboard_vo (object)
+        """
+
+        domain_dashboard_id = params['domain_dashboard_id']
+        version = params['version']
+        domain_id = params['domain_id']
+
+        domain_dashboard_vo: DomainDashboard = self.domain_dashboard_mgr.get_domain_dashboard(domain_dashboard_id,
+                                                                                              domain_id)
+        version_vo: DomainDashboardVersion = self.version_mgr.get_version(domain_dashboard_id, version, domain_id)
+
+        params['layouts'] = version_vo.layouts
+        params['dashboard_options'] = version_vo.dashboard_options
+        params['dashboard_options_schema'] = version_vo.dashboard_options_schema
+
+        return self.domain_dashboard_mgr.update_domain_dashboard_by_vo(params, domain_dashboard_vo)
+
+    @transaction(append_meta={'authorization.scope': 'DOMAIN_OR_USER'})
+    @check_required(['domain_dashboard_id', 'version', 'domain_id'])
+    def get_version(self, params):
+        """ Get version of domain dashboard
+
+        Args:
+            params (dict): {
+                'domain_dashboard_id': 'str',
+                'version': 'int',
+                'domain_id': 'str',
+                'only': 'list
+            }
+
+        Returns:
+            domain_dashboard_version_vo (object)
+        """
+
+        domain_dashboard_id = params['domain_dashboard_id']
+        version = params['version']
+        domain_id = params['domain_id']
+
+        return self.version_mgr.get_version(domain_dashboard_id, version, domain_id)
+
+    @transaction(append_meta={'authorization.scope': 'DOMAIN_OR_USER'})
+    @check_required(['domain_dashboard_id', 'domain_id'])
+    @append_query_filter(['domain_dashboard_id', 'version', 'domain_id'])
+    @append_keyword_filter(['domain_dashboard_id', 'version'])
+    def list_versions(self, params):
+        """ List versions of domain dashboard
+
+        Args:
+            params (dict): {
+                'domain_dashboard_id': 'str',
+                'version': 'int',
+                'domain_id': 'str',
+                'query': 'dict (spaceone.api.core.v1.Query)'
+            }
+
+        Returns:
+            domain_dashboard_version_vos (object)
+            total_count
+        """
+        query = params.get('query', {})
+        return self.version_mgr.list_versions(query)
 
     @transaction(append_meta={'authorization.scope': 'DOMAIN_OR_USER'})
     @check_required(['domain_id'])
@@ -160,3 +266,22 @@ class DomainDashboardService(BaseService):
         """
         query = params.get('query', {})
         return self.domain_dashboard_mgr.stat_domain_dashboards(query)
+
+    @staticmethod
+    def _check_version_change(domain_dashboard_vo, params, version_change_keys):
+        layouts = domain_dashboard_vo.layouts
+        dashboard_options = domain_dashboard_vo.dashboard_options
+        dashboard_options_schema = domain_dashboard_vo.dashboard_options_schema
+
+        if any(key for key in params if key in version_change_keys):
+            if layouts_from_params := params.get('layouts'):
+                if layouts != layouts_from_params:
+                    return True
+            elif options_from_params := params.get('dashboard_options'):
+                if dashboard_options != options_from_params:
+                    return True
+            elif schema_from_params := params.get('dashboard_options_schema'):
+                if schema_from_params != dashboard_options_schema:
+                    return True
+            else:
+                return False
