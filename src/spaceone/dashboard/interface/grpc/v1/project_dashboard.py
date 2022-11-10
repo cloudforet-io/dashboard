@@ -53,11 +53,12 @@ class ProjectDashboard(BaseAPI, project_dashboard_pb2_grpc.ProjectDashboardServi
         params, metadata = self.parse_request(request, context)
 
         with self.locator.get_service('ProjectDashboardService', metadata) as project_dashboard_service:
-            project_dashboard_version_vos, total_count = project_dashboard_service.list_versions(params)
+            project_dashboard_version_vos, total_count, dashboard_version = project_dashboard_service.list_versions(
+                params)
             return self.locator.get_info('ProjectDashboardVersionsInfo',
                                          project_dashboard_version_vos,
                                          total_count,
-                                         minimal=self.get_minimal(params))
+                                         minimal=self.get_minimal(params), version=dashboard_version)
 
     def list(self, request, context):
         params, metadata = self.parse_request(request, context)

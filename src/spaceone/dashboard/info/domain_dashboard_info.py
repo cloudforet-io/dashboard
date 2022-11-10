@@ -12,6 +12,7 @@ def DomainDashboardInfo(domain_dashboard_vo: DomainDashboard, minimal=False):
         'domain_dashboard_id': domain_dashboard_vo.domain_dashboard_id,
         'name': domain_dashboard_vo.name,
         'scope': domain_dashboard_vo.scope,
+        'version': domain_dashboard_vo.version,
         'labels': change_list_value_type(domain_dashboard_vo.labels),
         'user_id': domain_dashboard_vo.user_id,
         'domain_id': domain_dashboard_vo.domain_id

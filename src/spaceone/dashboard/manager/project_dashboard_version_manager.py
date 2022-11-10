@@ -12,16 +12,25 @@ class ProjectDashboardVersionManager(BaseManager):
         self.project_dashboard_version_model: ProjectDashboardVersion = self.locator.get_model(
             'ProjectDashboardVersion')
 
-    def create_version(self, params):
+    def create_version_by_project_dashboard_vo(self, project_dashboard_vo):
         def _rollback(version_vo):
-            _LOGGER.info(f'[create_project_dashboard_version._rollback] '
-                         f'Delete project_dashboard_version_vo : {version_vo.version} '
+            _LOGGER.info(f'[create_domain_dashboard_version._rollback] '
+                         f'Delete domain_dashboard_version_vo : {version_vo.version} '
                          f'({version_vo.project_dashboard_id})')
             version_vo.delete()
 
+        params = {
+            'domain_dashboard_id': project_dashboard_vo.project_dashboard_id,
+            'version': project_dashboard_vo.version,
+            'layouts': project_dashboard_vo.layouts,
+            'dashboard_options': project_dashboard_vo.dashboard_options,
+            'settings': project_dashboard_vo.settings,
+            'dashboard_options_schema': project_dashboard_vo.dashboard_options_schema,
+            'domain_id': project_dashboard_vo.domain_id
+        }
+
         version_vo: ProjectDashboardVersion = self.project_dashboard_version_model.create(params)
         self.transaction.add_rollback(_rollback, version_vo)
-
         return version_vo
 
     def delete_version(self, project_dashboard_id, version, domain_id):

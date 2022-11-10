@@ -53,11 +53,11 @@ class DomainDashboard(BaseAPI, domain_dashboard_pb2_grpc.DomainDashboardServicer
         params, metadata = self.parse_request(request, context)
 
         with self.locator.get_service('DomainDashboardService', metadata) as domain_dashboard_service:
-            domain_dashboard_version_vos, total_count = domain_dashboard_service.list_versions(params)
+            domain_dashboard_version_vos, total_count, dashboard_version = domain_dashboard_service.list_versions(params)
             return self.locator.get_info('DomainDashboardVersionsInfo',
                                          domain_dashboard_version_vos,
                                          total_count,
-                                         minimal=self.get_minimal(params))
+                                         minimal=self.get_minimal(params), version=dashboard_version)
 
     def list(self, request, context):
         params, metadata = self.parse_request(request, context)

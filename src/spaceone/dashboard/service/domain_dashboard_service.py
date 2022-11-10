@@ -51,7 +51,13 @@ class DomainDashboardService(BaseService):
         else:
             params['scope'] = 'DOMAIN'
 
-        return self.domain_dashboard_mgr.create_domain_dashboard(params)
+        domain_dashboard_vo = self.domain_dashboard_mgr.create_domain_dashboard(params)
+
+        version_keys = ['layouts', 'dashboard_options', 'dashboard_options_schema']
+        if set(version_keys) <= params.keys():
+            self.version_mgr.create_version_by_domain_dashboard_vo(domain_dashboard_vo)
+
+        return domain_dashboard_vo
 
     @transaction(append_meta={'authorization.scope': 'DOMAIN_OR_USER'})
     @check_required(['domain_dashboard_id', 'domain_id'])
@@ -84,6 +90,7 @@ class DomainDashboardService(BaseService):
         version_change_keys = ['layouts', 'dashboard_options', 'dashboard_options_schema']
         if self._check_version_change(domain_dashboard_vo, params, version_change_keys):
             self.domain_dashboard_mgr.increase_version(domain_dashboard_vo)
+            self.version_mgr.create_version_by_domain_dashboard_vo(domain_dashboard_vo)
 
         return self.domain_dashboard_mgr.update_domain_dashboard_by_vo(params, domain_dashboard_vo)
 
@@ -143,8 +150,10 @@ class DomainDashboardService(BaseService):
         version = params['version']
         domain_id = params['domain_id']
 
-        # TODO: if version is latest, Don't delete version
-        # TODO: info에 field를 추가한 후 latest처리
+        domain_dashboard_vo = self.domain_dashboard_mgr.get_domain_dashboard(domain_dashboard_id, domain_id)
+        current_version = domain_dashboard_vo.version
+        if current_version == version:
+            raise ERROR_LATEST_VERSION(version)
 
         return self.version_mgr.delete_version(domain_dashboard_id, version, domain_id)
 
@@ -199,7 +208,7 @@ class DomainDashboardService(BaseService):
         version = params['version']
         domain_id = params['domain_id']
 
-        return self.version_mgr.get_version(domain_dashboard_id, version, domain_id)
+        return self.version_mgr.get_version(domain_dashboard_id, version, domain_id, params.get('only'))
 
     @transaction(append_meta={'authorization.scope': 'DOMAIN_OR_USER'})
     @check_required(['domain_dashboard_id', 'domain_id'])
@@ -220,8 +229,13 @@ class DomainDashboardService(BaseService):
             domain_dashboard_version_vos (object)
             total_count
         """
+        domain_dashboard_id = params['domain_dashboard_id']
+        domain_id = params['domain_id']
+
         query = params.get('query', {})
-        return self.version_mgr.list_versions(query)
+        domain_dashboard_version_vos, total_count = self.version_mgr.list_versions(query)
+        domain_dashboard_vo = self.domain_dashboard_mgr.get_domain_dashboard(domain_dashboard_id, domain_id)
+        return domain_dashboard_version_vos, total_count, domain_dashboard_vo.version
 
     @transaction(append_meta={'authorization.scope': 'DOMAIN_OR_USER'})
     @check_required(['domain_id'])
