@@ -115,6 +115,18 @@ class TestProjectDashboardService(unittest.TestCase):
         self.assertIsInstance(project_dashboard_vo, ProjectDashboard)
         self.assertEqual(params['name'], project_dashboard_vo.name)
 
+    def test_delete_version(self):
+        pass
+
+    def test_revert_version(self):
+        pass
+
+    def test_get_version(self):
+        pass
+
+    def test_list_versions(self):
+        pass
+
     def test_get_project_dashboard(self):
         project_dashboard_vo = ProjectDashboardFactory(domain_id=self.domain_id)
 

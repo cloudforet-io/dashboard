@@ -6,11 +6,12 @@ from spaceone.core.transaction import Transaction
 from spaceone.core.unittest.result import print_data
 from parameterized import parameterized
 
-from spaceone.dashboard.info import DomainDashboardInfo, DomainDashboardsInfo, StatisticsInfo
+from spaceone.dashboard.info import DomainDashboardInfo, DomainDashboardsInfo
 from spaceone.dashboard.model import DomainDashboard
 from spaceone.dashboard.service.domain_dashboard_service import DomainDashboardService
 from spaceone.dashboard.error import *
 from test.factory import DomainDashboardFactory
+from test.factory.domain_dashboard_version_factory import DomainDashboardVersionFactory
 from test.lib import *
 
 
@@ -112,6 +113,55 @@ class TestDomainDashboardService(unittest.TestCase):
 
         self.assertIsInstance(domain_dashboard_vo, DomainDashboard)
         self.assertEqual(params['name'], domain_dashboard_vo.name)
+
+    def test_delete_version(self):
+        domain_dashboard_vo = DomainDashboardFactory(domain_id=self.domain_id)
+        params = {
+            'domain_dashboard_id': domain_dashboard_vo.domain_dashboard_id,
+            'name': 'update domain dashboard test',
+            'layouts': [{'name': 'widget4'}],
+            'settings': {
+                'date_range': {'enabled': False},
+                'currency': {'enabled': False}
+            },
+            'tags': {'a': 'b'},
+            'domain_id': self.domain_id
+        }
+        self.transaction.method = 'update'
+        domain_dashboard_svc = DomainDashboardService(transaction=self.transaction)
+        domain_dashboard_vo = domain_dashboard_svc.update(params.copy())
+        print_data(domain_dashboard_vo.to_dict(), 'test_update_project_dashboard')
+
+        params = {
+            'domain_dashboard_id': domain_dashboard_vo.domain_dashboard_id,
+            'version': 1,
+            'domain_id': domain_dashboard_vo.domain_id
+        }
+
+        domain_dashboard_svc.delete_version(params.copy())
+
+    def test_delete_latest_version(self):
+        domain_dashboard_vo = DomainDashboardFactory(domain_id=self.domain_id)
+        params = {
+            'domain_dashboard_id': domain_dashboard_vo.domain_dashboard_id,
+            'version': 1,
+            'domain_id': domain_dashboard_vo.domain_id
+        }
+        print(params)
+
+        self.transaction.method = 'delete_version'
+        domain_dashboard_svc = DomainDashboardService(transaction=self.transaction)
+        with self.assertRaises(ERROR_LATEST_VERSION):
+            domain_dashboard_svc.delete_version(params.copy())
+
+    def test_revert_version(self):
+        pass
+
+    def test_get_version(self):
+        pass
+
+    def test_list_versions(self):
+        pass
 
     def test_get_domain_dashboard(self):
         domain_dashboard_vo = DomainDashboardFactory(domain_id=self.domain_id)

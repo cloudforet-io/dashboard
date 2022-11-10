@@ -153,7 +153,7 @@ class DomainDashboardService(BaseService):
         domain_dashboard_vo = self.domain_dashboard_mgr.get_domain_dashboard(domain_dashboard_id, domain_id)
         current_version = domain_dashboard_vo.version
         if current_version == version:
-            raise ERROR_LATEST_VERSION(version)
+            raise ERROR_LATEST_VERSION(version=version)
 
         return self.version_mgr.delete_version(domain_dashboard_id, version, domain_id)
 

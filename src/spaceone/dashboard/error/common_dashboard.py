@@ -6,4 +6,4 @@ class ERROR_INVALID_USER_ID(ERROR_INVALID_ARGUMENT):
 
 
 class ERROR_LATEST_VERSION(ERROR_INVALID_ARGUMENT):
-    _message = 'Do not remove latest version. (latest version = {version})'
+    _message = 'Do not remove latest version. (version = {version})'

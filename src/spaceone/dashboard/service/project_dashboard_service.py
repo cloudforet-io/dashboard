@@ -154,7 +154,7 @@ class ProjectDashboardService(BaseService):
         project_dashboard_vo = self.project_dashboard_mgr.get_project_dashboard(project_dashboard_id, domain_id)
         current_version = project_dashboard_vo.version
         if current_version == version:
-            raise ERROR_LATEST_VERSION(version)
+            raise ERROR_LATEST_VERSION(version=version)
 
         return self.version_mgr.delete_version(project_dashboard_id, version, domain_id)
 

@@ -27,6 +27,7 @@ class DomainDashboardVersionManager(BaseManager):
             'dashboard_options_schema': domain_dashboard_vo.dashboard_options_schema,
             'domain_id': domain_dashboard_vo.domain_id
         }
+        print(params)
 
         version_vo: DomainDashboardVersion = self.domain_dashboard_version_model.create(params)
         self.transaction.add_rollback(_rollback, version_vo)
