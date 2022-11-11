@@ -7,9 +7,12 @@ from spaceone.core.unittest.result import print_data
 from parameterized import parameterized
 
 from spaceone.dashboard.info import ProjectDashboardInfo, ProjectDashboardsInfo, StatisticsInfo
-from spaceone.dashboard.model import ProjectDashboard
-from spaceone.dashboard.service import ProjectDashboardService
+from spaceone.dashboard.info.project_dashboard_version_info import ProjectDashboardVersionsInfo
+from spaceone.dashboard.model import ProjectDashboard, ProjectDashboardVersion
+from spaceone.dashboard.service import ProjectDashboardService, DomainDashboardService
+from spaceone.dashboard.error import *
 from test.factory import ProjectDashboardFactory
+from test.factory.project_dashboard_version_factory import ProjectDashboardVersionFactory
 from test.lib import *
 
 
@@ -43,17 +46,15 @@ class TestProjectDashboardService(unittest.TestCase):
     @parameterized.expand([['user_id', None], ['user_id', 'cloudforet@gmail.com']], name_func=key_value_name_func)
     def test_create_project_dashboard(self, key, value):
         params = {
+            'project_id': 'project-12345',
             'name': 'test',
             'domain_id': 'domain-12345',
-            'options': {
-                'date_range': {
-                    'enabled': True,
-                    'period_type': 'AUTO',
-                    'period': {'start': '2021-11', 'end': '2021-12'}
-                },
-                'currency': {
-                    'enabled': True,
-                }
+            'dashboard_options': {
+                'project_id': 'project-1234'
+            },
+            'settings': {
+                'date_range': {'enabled': False},
+                'currency': {'enabled': False}
             }
         }
 
@@ -61,6 +62,7 @@ class TestProjectDashboardService(unittest.TestCase):
             params.update({key: value})
 
         self.transaction.method = 'create'
+        self.transaction.set_meta('user_id', 'cloudforet@gmail.com')
         project_dashboard_svc = ProjectDashboardService(transaction=self.transaction)
         project_dashboard_vo = project_dashboard_svc.create(params.copy())
 
@@ -69,7 +71,29 @@ class TestProjectDashboardService(unittest.TestCase):
 
         self.assertIsInstance(project_dashboard_vo, ProjectDashboard)
         self.assertEqual(params['name'], project_dashboard_vo.name)
-        self.assertEqual(params['options']['currency']['enabled'], project_dashboard_vo.options.currency.enabled)
+        self.assertEqual(params['dashboard_options']['project_id'],
+                         project_dashboard_vo.dashboard_options.get('project_id'))
+
+    def test_create_project_dashboard_invalid_user_id(self):
+        params = {
+            'project_id': 'project-12345',
+            'name': 'test',
+            'domain_id': 'domain-12345',
+            'dashboard_options': {
+                'project_id': 'project-1234'
+            },
+            'settings': {
+                'date_range': {'enabled': False},
+                'currency': {'enabled': False}
+            },
+            'user_id': 'cloudforet2@gmail.com'
+        }
+
+        self.transaction.method = 'create'
+        self.transaction.set_meta('user_id', 'cloudforet@gmail.com')
+        project_dashboard_svc = ProjectDashboardService(transaction=self.transaction)
+        with self.assertRaises(ERROR_INVALID_USER_ID):
+            project_dashboard_svc.create(params.copy())
 
     def test_update_project_dashboard(self):
         project_dashboard_vo = ProjectDashboardFactory(domain_id=self.domain_id)
@@ -77,6 +101,11 @@ class TestProjectDashboardService(unittest.TestCase):
         params = {
             'project_dashboard_id': project_dashboard_vo.project_dashboard_id,
             'name': 'update project dashboard test',
+            'settings': {
+                'date_range': {'enabled': False},
+                'currency': {'enabled': False}
+            },
+            'tags': {'a': 'b'},
             'domain_id': self.domain_id
         }
 
@@ -87,6 +116,181 @@ class TestProjectDashboardService(unittest.TestCase):
 
         self.assertIsInstance(project_dashboard_vo, ProjectDashboard)
         self.assertEqual(params['name'], project_dashboard_vo.name)
+
+    def test_delete_project_dashboard(self):
+        project_dashboard_vo = ProjectDashboardFactory(domain_id=self.domain_id)
+        project_dashboard_version_vos = ProjectDashboardVersionFactory.build_batch(5,
+                                                                                   project_dashboard_id=project_dashboard_vo.project_dashboard_id,
+                                                                                   domain_id=self.domain_id)
+        list(map(lambda vo: vo.save(), project_dashboard_version_vos))
+
+        for idx, project_dashboard_version in enumerate(project_dashboard_version_vos, 1):
+            print_data(project_dashboard_version.to_dict(), f'{idx}th project_dashboard_version')
+
+        params = {
+            'project_dashboard_id': project_dashboard_vo.project_dashboard_id,
+            'domain_id': project_dashboard_vo.domain_id
+        }
+
+        self.transaction.method = 'delete'
+        project_dashboard_svc = ProjectDashboardService(transaction=self.transaction)
+        project_dashboard_svc.delete(params.copy())
+
+        with self.assertRaises(ERROR_NOT_FOUND):
+            project_dashboard_svc.list_versions(params)
+
+    def test_delete_version(self):
+        # Create 1 domain_dashboard instance / Create 1 domain_dashboard_version instance
+        project_dashboard_vo = ProjectDashboardFactory(domain_id=self.domain_id)
+        ProjectDashboardVersionFactory(
+            project_dashboard_id=project_dashboard_vo.project_dashboard_id,
+            layouts=project_dashboard_vo.layouts,
+            dashboard_options=project_dashboard_vo.dashboard_options,
+            version=1,
+            dashboard_options_schema=project_dashboard_vo.dashboard_options_schema,
+            domain_id=self.domain_id
+        )
+
+        # When updating domain_dashboard, version=2 is created
+        params = {
+            'project_dashboard_id': project_dashboard_vo.project_dashboard_id,
+            'name': 'update domain dashboard test',
+            'layouts': [{'name': 'widget4'}],
+            'settings': {
+                'date_range': {'enabled': False},
+                'currency': {'enabled': False}
+            },
+            'tags': {'a': 'b'},
+            'domain_id': self.domain_id
+        }
+        self.transaction.method = 'update'
+        project_dashboard_svc = ProjectDashboardService(transaction=self.transaction)
+        project_dashboard_vo = project_dashboard_svc.update(params.copy())
+        print_data(project_dashboard_vo.to_dict(), 'test_update_project_dashboard')
+
+        params = {
+            'project_dashboard_id': project_dashboard_vo.project_dashboard_id,
+            'version': 1,
+            'domain_id': project_dashboard_vo.domain_id
+        }
+
+        # After that, delete version=1 with the delete_version method
+        project_dashboard_svc.delete_version(params.copy())
+
+    def test_delete_latest_version(self):
+        project_dashboard_vo = ProjectDashboardFactory(domain_id=self.domain_id)
+        params = {
+            'project_dashboard_id': project_dashboard_vo.project_dashboard_id,
+            'version': 1,
+            'domain_id': project_dashboard_vo.domain_id
+        }
+
+        self.transaction.method = 'delete_version'
+        project_dashboard_svc = ProjectDashboardService(transaction=self.transaction)
+        with self.assertRaises(ERROR_LATEST_VERSION):
+            project_dashboard_svc.delete_version(params.copy())
+
+    def test_revert_version(self):
+        # Create 1 domain_dashboard instance / Create 1 domain_dashboard_version instance
+        project_dashboard_vo = ProjectDashboardFactory(domain_id=self.domain_id)
+        first_version = ProjectDashboardVersionFactory(
+            project_dashboard_id=project_dashboard_vo.project_dashboard_id,
+            layouts=project_dashboard_vo.layouts,
+            dashboard_options=project_dashboard_vo.dashboard_options,
+            version=1,
+            dashboard_options_schema=project_dashboard_vo.dashboard_options_schema,
+            domain_id=self.domain_id
+        )
+
+        # When updating domain_dashboard, version=2 is created
+        params = {
+            'project_dashboard_id': project_dashboard_vo.project_dashboard_id,
+            'name': 'update project dashboard test',
+            'layouts': [{'name': 'widget4'}],
+            'settings': {
+                'date_range': {'enabled': False},
+                'currency': {'enabled': False}
+            },
+            'tags': {'a': 'b'},
+            'domain_id': self.domain_id
+        }
+        self.transaction.method = 'update'
+        project_dashboard_svc = ProjectDashboardService(transaction=self.transaction)
+        project_dashboard_vo = project_dashboard_svc.update(params.copy())
+        print_data(project_dashboard_vo.to_dict(), 'test_update_project_dashboard')
+
+        params = {
+            'project_dashboard_id': project_dashboard_vo.project_dashboard_id,
+            'version': 1,
+            'domain_id': project_dashboard_vo.domain_id
+        }
+
+        # After that, revert version=1 with the revert_version method
+        project_dashboard_vo = project_dashboard_svc.revert_version(params.copy())
+        print_data(project_dashboard_vo.to_dict(), 'test_reverted_project_dashboard')
+
+        self.assertIsInstance(project_dashboard_vo, ProjectDashboard)
+        self.assertEqual(project_dashboard_vo.version, 3)
+        self.assertEqual(project_dashboard_vo.layouts, first_version.layouts)
+        self.assertEqual(project_dashboard_vo.dashboard_options, first_version.dashboard_options)
+        self.assertEqual(project_dashboard_vo.dashboard_options_schema, first_version.dashboard_options_schema)
+
+    def test_get_version(self):
+        project_dashboard_vo = ProjectDashboardFactory(domain_id=self.domain_id)
+        ProjectDashboardVersionFactory(
+            project_dashboard_id=project_dashboard_vo.project_dashboard_id,
+            layouts=project_dashboard_vo.layouts,
+            dashboard_options=project_dashboard_vo.dashboard_options,
+            version=1,
+            dashboard_options_schema=project_dashboard_vo.dashboard_options_schema,
+            domain_id=self.domain_id
+        )
+
+        params = {
+            'project_dashboard_id': project_dashboard_vo.project_dashboard_id,
+            'version': 1,
+            'domain_id': project_dashboard_vo.domain_id
+        }
+
+        self.transaction.method = 'get_version'
+        project_dashboard_svc = ProjectDashboardService(transaction=self.transaction)
+        project_dashboard_version_vo = project_dashboard_svc.get_version(params.copy())
+
+        print_data(project_dashboard_version_vo.to_dict(), 'test_project_dashboard_version_by_get_version')
+
+        self.assertIsInstance(project_dashboard_version_vo, ProjectDashboardVersion)
+        self.assertEqual(project_dashboard_version_vo.version, 1)
+        self.assertEqual(project_dashboard_version_vo.project_dashboard_id, project_dashboard_vo.project_dashboard_id)
+        self.assertEqual(project_dashboard_version_vo.layouts, project_dashboard_vo.layouts)
+        self.assertEqual(project_dashboard_version_vo.dashboard_options, project_dashboard_vo.dashboard_options)
+        self.assertEqual(project_dashboard_version_vo.dashboard_options_schema,
+                         project_dashboard_vo.dashboard_options_schema)
+
+    def test_list_versions(self):
+        project_dashboard_vo = ProjectDashboardFactory(domain_id=self.domain_id)
+        project_dashboard_version_vos = ProjectDashboardVersionFactory.build_batch(5,
+                                                                                   project_dashboard_id=project_dashboard_vo.project_dashboard_id,
+                                                                                   domain_id=self.domain_id)
+        list(map(lambda vo: vo.save(), project_dashboard_version_vos))
+
+        params = {
+            'project_dashboard_id': project_dashboard_vo.project_dashboard_id,
+            'domain_id': project_dashboard_vo.domain_id
+        }
+
+        self.transaction.method = 'list_versions'
+        project_dashboard_svc = ProjectDashboardService(transaction=self.transaction)
+        list_project_dashboard_version_vos, total_count, current_version = project_dashboard_svc.list_versions(
+            params.copy())
+
+        ProjectDashboardVersionsInfo(list_project_dashboard_version_vos, total_count)
+
+        for idx, domain_dashboard_version in enumerate(list_project_dashboard_version_vos, 1):
+            print_data(domain_dashboard_version.to_dict(), f'{idx}th project_dashboard_version')
+
+        self.assertEqual(len(list_project_dashboard_version_vos), 5)
+        self.assertIsInstance(list_project_dashboard_version_vos[0], ProjectDashboardVersion)
+        self.assertEqual(total_count, 5)
 
     def test_get_project_dashboard(self):
         project_dashboard_vo = ProjectDashboardFactory(domain_id=self.domain_id)

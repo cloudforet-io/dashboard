@@ -31,6 +31,34 @@ class DomainDashboard(BaseAPI, domain_dashboard_pb2_grpc.DomainDashboardServicer
         with self.locator.get_service('DomainDashboardService', metadata) as domain_dashboard_service:
             return self.locator.get_info('DomainDashboardInfo', domain_dashboard_service.get(params))
 
+    def delete_version(self, request, context):
+        params, metadata = self.parse_request(request, context)
+
+        with self.locator.get_service('DomainDashboardService', metadata) as domain_dashboard_service:
+            return self.locator.get_info('DomainDashboardInfo', domain_dashboard_service.delete_version(params))
+
+    def revert_version(self, request, context):
+        params, metadata = self.parse_request(request, context)
+
+        with self.locator.get_service('DomainDashboardService', metadata) as domain_dashboard_service:
+            return self.locator.get_info('DomainDashboardInfo', domain_dashboard_service.revert_version(params))
+
+    def get_version(self, request, context):
+        params, metadata = self.parse_request(request, context)
+
+        with self.locator.get_service('DomainDashboardService', metadata) as domain_dashboard_service:
+            return self.locator.get_info('DomainDashboardVersionInfo', domain_dashboard_service.get_version(params))
+
+    def list_versions(self, request, context):
+        params, metadata = self.parse_request(request, context)
+
+        with self.locator.get_service('DomainDashboardService', metadata) as domain_dashboard_service:
+            domain_dashboard_version_vos, total_count, dashboard_version = domain_dashboard_service.list_versions(params)
+            return self.locator.get_info('DomainDashboardVersionsInfo',
+                                         domain_dashboard_version_vos,
+                                         total_count,
+                                         minimal=self.get_minimal(params), version=dashboard_version)
+
     def list(self, request, context):
         params, metadata = self.parse_request(request, context)
 

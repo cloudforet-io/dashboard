@@ -3,39 +3,32 @@ from mongoengine import *
 from spaceone.core.model.mongo_model import MongoModel
 
 
-class Period(EmbeddedDocument):
-    start = StringField(required=True)
-    end = StringField(required=True)
-
-    def to_dict(self):
-        return dict(self.to_mongo())
-
-
 class DateRange(EmbeddedDocument):
-    enabled = BooleanField()
-    period_type = StringField(max_length=255, choices=('AUTO', 'FIXED'))
-    period = EmbeddedDocumentField(Period)
+    enabled = BooleanField(default=False)
 
 
 class Currency(EmbeddedDocument):
-    enabled = BooleanField()
+    enabled = BooleanField(default=False)
 
 
-class Options(EmbeddedDocument):
+class Settings(EmbeddedDocument):
     date_range = EmbeddedDocumentField(DateRange, default=DateRange)
     currency = EmbeddedDocumentField(Currency, default=Currency)
 
 
 class ProjectDashboard(MongoModel):
-    project_dashboard_id = StringField(max_length=40, generate_id='project-dash', unique=True)
+    project_dashboard_id = StringField(max_length=40, generate_id='domain-dash', unique=True)
     name = StringField(max_length=255)
     scope = StringField(max_length=255, choices=('PROJECT', 'USER'))
-    layouts = ListField(default=[])
-    options = EmbeddedDocumentField(Options, default=Options)
-    default_variables = DictField(default={})
-    labels = ListField(default=[])
+    version = IntField(default=1)
+    layouts = ListField(DictField(default={}))
+    dashboard_options = DictField(default={})
+    settings = EmbeddedDocumentField(Settings, default=Settings)
+    dashboard_options_schema = DictField(default={})
+    labels = ListField(StringField())
     tags = DictField(default={})
     user_id = StringField(max_length=40)
+    project_id = StringField(max_length=40)
     domain_id = StringField(max_length=40)
     created_at = DateTimeField(auto_now_add=True)
     updated_at = DateTimeField(auto_now=True)
@@ -44,8 +37,9 @@ class ProjectDashboard(MongoModel):
         'updatable_fields': [
             'name',
             'layouts',
-            'options',
-            'default_variables',
+            'dashboard_options',
+            'settings',
+            'dashboard_options_schema',
             'labels',
             'tags'
         ],
@@ -53,17 +47,18 @@ class ProjectDashboard(MongoModel):
             'project_dashboard_id',
             'name',
             'scope',
+            'version',
             'options',
-            'default_variables',
-            'labels',
+            'project_id'
             'user_id',
             'domain_id'
         ],
-        'ordering': ['-created_at'],
+        'ordering': ['name'],
         'indexes': [
             'name',
             'scope',
             'labels',
+            'project_id',
             'user_id',
             'domain_id'
         ]

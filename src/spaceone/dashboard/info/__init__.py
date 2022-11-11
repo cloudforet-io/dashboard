@@ -1,4 +1,4 @@
 from spaceone.dashboard.info.common_info import *
 from spaceone.dashboard.info.domain_dashboard_info import *
 from spaceone.dashboard.info.project_dashboard_info import *
-from spaceone.dashboard.info.widget_info import *
+from spaceone.dashboard.info.custom_widget_info import *

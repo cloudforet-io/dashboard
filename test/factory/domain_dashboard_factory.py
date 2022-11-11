@@ -11,18 +11,18 @@ class DomainDashboardFactory(factory.mongoengine.MongoEngineFactory):
     domain_dashboard_id = factory.LazyAttribute(lambda o: utils.generate_id('domain-dash'))
     name = factory.LazyAttribute(lambda o: utils.random_string())
     layouts = []
-    # options = {'currency': {'enabled': True},
-    #            'date_range': {'enabled': True,
-    #                           'period': {'end': '2021-12',
-    #                                      'start': '2021-11'},
-    #                           'period_type': 'FIXED'}},
-    default_variables = {
+    dashboard_options = {
         'group_by': 'product',
         'project_id': []
     }
+    settings = {
+        'date_range': {'enabled': True},
+        'currency': {'enabled': True},
+    }
+    dashboard_options_schema = {}
+    labels = ['a', 'b', 'c']
     tags = {'type': 'test',
             'env': 'dev'}
-    labels = ['a', 'b', 'c']
     user_id = 'cloudforet@gmail.com'
     domain_id = factory.LazyAttribute(lambda o: utils.generate_id('domain'))
     created_at = factory.Faker('date_time')
