@@ -8,8 +8,8 @@ class ProjectDashboardVersionFactory(factory.mongoengine.MongoEngineFactory):
     class Meta:
         model = ProjectDashboardVersion
 
-    project_dashboard_id = factory.LazyAttribute(lambda o: utils.generate_id('project-dash'))
-    layouts = ['widget1', 'widget2', 'widget3']
+    # project_dashboard_id = factory.LazyAttribute(lambda o: utils.generate_id('project-dash'))
+    layouts = [{'name': 'widget1'}, {'name': 'widget2'}, {'name': 'widget3'}]
     dashboard_options = {
         'group_by': 'product',
         'project_id': []
