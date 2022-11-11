@@ -89,8 +89,7 @@ class DomainDashboardService(BaseService):
 
         version_change_keys = ['layouts', 'dashboard_options', 'dashboard_options_schema']
         if self._check_version_change(domain_dashboard_vo, params, version_change_keys):
-            self.domain_dashboard_mgr.increase_version(domain_dashboard_vo)
-            self.version_mgr.create_version_by_domain_dashboard_vo(domain_dashboard_vo)
+            self.version_mgr.create_version_by_domain_dashboard_vo(domain_dashboard_vo, params)
 
         return self.domain_dashboard_mgr.update_domain_dashboard_by_vo(params, domain_dashboard_vo)
 
@@ -108,7 +107,15 @@ class DomainDashboardService(BaseService):
         Returns:
             None
         """
-        self.domain_dashboard_mgr.delete_domain_dashboard(params['domain_dashboard_id'], params['domain_id'])
+
+        domain_dashboard_vo: DomainDashboard = self.domain_dashboard_mgr.get_domain_dashboard(
+            params['domain_dashboard_id'], params['domain_id'])
+
+        if domain_dashboard_version_vos := self.version_mgr.filter_versions(
+                domain_dashboard_id=domain_dashboard_vo.domain_dashboard_id):
+            self.version_mgr.delete_versions_by_domain_dashboard_version_vos(domain_dashboard_version_vos)
+
+        self.domain_dashboard_mgr.delete_by_domain_dashboard_vo(domain_dashboard_vo)
 
     @transaction(append_meta={'authorization.scope': 'DOMAIN_OR_USER'})
     @check_required(['domain_dashboard_id', 'domain_id'])

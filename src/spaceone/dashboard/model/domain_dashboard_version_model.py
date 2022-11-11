@@ -17,7 +17,7 @@ class Settings(EmbeddedDocument):
 
 
 class DomainDashboardVersion(MongoModel):
-    domain_dashboard_id = StringField(max_length=40, unique=True)
+    domain_dashboard_id = StringField(max_length=40)
     version = IntField()
     layouts = ListField(DictField(default={}))
     dashboard_options = DictField(default={})

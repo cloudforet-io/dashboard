@@ -34,6 +34,7 @@ class DomainDashboardManager(BaseManager):
                          f'{old_data["domain_dashboard_id"]}')
             domain_dashboard_vo.update(old_data)
 
+        self.increase_version(domain_dashboard_vo)
         self.transaction.add_rollback(_rollback, domain_dashboard_vo.to_dict())
         return domain_dashboard_vo.update(params)
 
@@ -55,3 +56,7 @@ class DomainDashboardManager(BaseManager):
     @staticmethod
     def increase_version(domain_dashboard_vo):
         domain_dashboard_vo.increment('version')
+
+    @staticmethod
+    def delete_by_domain_dashboard_vo(domain_dashboard_vo):
+        domain_dashboard_vo.delete()

@@ -17,7 +17,7 @@ class Settings(EmbeddedDocument):
 
 
 class ProjectDashboardVersion(MongoModel):
-    project_dashboard_id = StringField(max_length=40, unique=True)
+    project_dashboard_id = StringField(max_length=40)
     version = IntField()
     layouts = ListField(DictField(default={}))
     dashboard_options = DictField(default={})
@@ -42,4 +42,3 @@ class ProjectDashboardVersion(MongoModel):
             'created_at'
         ]
     }
-

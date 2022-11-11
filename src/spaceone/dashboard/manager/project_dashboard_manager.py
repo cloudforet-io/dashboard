@@ -34,6 +34,7 @@ class ProjectDashboardManager(BaseManager):
                          f'{old_data["project_dashboard_id"]}')
             project_dashboard_vo.update(old_data)
 
+        self.increase_version(project_dashboard_vo)
         self.transaction.add_rollback(_rollback, project_dashboard_vo.to_dict())
         return project_dashboard_vo.update(params)
 
@@ -56,3 +57,7 @@ class ProjectDashboardManager(BaseManager):
     @staticmethod
     def increase_version(project_dashboard_vo):
         project_dashboard_vo.increment('version')
+
+    @staticmethod
+    def delete_by_project_dashboard_vo(project_dashboard_vo):
+        project_dashboard_vo.delete()

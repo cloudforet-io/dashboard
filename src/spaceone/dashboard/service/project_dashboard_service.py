@@ -90,8 +90,7 @@ class ProjectDashboardService(BaseService):
 
         version_change_keys = ['layouts', 'dashboard_options', 'dashboard_options_schema']
         if self._check_version_change(project_dashboard_vo, params, version_change_keys):
-            self.project_dashboard_mgr.increase_version(project_dashboard_vo)
-            self.version_mgr.create_version_by_project_dashboard_vo(project_dashboard_vo)
+            self.version_mgr.create_version_by_project_dashboard_vo(project_dashboard_vo, params)
 
         return self.project_dashboard_mgr.update_project_dashboard_by_vo(params, project_dashboard_vo)
 
@@ -109,7 +108,15 @@ class ProjectDashboardService(BaseService):
         Returns:
             None
         """
-        self.project_dashboard_mgr.delete_project_dashboard(params['project_dashboard_id'], params['domain_id'])
+
+        project_dashboard_vo: ProjectDashboard = self.project_dashboard_mgr.get_project_dashboard(
+            params['project_dashboard_id'], params['domain_id'])
+
+        if project_dashboard_version_vos := self.version_mgr.filter_versions(
+                project_dashboard_id=project_dashboard_vo.project_dashboard_id):
+            self.version_mgr.delete_versions_by_project_dashboard_version_vos(project_dashboard_version_vos)
+
+        self.project_dashboard_mgr.delete_by_project_dashboard_vo(project_dashboard_vo)
 
     @transaction(append_meta={'authorization.scope': 'PROJECT_OR_USER'})
     @check_required(['project_dashboard_id', 'domain_id'])
