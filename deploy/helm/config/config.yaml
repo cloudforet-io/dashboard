@@ -1,0 +1,43 @@
+REMOTE_URL:
+- file:///opt/spaceone/dashboard/config/database.yaml
+- file:///opt/spaceone/dashboard/config/shared.yaml
+- file:///opt/spaceone/dashboard/config/application.yaml
+GLOBAL:
+  MAX_WORKERS: 1000
+  DATABASES:
+    default:
+      db: dashboard
+      host: mongodb
+      port: 27017
+      maxPoolSize: 200
+      username: dashboard_user
+      password: dashboard_password
+  CACHES:
+    default:
+      backend: spaceone.core.cache.redis_cache.RedisCache
+      host: redis
+      port: 6379
+      db: 1
+      encoding: utf-8
+      socket_timeout: 10
+      socket_connect_timeout: 10
+  LOG:
+    loggers:
+      spaceone:
+        handlers:
+          - console
+          - file
+    handlers:
+      file:
+        type: file
+        filename: /var/log/spaceone/dashboard.log
+
+  HANDLERS:
+    authentication:
+    - backend: spaceone.core.handler.authentication_handler.AuthenticationGRPCHandler
+      uri: grpc+ssl://identity.dev.spaceone.dev:443/v1/Domain/get_public_key
+    authorization:
+    - backend: spaceone.core.handler.authorization_handler.AuthorizationGRPCHandler
+      uri: grpc+ssl://identity.dev.spaceone.dev:443/v1/Authorization/verify
+    mutation:
+    - backend: spaceone.core.handler.mutation_handler.SpaceONEMutationHandler
