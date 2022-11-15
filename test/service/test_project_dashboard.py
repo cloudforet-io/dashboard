@@ -48,6 +48,7 @@ class TestProjectDashboardService(unittest.TestCase):
         params = {
             'project_id': 'project-12345',
             'name': 'test',
+            'viewers': 'PUBLIC',
             'domain_id': 'domain-12345',
             'dashboard_options': {
                 'project_id': 'project-1234'
@@ -74,27 +75,6 @@ class TestProjectDashboardService(unittest.TestCase):
         self.assertEqual(params['dashboard_options']['project_id'],
                          project_dashboard_vo.dashboard_options.get('project_id'))
 
-    def test_create_project_dashboard_invalid_user_id(self):
-        params = {
-            'project_id': 'project-12345',
-            'name': 'test',
-            'domain_id': 'domain-12345',
-            'dashboard_options': {
-                'project_id': 'project-1234'
-            },
-            'settings': {
-                'date_range': {'enabled': False},
-                'currency': {'enabled': False}
-            },
-            'user_id': 'cloudforet2@gmail.com'
-        }
-
-        self.transaction.method = 'create'
-        self.transaction.set_meta('user_id', 'cloudforet@gmail.com')
-        project_dashboard_svc = ProjectDashboardService(transaction=self.transaction)
-        with self.assertRaises(ERROR_INVALID_USER_ID):
-            project_dashboard_svc.create(params.copy())
-
     def test_update_project_dashboard(self):
         project_dashboard_vo = ProjectDashboardFactory(domain_id=self.domain_id)
 
@@ -116,6 +96,28 @@ class TestProjectDashboardService(unittest.TestCase):
 
         self.assertIsInstance(project_dashboard_vo, ProjectDashboard)
         self.assertEqual(params['name'], project_dashboard_vo.name)
+
+    def test_update_project_dashboard_permission_error(self):
+        project_dashboard_vo = ProjectDashboardFactory(domain_id=self.domain_id,
+                                                       viewers='PRIVATE',
+                                                       user_id='cloudforet2@gmail.com')
+
+        params = {
+            'project_dashboard_id': project_dashboard_vo.project_dashboard_id,
+            'name': 'update project dashboard test',
+            'settings': {
+                'date_range': {'enabled': False},
+                'currency': {'enabled': False}
+            },
+            'tags': {'a': 'b'},
+            'domain_id': self.domain_id
+        }
+
+        self.transaction.method = 'update'
+        self.transaction.set_meta('user_id', 'cloudforet@gmail.com')
+        project_dashboard_svc = ProjectDashboardService(transaction=self.transaction)
+        with self.assertRaises(ERROR_PERMISSION_DENIED):
+            project_dashboard_svc.update(params.copy())
 
     def test_delete_project_dashboard(self):
         project_dashboard_vo = ProjectDashboardFactory(domain_id=self.domain_id)
