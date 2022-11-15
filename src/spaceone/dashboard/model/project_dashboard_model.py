@@ -17,9 +17,9 @@ class Settings(EmbeddedDocument):
 
 
 class ProjectDashboard(MongoModel):
-    project_dashboard_id = StringField(max_length=40, generate_id='domain-dash', unique=True)
+    project_dashboard_id = StringField(max_length=40, generate_id='project-dash', unique=True)
     name = StringField(max_length=255)
-    scope = StringField(max_length=255, choices=('PROJECT', 'USER'))
+    viewers = StringField(max_length=255, choices=('PUBLIC', 'PRIVATE'))
     version = IntField(default=1)
     layouts = ListField(DictField(default={}))
     dashboard_options = DictField(default={})
@@ -46,17 +46,20 @@ class ProjectDashboard(MongoModel):
         'minimal_fields': [
             'project_dashboard_id',
             'name',
-            'scope',
+            'viewers',
             'version',
             'options',
             'project_id'
             'user_id',
             'domain_id'
         ],
+        'change_query_keys': {
+            'user_projects': 'project_id'
+        },
         'ordering': ['name'],
         'indexes': [
             'name',
-            'scope',
+            'viewers',
             'labels',
             'project_id',
             'user_id',

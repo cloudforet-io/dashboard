@@ -19,14 +19,15 @@ class DomainDashboardService(BaseService):
         self.domain_dashboard_mgr: DomainDashboardManager = self.locator.get_manager('DomainDashboardManager')
         self.version_mgr: DomainDashboardVersionManager = self.locator.get_manager('DomainDashboardVersionManager')
 
-    @transaction(append_meta={'authorization.scope': 'DOMAIN_OR_USER'})
-    @check_required(['name', 'domain_id'])
+    @transaction(append_meta={'authorization.scope': 'DOMAIN'})
+    @check_required(['name', 'viewers', 'domain_id'])
     def create(self, params):
         """Register domain_dashboard
 
         Args:
             params (dict): {
                 'name': 'str',
+                'viewers': 'str',
                 'layouts': 'list',
                 'dashboard_options': 'dict',
                 'settings': 'dict',
@@ -41,15 +42,10 @@ class DomainDashboardService(BaseService):
             domain_dashboard_vo (object)
         """
 
-        if 'user_id' in params:
-            user_id = params['user_id']
-            tnx_user_id = self.transaction.get_meta('user_id')
-            if user_id != tnx_user_id:
-                raise ERROR_INVALID_USER_ID(user_id=user_id, tnx_user_id=tnx_user_id)
-            else:
-                params['scope'] = 'USER'
+        if params['viewers'] == 'PUBLIC':
+            params['user_id'] = None
         else:
-            params['scope'] = 'DOMAIN'
+            params['user_id'] = self.transaction.get_meta('user_id')
 
         domain_dashboard_vo = self.domain_dashboard_mgr.create_domain_dashboard(params)
 
@@ -59,7 +55,7 @@ class DomainDashboardService(BaseService):
 
         return domain_dashboard_vo
 
-    @transaction(append_meta={'authorization.scope': 'DOMAIN_OR_USER'})
+    @transaction(append_meta={'authorization.scope': 'DOMAIN'})
     @check_required(['domain_dashboard_id', 'domain_id'])
     def update(self, params):
         """Update domain_dashboard
@@ -87,13 +83,17 @@ class DomainDashboardService(BaseService):
         domain_dashboard_vo: DomainDashboard = self.domain_dashboard_mgr.get_domain_dashboard(domain_dashboard_id,
                                                                                               domain_id)
 
+        if domain_dashboard_vo.viewers == 'PRIVATE' and domain_dashboard_vo.user_id != self.transaction.get_meta(
+                'user_id'):
+            raise ERROR_PERMISSION_DENIED
+
         version_change_keys = ['layouts', 'dashboard_options', 'dashboard_options_schema']
         if self._check_version_change(domain_dashboard_vo, params, version_change_keys):
             self.version_mgr.create_version_by_domain_dashboard_vo(domain_dashboard_vo, params)
 
         return self.domain_dashboard_mgr.update_domain_dashboard_by_vo(params, domain_dashboard_vo)
 
-    @transaction(append_meta={'authorization.scope': 'DOMAIN_OR_USER'})
+    @transaction(append_meta={'authorization.scope': 'DOMAIN'})
     @check_required(['domain_dashboard_id', 'domain_id'])
     def delete(self, params):
         """Deregister domain_dashboard
@@ -111,13 +111,17 @@ class DomainDashboardService(BaseService):
         domain_dashboard_vo: DomainDashboard = self.domain_dashboard_mgr.get_domain_dashboard(
             params['domain_dashboard_id'], params['domain_id'])
 
+        if domain_dashboard_vo.viewers == 'PRIVATE' and domain_dashboard_vo.user_id != self.transaction.get_meta(
+                'user_id'):
+            raise ERROR_PERMISSION_DENIED
+
         if domain_dashboard_version_vos := self.version_mgr.filter_versions(
                 domain_dashboard_id=domain_dashboard_vo.domain_dashboard_id):
             self.version_mgr.delete_versions_by_domain_dashboard_version_vos(domain_dashboard_version_vos)
 
         self.domain_dashboard_mgr.delete_by_domain_dashboard_vo(domain_dashboard_vo)
 
-    @transaction(append_meta={'authorization.scope': 'DOMAIN_OR_USER'})
+    @transaction(append_meta={'authorization.scope': 'DOMAIN'})
     @check_required(['domain_dashboard_id', 'domain_id'])
     def get(self, params):
         """ Get domain_dashboard
@@ -135,9 +139,16 @@ class DomainDashboardService(BaseService):
         domain_dashboard_id = params['domain_dashboard_id']
         domain_id = params['domain_id']
 
-        return self.domain_dashboard_mgr.get_domain_dashboard(domain_dashboard_id, domain_id, params.get('only'))
+        domain_dashboard_vo = self.domain_dashboard_mgr.get_domain_dashboard(domain_dashboard_id, domain_id,
+                                                                             params.get('only'))
 
-    @transaction(append_meta={'authorization.scope': 'DOMAIN_OR_USER'})
+        if domain_dashboard_vo.viewers == 'PRIVATE' and domain_dashboard_vo.user_id != self.transaction.get_meta(
+                'user_id'):
+            raise ERROR_PERMISSION_DENIED
+
+        return domain_dashboard_vo
+
+    @transaction(append_meta={'authorization.scope': 'DOMAIN'})
     @check_required(['domain_dashboard_id', 'version', 'domain_id'])
     def delete_version(self, params):
         """ delete version of domain dashboard
@@ -164,7 +175,7 @@ class DomainDashboardService(BaseService):
 
         return self.version_mgr.delete_version(domain_dashboard_id, version, domain_id)
 
-    @transaction(append_meta={'authorization.scope': 'DOMAIN_OR_USER'})
+    @transaction(append_meta={'authorization.scope': 'DOMAIN'})
     @check_required(['domain_dashboard_id', 'version', 'domain_id'])
     def revert_version(self, params):
         """ Revert version of domain dashboard
@@ -194,7 +205,7 @@ class DomainDashboardService(BaseService):
 
         return self.domain_dashboard_mgr.update_domain_dashboard_by_vo(params, domain_dashboard_vo)
 
-    @transaction(append_meta={'authorization.scope': 'DOMAIN_OR_USER'})
+    @transaction(append_meta={'authorization.scope': 'DOMAIN'})
     @check_required(['domain_dashboard_id', 'version', 'domain_id'])
     def get_version(self, params):
         """ Get version of domain dashboard
@@ -217,7 +228,7 @@ class DomainDashboardService(BaseService):
 
         return self.version_mgr.get_version(domain_dashboard_id, version, domain_id, params.get('only'))
 
-    @transaction(append_meta={'authorization.scope': 'DOMAIN_OR_USER'})
+    @transaction(append_meta={'authorization.scope': 'DOMAIN'})
     @check_required(['domain_dashboard_id', 'domain_id'])
     @append_query_filter(['domain_dashboard_id', 'version', 'domain_id'])
     @append_keyword_filter(['domain_dashboard_id', 'version'])
@@ -244,9 +255,9 @@ class DomainDashboardService(BaseService):
         domain_dashboard_vo = self.domain_dashboard_mgr.get_domain_dashboard(domain_dashboard_id, domain_id)
         return domain_dashboard_version_vos, total_count, domain_dashboard_vo.version
 
-    @transaction(append_meta={'authorization.scope': 'DOMAIN_OR_USER'})
+    @transaction(append_meta={'authorization.scope': 'DOMAIN'})
     @check_required(['domain_id'])
-    @append_query_filter(['domain_dashboard_id', 'name', 'scope', 'user_id', 'domain_id'])
+    @append_query_filter(['domain_dashboard_id', 'name', 'viewers', 'user_id', 'domain_id'])
     @append_keyword_filter(['domain_dashboard_id', 'name'])
     def list(self, params):
         """ List public_dashboards
@@ -255,7 +266,7 @@ class DomainDashboardService(BaseService):
             params (dict): {
                 'domain_dashboard_id': 'str',
                 'name': 'str',
-                'scope': 'str',
+                'viewers': 'str',
                 'user_id': 'str'
                 'domain_id': 'str',
                 'query': 'dict (spaceone.api.core.v1.Query)'
@@ -267,9 +278,17 @@ class DomainDashboardService(BaseService):
         """
 
         query = params.get('query', {})
+
+        query['filter'] = query.get('filter', [])
+        query['filter'].append({
+            'k': 'user_id',
+            'v': [self.transaction.get_meta('user_id'), None],
+            'o': 'in'
+        })
+
         return self.domain_dashboard_mgr.list_domain_dashboards(query)
 
-    @transaction(append_meta={'authorization.scope': 'DOMAIN_OR_USER'})
+    @transaction(append_meta={'authorization.scope': 'DOMAIN'})
     @check_required(['query', 'domain_id'])
     @append_query_filter(['domain_id'])
     @append_keyword_filter(['domain_dashboard_id', 'name'])
@@ -286,6 +305,14 @@ class DomainDashboardService(BaseService):
 
         """
         query = params.get('query', {})
+
+        query['filter'] = query.get('filter', [])
+        query['filter'].append({
+            'k': 'user_id',
+            'v': [self.transaction.get_meta('user_id'), None],
+            'o': 'in'
+        })
+
         return self.domain_dashboard_mgr.stat_domain_dashboards(query)
 
     @staticmethod

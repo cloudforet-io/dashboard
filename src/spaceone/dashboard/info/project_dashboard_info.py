@@ -11,7 +11,7 @@ def ProjectDashboardInfo(project_dashboard_vo: ProjectDashboard, minimal=False):
     info = {
         'project_dashboard_id': project_dashboard_vo.project_dashboard_id,
         'name': project_dashboard_vo.name,
-        'scope': project_dashboard_vo.scope,
+        'viewers': project_dashboard_vo.viewers,
         'version': project_dashboard_vo.version,
         'labels': change_list_value_type(project_dashboard_vo.labels),
         'project_id': project_dashboard_vo.project_id,

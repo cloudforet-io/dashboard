@@ -19,8 +19,8 @@ class ProjectDashboardService(BaseService):
         self.project_dashboard_mgr: ProjectDashboardManager = self.locator.get_manager('ProjectDashboardManager')
         self.version_mgr: ProjectDashboardVersionManager = self.locator.get_manager('ProjectDashboardVersionManager')
 
-    @transaction(append_meta={'authorization.scope': 'PROJECT_OR_USER'})
-    @check_required(['project_id', 'name', 'domain_id'])
+    @transaction(append_meta={'authorization.scope': 'PROJECT'})
+    @check_required(['project_id', 'name', 'viewers', 'domain_id'])
     def create(self, params):
         """Register project_dashboard
 
@@ -28,6 +28,7 @@ class ProjectDashboardService(BaseService):
             params (dict): {
                 'project_id': 'str',
                 'name': 'str',
+                'viewers': 'str',
                 'layouts': 'list',
                 'dashboard_options': 'dict',
                 'settings': 'dict',
@@ -42,15 +43,10 @@ class ProjectDashboardService(BaseService):
             project_dashboard_vo (object)
         """
 
-        if 'user_id' in params:
-            user_id = params['user_id']
-            tnx_user_id = self.transaction.get_meta('user_id')
-            if user_id != tnx_user_id:
-                raise ERROR_INVALID_USER_ID(user_id=user_id, tnx_user_id=tnx_user_id)
-            else:
-                params['scope'] = 'USER'
+        if params['viewers'] == 'PUBLIC':
+            params['user_id'] = None
         else:
-            params['scope'] = 'PROJECT'
+            params['user_id'] = self.transaction.get_meta('user_id')
 
         project_dashboard_vo = self.project_dashboard_mgr.create_project_dashboard(params)
 
@@ -60,7 +56,7 @@ class ProjectDashboardService(BaseService):
 
         return project_dashboard_vo
 
-    @transaction(append_meta={'authorization.scope': 'PROJECT_OR_USER'})
+    @transaction(append_meta={'authorization.scope': 'PROJECT'})
     @check_required(['project_dashboard_id', 'domain_id'])
     def update(self, params):
         """Update project_dashboard
@@ -88,13 +84,17 @@ class ProjectDashboardService(BaseService):
         project_dashboard_vo: ProjectDashboard = self.project_dashboard_mgr.get_project_dashboard(project_dashboard_id,
                                                                                                   domain_id)
 
+        if project_dashboard_vo.viewers == 'PRIVATE' and project_dashboard_vo.user_id != self.transaction.get_meta(
+                'user_id'):
+            raise ERROR_PERMISSION_DENIED
+
         version_change_keys = ['layouts', 'dashboard_options', 'dashboard_options_schema']
         if self._check_version_change(project_dashboard_vo, params, version_change_keys):
             self.version_mgr.create_version_by_project_dashboard_vo(project_dashboard_vo, params)
 
         return self.project_dashboard_mgr.update_project_dashboard_by_vo(params, project_dashboard_vo)
 
-    @transaction(append_meta={'authorization.scope': 'PROJECT_OR_USER'})
+    @transaction(append_meta={'authorization.scope': 'PROJECT'})
     @check_required(['project_dashboard_id', 'domain_id'])
     def delete(self, params):
         """Deregister project_dashboard
@@ -112,13 +112,17 @@ class ProjectDashboardService(BaseService):
         project_dashboard_vo: ProjectDashboard = self.project_dashboard_mgr.get_project_dashboard(
             params['project_dashboard_id'], params['domain_id'])
 
+        if project_dashboard_vo.viewers == 'PRIVATE' and project_dashboard_vo.user_id != self.transaction.get_meta(
+                'user_id'):
+            raise ERROR_PERMISSION_DENIED
+
         if project_dashboard_version_vos := self.version_mgr.filter_versions(
                 project_dashboard_id=project_dashboard_vo.project_dashboard_id):
             self.version_mgr.delete_versions_by_project_dashboard_version_vos(project_dashboard_version_vos)
 
         self.project_dashboard_mgr.delete_by_project_dashboard_vo(project_dashboard_vo)
 
-    @transaction(append_meta={'authorization.scope': 'PROJECT_OR_USER'})
+    @transaction(append_meta={'authorization.scope': 'PROJECT'})
     @check_required(['project_dashboard_id', 'domain_id'])
     def get(self, params):
         """ Get project_dashboard
@@ -137,9 +141,16 @@ class ProjectDashboardService(BaseService):
         project_dashboard_id = params['project_dashboard_id']
         domain_id = params['domain_id']
 
-        return self.project_dashboard_mgr.get_project_dashboard(project_dashboard_id, domain_id, params.get('only'))
+        project_dashboard_vo = self.project_dashboard_mgr.get_project_dashboard(project_dashboard_id, domain_id,
+                                                                                params.get('only'))
 
-    @transaction(append_meta={'authorization.scope': 'PROJECT_OR_USER'})
+        if project_dashboard_vo.viewers == 'PRIVATE' and project_dashboard_vo.user_id != self.transaction.get_meta(
+                'user_id'):
+            raise ERROR_PERMISSION_DENIED
+
+        return project_dashboard_vo
+
+    @transaction(append_meta={'authorization.scope': 'PROJECT'})
     @check_required(['project_dashboard_id', 'version', 'domain_id'])
     def delete_version(self, params):
         """ Delete version of project dashboard
@@ -165,7 +176,7 @@ class ProjectDashboardService(BaseService):
 
         return self.version_mgr.delete_version(project_dashboard_id, version, domain_id)
 
-    @transaction(append_meta={'authorization.scope': 'PROJECT_OR_USER'})
+    @transaction(append_meta={'authorization.scope': 'PROJECT'})
     @check_required(['project_dashboard_id', 'version', 'domain_id'])
     def revert_version(self, params):
         """ Revert version of project dashboard
@@ -194,7 +205,7 @@ class ProjectDashboardService(BaseService):
 
         return self.project_dashboard_mgr.update_project_dashboard_by_vo(params, project_dashboard_vo)
 
-    @transaction(append_meta={'authorization.scope': 'PROJECT_OR_USER'})
+    @transaction(append_meta={'authorization.scope': 'PROJECT'})
     @check_required(['project_dashboard_id', 'version', 'domain_id'])
     def get_version(self, params):
         """ Get version of project dashboard
@@ -217,7 +228,7 @@ class ProjectDashboardService(BaseService):
 
         return self.version_mgr.get_version(project_dashboard_id, version, domain_id, params.get('only'))
 
-    @transaction(append_meta={'authorization.scope': 'PROJECT_OR_USER'})
+    @transaction(append_meta={'authorization.scope': 'PROJECT'})
     @check_required(['project_dashboard_id', 'domain_id'])
     @append_query_filter(['project_dashboard_id', 'version', 'domain_id'])
     @append_keyword_filter(['project_dashboard_id', 'version'])
@@ -244,9 +255,9 @@ class ProjectDashboardService(BaseService):
         project_dashboard_vo = self.project_dashboard_mgr.get_project_dashboard(project_dashboard_id, domain_id)
         return project_dashboard_version_vos, total_count, project_dashboard_vo.version
 
-    @transaction(append_meta={'authorization.scope': 'PROJECT_OR_USER'})
+    @transaction(append_meta={'authorization.scope': 'PROJECT'})
     @check_required(['domain_id'])
-    @append_query_filter(['project_dashboard_id', 'project_id', 'name', 'scope', 'user_id', 'domain_id'])
+    @append_query_filter(['project_dashboard_id', 'project_id', 'name', 'viewers', 'user_id', 'domain_id', 'user_projects'])
     @append_keyword_filter(['project_dashboard_id', 'name'])
     def list(self, params):
         """ List project_dashboards
@@ -256,10 +267,11 @@ class ProjectDashboardService(BaseService):
                 'project_dashboard_id': 'str',
                 'project_id': 'str',
                 'name': 'str',
-                'scope': 'str',
+                'viewers': 'str',
                 'user_id': 'str'
                 'domain_id': 'str',
-                'query': 'dict (spaceone.api.core.v1.Query)'
+                'query': 'dict (spaceone.api.core.v1.Query)',
+                'user_projects': 'list', // from meta
             }
 
         Returns:
@@ -268,18 +280,27 @@ class ProjectDashboardService(BaseService):
         """
 
         query = params.get('query', {})
+
+        query['filter'] = query.get('filter', [])
+        query['filter'].append({
+            'k': 'user_id',
+            'v': [self.transaction.get_meta('user_id'), None],
+            'o': 'in'
+        })
+
         return self.project_dashboard_mgr.list_project_dashboards(query)
 
-    @transaction(append_meta={'authorization.scope': 'PROJECT_OR_USER'})
+    @transaction(append_meta={'authorization.scope': 'PROJECT'})
     @check_required(['query', 'domain_id'])
-    @append_query_filter(['domain_id'])
+    @append_query_filter(['domain_id', 'user_projects'])
     @append_keyword_filter(['project_dashboard_id', 'name'])
     def stat(self, params):
         """
         Args:
             params (dict): {
                 'domain_id': 'str',
-                'query': 'dict (spaceone.api.core.v1.StatisticsQuery)'
+                'query': 'dict (spaceone.api.core.v1.StatisticsQuery)',
+                'user_projects': 'list', // from meta
             }
 
         Returns:
@@ -287,6 +308,14 @@ class ProjectDashboardService(BaseService):
 
         """
         query = params.get('query', {})
+
+        query['filter'] = query.get('filter', [])
+        query['filter'].append({
+            'k': 'user_id',
+            'v': [self.transaction.get_meta('user_id'), None],
+            'o': 'in'
+        })
+
         return self.project_dashboard_mgr.stat_project_dashboards(query)
 
     @staticmethod
