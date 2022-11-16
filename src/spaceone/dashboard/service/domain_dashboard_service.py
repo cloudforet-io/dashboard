@@ -83,9 +83,9 @@ class DomainDashboardService(BaseService):
         domain_dashboard_vo: DomainDashboard = self.domain_dashboard_mgr.get_domain_dashboard(domain_dashboard_id,
                                                                                               domain_id)
 
-        if domain_dashboard_vo.viewers == 'PRIVATE' and domain_dashboard_vo.user_id != self.transaction.get_meta(
-                'user_id'):
-            raise ERROR_PERMISSION_DENIED
+        if domain_dashboard_vo.viewers == 'PRIVATE' and \
+                domain_dashboard_vo.user_id != self.transaction.get_meta('user_id'):
+            raise ERROR_PERMISSION_DENIED()
 
         version_change_keys = ['layouts', 'dashboard_options', 'dashboard_options_schema']
         if self._check_version_change(domain_dashboard_vo, params, version_change_keys):
@@ -111,9 +111,9 @@ class DomainDashboardService(BaseService):
         domain_dashboard_vo: DomainDashboard = self.domain_dashboard_mgr.get_domain_dashboard(
             params['domain_dashboard_id'], params['domain_id'])
 
-        if domain_dashboard_vo.viewers == 'PRIVATE' and domain_dashboard_vo.user_id != self.transaction.get_meta(
-                'user_id'):
-            raise ERROR_PERMISSION_DENIED
+        if domain_dashboard_vo.viewers == 'PRIVATE' and \
+                domain_dashboard_vo.user_id != self.transaction.get_meta('user_id'):
+            raise ERROR_PERMISSION_DENIED()
 
         if domain_dashboard_version_vos := self.version_mgr.filter_versions(
                 domain_dashboard_id=domain_dashboard_vo.domain_dashboard_id):
@@ -142,9 +142,9 @@ class DomainDashboardService(BaseService):
         domain_dashboard_vo = self.domain_dashboard_mgr.get_domain_dashboard(domain_dashboard_id, domain_id,
                                                                              params.get('only'))
 
-        if domain_dashboard_vo.viewers == 'PRIVATE' and domain_dashboard_vo.user_id != self.transaction.get_meta(
-                'user_id'):
-            raise ERROR_PERMISSION_DENIED
+        if domain_dashboard_vo.viewers == 'PRIVATE' and \
+                domain_dashboard_vo.user_id != self.transaction.get_meta('user_id'):
+            raise ERROR_PERMISSION_DENIED()
 
         return domain_dashboard_vo
 
@@ -169,6 +169,11 @@ class DomainDashboardService(BaseService):
         domain_id = params['domain_id']
 
         domain_dashboard_vo = self.domain_dashboard_mgr.get_domain_dashboard(domain_dashboard_id, domain_id)
+
+        if domain_dashboard_vo.viewers == 'PRIVATE' and \
+                domain_dashboard_vo.user_id != self.transaction.get_meta('user_id'):
+            raise ERROR_PERMISSION_DENIED()
+
         current_version = domain_dashboard_vo.version
         if current_version == version:
             raise ERROR_LATEST_VERSION(version=version)
@@ -197,6 +202,11 @@ class DomainDashboardService(BaseService):
 
         domain_dashboard_vo: DomainDashboard = self.domain_dashboard_mgr.get_domain_dashboard(domain_dashboard_id,
                                                                                               domain_id)
+
+        if domain_dashboard_vo.viewers == 'PRIVATE' and \
+                domain_dashboard_vo.user_id != self.transaction.get_meta('user_id'):
+            raise ERROR_PERMISSION_DENIED()
+
         version_vo: DomainDashboardVersion = self.version_mgr.get_version(domain_dashboard_id, version, domain_id)
 
         params['layouts'] = version_vo.layouts
@@ -225,6 +235,13 @@ class DomainDashboardService(BaseService):
         domain_dashboard_id = params['domain_dashboard_id']
         version = params['version']
         domain_id = params['domain_id']
+
+        domain_dashboard_vo: DomainDashboard = self.domain_dashboard_mgr.get_domain_dashboard(domain_dashboard_id,
+                                                                                              domain_id)
+
+        if domain_dashboard_vo.viewers == 'PRIVATE' and \
+                domain_dashboard_vo.user_id != self.transaction.get_meta('user_id'):
+            raise ERROR_PERMISSION_DENIED()
 
         return self.version_mgr.get_version(domain_dashboard_id, version, domain_id, params.get('only'))
 

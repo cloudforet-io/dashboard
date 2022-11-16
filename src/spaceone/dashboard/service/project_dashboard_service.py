@@ -84,9 +84,9 @@ class ProjectDashboardService(BaseService):
         project_dashboard_vo: ProjectDashboard = self.project_dashboard_mgr.get_project_dashboard(project_dashboard_id,
                                                                                                   domain_id)
 
-        if project_dashboard_vo.viewers == 'PRIVATE' and project_dashboard_vo.user_id != self.transaction.get_meta(
-                'user_id'):
-            raise ERROR_PERMISSION_DENIED
+        if project_dashboard_vo.viewers == 'PRIVATE' and \
+                project_dashboard_vo.user_id != self.transaction.get_meta('user_id'):
+            raise ERROR_PERMISSION_DENIED()
 
         version_change_keys = ['layouts', 'dashboard_options', 'dashboard_options_schema']
         if self._check_version_change(project_dashboard_vo, params, version_change_keys):
@@ -112,9 +112,9 @@ class ProjectDashboardService(BaseService):
         project_dashboard_vo: ProjectDashboard = self.project_dashboard_mgr.get_project_dashboard(
             params['project_dashboard_id'], params['domain_id'])
 
-        if project_dashboard_vo.viewers == 'PRIVATE' and project_dashboard_vo.user_id != self.transaction.get_meta(
-                'user_id'):
-            raise ERROR_PERMISSION_DENIED
+        if project_dashboard_vo.viewers == 'PRIVATE' and \
+                project_dashboard_vo.user_id != self.transaction.get_meta('user_id'):
+            raise ERROR_PERMISSION_DENIED()
 
         if project_dashboard_version_vos := self.version_mgr.filter_versions(
                 project_dashboard_id=project_dashboard_vo.project_dashboard_id):
@@ -144,9 +144,9 @@ class ProjectDashboardService(BaseService):
         project_dashboard_vo = self.project_dashboard_mgr.get_project_dashboard(project_dashboard_id, domain_id,
                                                                                 params.get('only'))
 
-        if project_dashboard_vo.viewers == 'PRIVATE' and project_dashboard_vo.user_id != self.transaction.get_meta(
-                'user_id'):
-            raise ERROR_PERMISSION_DENIED
+        if project_dashboard_vo.viewers == 'PRIVATE' and \
+                project_dashboard_vo.user_id != self.transaction.get_meta('user_id'):
+            raise ERROR_PERMISSION_DENIED()
 
         return project_dashboard_vo
 
@@ -170,6 +170,11 @@ class ProjectDashboardService(BaseService):
         domain_id = params['domain_id']
 
         project_dashboard_vo = self.project_dashboard_mgr.get_project_dashboard(project_dashboard_id, domain_id)
+
+        if project_dashboard_vo.viewers == 'PRIVATE' and \
+                project_dashboard_vo.user_id != self.transaction.get_meta('user_id'):
+            raise ERROR_PERMISSION_DENIED()
+
         current_version = project_dashboard_vo.version
         if current_version == version:
             raise ERROR_LATEST_VERSION(version=version)
@@ -197,6 +202,11 @@ class ProjectDashboardService(BaseService):
 
         project_dashboard_vo: ProjectDashboard = self.project_dashboard_mgr.get_project_dashboard(project_dashboard_id,
                                                                                                   domain_id)
+
+        if project_dashboard_vo.viewers == 'PRIVATE' and \
+                project_dashboard_vo.user_id != self.transaction.get_meta('user_id'):
+            raise ERROR_PERMISSION_DENIED()
+
         version_vo: ProjectDashboardVersion = self.version_mgr.get_version(project_dashboard_id, version, domain_id)
 
         params['layouts'] = version_vo.layouts
@@ -225,6 +235,13 @@ class ProjectDashboardService(BaseService):
         project_dashboard_id = params['project_dashboard_id']
         version = params['version']
         domain_id = params['domain_id']
+
+        project_dashboard_vo: ProjectDashboard = self.project_dashboard_mgr.get_project_dashboard(project_dashboard_id,
+                                                                                                  domain_id)
+
+        if project_dashboard_vo.viewers == 'PRIVATE' and \
+                project_dashboard_vo.user_id != self.transaction.get_meta('user_id'):
+            raise ERROR_PERMISSION_DENIED()
 
         return self.version_mgr.get_version(project_dashboard_id, version, domain_id, params.get('only'))
 
