@@ -11,7 +11,7 @@ replicas: 1
 replicas_worker: 1     # replica number of worker
 
 image:
-    name: pyengine/dashboard
+    name: spaceone/dashboard
     version: latest
 imagePullPolicy: IfNotPresent
 
