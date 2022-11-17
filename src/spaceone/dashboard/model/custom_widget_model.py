@@ -27,7 +27,7 @@ class CustomWidget(MongoModel):
             'tags'
         ],
         'minimal_fields': [
-            'custom_widget_id'
+            'custom_widget_id',
             'widget_name',
             'title',
             'version',

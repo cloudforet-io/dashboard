@@ -27,7 +27,7 @@ def CustomWidgetInfo(custom_widget_vo: CustomWidget, minimal=False):
             'updated_at': utils.datetime_to_iso8601(custom_widget_vo.updated_at)
         })
 
-        return custom_widget_pb2.CustomWidgetInfo(**info)
+    return custom_widget_pb2.CustomWidgetInfo(**info)
 
 
 def CustomWidgetsInfo(custom_widget_vos, total_count, **kwargs):

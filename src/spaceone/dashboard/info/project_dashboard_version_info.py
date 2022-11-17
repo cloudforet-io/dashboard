@@ -35,7 +35,7 @@ def ProjectDashboardVersionInfo(project_dashboard_version_vo: ProjectDashboardVe
             'dashboard_options_schema': change_struct_type(project_dashboard_version_vo.dashboard_options_schema)
         })
 
-        return project_dashboard_pb2.ProjectDashboardVersionInfo(**info)
+    return project_dashboard_pb2.ProjectDashboardVersionInfo(**info)
 
 
 def ProjectDashboardVersionsInfo(project_dashboard_version_vos, total_count, **kwargs):
