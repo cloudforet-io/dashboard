@@ -105,9 +105,9 @@ class ProjectDashboardService(BaseService):
         version_change_keys = ['layouts', 'dashboard_options', 'dashboard_options_schema']
         if self._check_version_change(project_dashboard_vo, params, version_change_keys):
             self.project_dashboard_mgr.increase_version(project_dashboard_vo)
-            version_vo = self.version_mgr.create_version_by_project_dashboard_vo(project_dashboard_vo, params)
+            self.version_mgr.create_version_by_project_dashboard_vo(project_dashboard_vo, params)
 
-        return self.project_dashboard_mgr.update_project_dashboard_by_vo(params, project_dashboard_vo, version_vo)
+        return self.project_dashboard_mgr.update_project_dashboard_by_vo(params, project_dashboard_vo)
 
     @transaction(append_meta={'authorization.scope': 'PROJECT'})
     @check_required(['project_dashboard_id', 'domain_id'])
@@ -229,9 +229,9 @@ class ProjectDashboardService(BaseService):
         params['dashboard_options_schema'] = version_vo.dashboard_options_schema
 
         self.project_dashboard_mgr.increase_version(project_dashboard_vo)
-        new_version_vo = self.version_mgr.create_version_by_project_dashboard_vo(project_dashboard_vo, params)
+        self.version_mgr.create_version_by_project_dashboard_vo(project_dashboard_vo, params)
 
-        return self.project_dashboard_mgr.update_project_dashboard_by_vo(params, project_dashboard_vo, new_version_vo)
+        return self.project_dashboard_mgr.update_project_dashboard_by_vo(params, project_dashboard_vo)
 
     @transaction(append_meta={'authorization.scope': 'PROJECT'})
     @check_required(['project_dashboard_id', 'version', 'domain_id'])

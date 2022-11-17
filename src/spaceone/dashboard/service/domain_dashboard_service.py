@@ -105,9 +105,9 @@ class DomainDashboardService(BaseService):
         version_change_keys = ['layouts', 'dashboard_options', 'dashboard_options_schema']
         if self._check_version_change(domain_dashboard_vo, params, version_change_keys):
             self.domain_dashboard_mgr.increase_version(domain_dashboard_vo)
-            version_vo = self.version_mgr.create_version_by_domain_dashboard_vo(domain_dashboard_vo, params)
+            self.version_mgr.create_version_by_domain_dashboard_vo(domain_dashboard_vo, params)
 
-        return self.domain_dashboard_mgr.update_domain_dashboard_by_vo(params, domain_dashboard_vo, version_vo)
+        return self.domain_dashboard_mgr.update_domain_dashboard_by_vo(params, domain_dashboard_vo)
 
     @transaction(append_meta={'authorization.scope': 'DOMAIN'})
     @check_required(['domain_dashboard_id', 'domain_id'])
@@ -230,9 +230,9 @@ class DomainDashboardService(BaseService):
         params['dashboard_options_schema'] = version_vo.dashboard_options_schema
 
         self.domain_dashboard_mgr.increase_version(domain_dashboard_vo)
-        new_version_vo = self.version_mgr.create_version_by_domain_dashboard_vo(domain_dashboard_vo, params)
+        self.version_mgr.create_version_by_domain_dashboard_vo(domain_dashboard_vo, params)
 
-        return self.domain_dashboard_mgr.update_domain_dashboard_by_vo(params, domain_dashboard_vo, new_version_vo)
+        return self.domain_dashboard_mgr.update_domain_dashboard_by_vo(params, domain_dashboard_vo)
 
     @transaction(append_meta={'authorization.scope': 'DOMAIN'})
     @check_required(['domain_dashboard_id', 'version', 'domain_id'])
