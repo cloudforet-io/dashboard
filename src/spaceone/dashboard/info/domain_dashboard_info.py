@@ -30,7 +30,7 @@ def DomainDashboardInfo(domain_dashboard_vo: DomainDashboard, minimal=False):
             'updated_at': utils.datetime_to_iso8601(domain_dashboard_vo.updated_at)
         })
 
-        return domain_dashboard_pb2.DomainDashboardInfo(**info)
+    return domain_dashboard_pb2.DomainDashboardInfo(**info)
 
 
 def DomainDashboardsInfo(domain_dashboard_vos, total_count, **kwargs):

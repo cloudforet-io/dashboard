@@ -25,7 +25,7 @@ class ProjectDashboardVersionManager(BaseManager):
             'layouts': params.get('layouts') if params.get('layouts') else project_dashboard_vo.layouts,
             'dashboard_options': params.get('dashboard_options') if params.get(
                 'dashboard_options') else project_dashboard_vo.dashboard_options,
-            'settings': params.get('settings') if params.get('settings') else project_dashboard_vo.settings,
+            'settings': params.get('settings') if params.get('settings') else project_dashboard_vo.settings.to_dict(),
             'dashboard_options_schema': params.get('dashboard_options_schema') if params.get(
                 'dashboard_options_schema') else project_dashboard_vo.dashboard_options_schema,
             'domain_id': project_dashboard_vo.domain_id

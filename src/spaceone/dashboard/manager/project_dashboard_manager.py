@@ -28,13 +28,14 @@ class ProjectDashboardManager(BaseManager):
                                                                             params['domain_id'])
         return self.update_project_dashboard_by_vo(params, project_dashboard_vo)
 
-    def update_project_dashboard_by_vo(self, params, project_dashboard_vo):
+    def update_project_dashboard_by_vo(self, params, project_dashboard_vo, version_vo=None):
         def _rollback(old_data):
             _LOGGER.info(f'[update_project_dashboard_by_vo._rollback] Revert Data : '
                          f'{old_data["project_dashboard_id"]}')
             project_dashboard_vo.update(old_data)
+            if version_vo:
+                version_vo.delete()
 
-        self.increase_version(project_dashboard_vo)
         self.transaction.add_rollback(_rollback, project_dashboard_vo.to_dict())
         return project_dashboard_vo.update(params)
 

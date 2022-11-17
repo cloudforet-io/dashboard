@@ -28,13 +28,14 @@ class DomainDashboardManager(BaseManager):
                                                                          params['domain_id'])
         return self.update_domain_dashboard_by_vo(params, domain_dashboard_vo)
 
-    def update_domain_dashboard_by_vo(self, params, domain_dashboard_vo):
+    def update_domain_dashboard_by_vo(self, params, domain_dashboard_vo, version_vo=None):
         def _rollback(old_data):
             _LOGGER.info(f'[update_domain_dashboard_by_vo._rollback] Revert Data : '
                          f'{old_data["domain_dashboard_id"]}')
             domain_dashboard_vo.update(old_data)
+            if version_vo:
+                version_vo.delete()
 
-        self.increase_version(domain_dashboard_vo)
         self.transaction.add_rollback(_rollback, domain_dashboard_vo.to_dict())
         return domain_dashboard_vo.update(params)
 

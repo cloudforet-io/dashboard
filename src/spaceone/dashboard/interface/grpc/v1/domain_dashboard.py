@@ -35,7 +35,8 @@ class DomainDashboard(BaseAPI, domain_dashboard_pb2_grpc.DomainDashboardServicer
         params, metadata = self.parse_request(request, context)
 
         with self.locator.get_service('DomainDashboardService', metadata) as domain_dashboard_service:
-            return self.locator.get_info('DomainDashboardInfo', domain_dashboard_service.delete_version(params))
+            domain_dashboard_service.delete_version(params)
+            return self.locator.get_info('EmptyInfo')
 
     def revert_version(self, request, context):
         params, metadata = self.parse_request(request, context)
@@ -57,7 +58,7 @@ class DomainDashboard(BaseAPI, domain_dashboard_pb2_grpc.DomainDashboardServicer
             return self.locator.get_info('DomainDashboardVersionsInfo',
                                          domain_dashboard_version_vos,
                                          total_count,
-                                         minimal=self.get_minimal(params), version=dashboard_version)
+                                         minimal=self.get_minimal(params), latest_version=dashboard_version)
 
     def list(self, request, context):
         params, metadata = self.parse_request(request, context)
