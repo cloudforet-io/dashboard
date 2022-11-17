@@ -35,7 +35,8 @@ class ProjectDashboard(BaseAPI, project_dashboard_pb2_grpc.ProjectDashboardServi
         params, metadata = self.parse_request(request, context)
 
         with self.locator.get_service('ProjectDashboardService', metadata) as project_dashboard_service:
-            return self.locator.get_info('ProjectDashboardInfo', project_dashboard_service.delete_version(params))
+            project_dashboard_service.delete_version(params)
+            return self.locator.get_info('EmptyInfo')
 
     def revert_version(self, request, context):
         params, metadata = self.parse_request(request, context)
@@ -58,7 +59,7 @@ class ProjectDashboard(BaseAPI, project_dashboard_pb2_grpc.ProjectDashboardServi
             return self.locator.get_info('ProjectDashboardVersionsInfo',
                                          project_dashboard_version_vos,
                                          total_count,
-                                         minimal=self.get_minimal(params), version=dashboard_version)
+                                         minimal=self.get_minimal(params), latest_version=dashboard_version)
 
     def list(self, request, context):
         params, metadata = self.parse_request(request, context)

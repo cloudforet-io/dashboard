@@ -34,7 +34,7 @@ def DomainDashboardVersionInfo(domain_dashboard_version_vo: DomainDashboardVersi
             'dashboard_options_schema': change_struct_type(domain_dashboard_version_vo.dashboard_options_schema)
         })
 
-        return domain_dashboard_pb2.DomainDashboardVersionInfo(**info)
+    return domain_dashboard_pb2.DomainDashboardVersionInfo(**info)
 
 
 def DomainDashboardVersionsInfo(domain_dashboard_version_vos, total_count, **kwargs):

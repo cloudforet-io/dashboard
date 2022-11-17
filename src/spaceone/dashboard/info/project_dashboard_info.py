@@ -31,7 +31,7 @@ def ProjectDashboardInfo(project_dashboard_vo: ProjectDashboard, minimal=False):
             'updated_at': utils.datetime_to_iso8601(project_dashboard_vo.updated_at)
         })
 
-        return project_dashboard_pb2.ProjectDashboardInfo(**info)
+    return project_dashboard_pb2.ProjectDashboardInfo(**info)
 
 
 def ProjectDashboardsInfo(project_dashboard_vos, total_count, **kwargs):

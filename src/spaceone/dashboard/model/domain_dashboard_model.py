@@ -15,6 +15,9 @@ class Settings(EmbeddedDocument):
     date_range = EmbeddedDocumentField(DateRange, default=DateRange)
     currency = EmbeddedDocumentField(Currency, default=Currency)
 
+    def to_dict(self):
+        return dict(self.to_mongo())
+
 
 class DomainDashboard(MongoModel):
     domain_dashboard_id = StringField(max_length=40, generate_id='domain-dash', unique=True)

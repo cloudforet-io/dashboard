@@ -35,7 +35,6 @@ class ProjectDashboardService(BaseService):
                 'dashboard_options_schema': 'dict',
                 'labels': 'list',
                 'tags': 'dict',
-                'user_id': 'str',
                 'domain_id': 'str'
             }
 
@@ -52,7 +51,7 @@ class ProjectDashboardService(BaseService):
 
         version_keys = ['layouts', 'dashboard_options', 'dashboard_options_schema']
         if set(version_keys) <= params.keys():
-            self.version_mgr.create_version_by_project_dashboard_vo(project_dashboard_vo)
+            self.version_mgr.create_version_by_project_dashboard_vo(project_dashboard_vo, params)
 
         return project_dashboard_vo
 
@@ -88,8 +87,24 @@ class ProjectDashboardService(BaseService):
                 project_dashboard_vo.user_id != self.transaction.get_meta('user_id'):
             raise ERROR_PERMISSION_DENIED()
 
+        if 'settings' in params:
+            if 'date_range' in params['settings']:
+                params['settings']['date_range'] = {
+                    'enabled': params['settings']['date_range'].get('enabled', False)
+                }
+            else:
+                params['settings'].update({'date_range': {'enabled': project_dashboard_vo.settings.date_range.enabled}})
+
+            if 'currency' in params['settings']:
+                params['settings']['currency'] = {
+                    'enabled': params['settings']['currency'].get('enabled', False)
+                }
+            else:
+                params['settings'].update({'currency': {'enabled': project_dashboard_vo.settings.currency.enabled}})
+
         version_change_keys = ['layouts', 'dashboard_options', 'dashboard_options_schema']
         if self._check_version_change(project_dashboard_vo, params, version_change_keys):
+            self.project_dashboard_mgr.increase_version(project_dashboard_vo)
             self.version_mgr.create_version_by_project_dashboard_vo(project_dashboard_vo, params)
 
         return self.project_dashboard_mgr.update_project_dashboard_by_vo(params, project_dashboard_vo)
@@ -179,7 +194,7 @@ class ProjectDashboardService(BaseService):
         if current_version == version:
             raise ERROR_LATEST_VERSION(version=version)
 
-        return self.version_mgr.delete_version(project_dashboard_id, version, domain_id)
+        self.version_mgr.delete_version(project_dashboard_id, version, domain_id)
 
     @transaction(append_meta={'authorization.scope': 'PROJECT'})
     @check_required(['project_dashboard_id', 'version', 'domain_id'])
@@ -212,6 +227,9 @@ class ProjectDashboardService(BaseService):
         params['layouts'] = version_vo.layouts
         params['dashboard_options'] = version_vo.dashboard_options
         params['dashboard_options_schema'] = version_vo.dashboard_options_schema
+
+        self.project_dashboard_mgr.increase_version(project_dashboard_vo)
+        self.version_mgr.create_version_by_project_dashboard_vo(project_dashboard_vo, params)
 
         return self.project_dashboard_mgr.update_project_dashboard_by_vo(params, project_dashboard_vo)
 
@@ -270,11 +288,17 @@ class ProjectDashboardService(BaseService):
         query = params.get('query', {})
         project_dashboard_version_vos, total_count = self.version_mgr.list_versions(query)
         project_dashboard_vo = self.project_dashboard_mgr.get_project_dashboard(project_dashboard_id, domain_id)
+
+        if project_dashboard_vo.viewers == 'PRIVATE' and \
+                project_dashboard_vo.user_id != self.transaction.get_meta('user_id'):
+            raise ERROR_PERMISSION_DENIED()
+
         return project_dashboard_version_vos, total_count, project_dashboard_vo.version
 
     @transaction(append_meta={'authorization.scope': 'PROJECT'})
     @check_required(['domain_id'])
-    @append_query_filter(['project_dashboard_id', 'project_id', 'name', 'viewers', 'user_id', 'domain_id', 'user_projects'])
+    @append_query_filter(
+        ['project_dashboard_id', 'project_id', 'name', 'viewers', 'user_id', 'domain_id', 'user_projects'])
     @append_keyword_filter(['project_dashboard_id', 'name'])
     def list(self, params):
         """ List project_dashboards
@@ -345,11 +369,10 @@ class ProjectDashboardService(BaseService):
             if layouts_from_params := params.get('layouts'):
                 if layouts != layouts_from_params:
                     return True
-            elif options_from_params := params.get('dashboard_options'):
+            if options_from_params := params.get('dashboard_options'):
                 if dashboard_options != options_from_params:
                     return True
-            elif schema_from_params := params.get('dashboard_options_schema'):
+            if schema_from_params := params.get('dashboard_options_schema'):
                 if schema_from_params != dashboard_options_schema:
                     return True
-            else:
-                return False
+            return False

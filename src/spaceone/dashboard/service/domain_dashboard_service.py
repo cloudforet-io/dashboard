@@ -34,7 +34,6 @@ class DomainDashboardService(BaseService):
                 'dashboard_options_schema': 'dict',
                 'labels': 'list',
                 'tags': 'dict',
-                'user_id': 'str',
                 'domain_id': 'str'
             }
 
@@ -51,7 +50,7 @@ class DomainDashboardService(BaseService):
 
         version_keys = ['layouts', 'dashboard_options', 'dashboard_options_schema']
         if set(version_keys) <= params.keys():
-            self.version_mgr.create_version_by_domain_dashboard_vo(domain_dashboard_vo)
+            self.version_mgr.create_version_by_domain_dashboard_vo(domain_dashboard_vo, params)
 
         return domain_dashboard_vo
 
@@ -82,13 +81,30 @@ class DomainDashboardService(BaseService):
 
         domain_dashboard_vo: DomainDashboard = self.domain_dashboard_mgr.get_domain_dashboard(domain_dashboard_id,
                                                                                               domain_id)
+        version_vo = None
 
         if domain_dashboard_vo.viewers == 'PRIVATE' and \
                 domain_dashboard_vo.user_id != self.transaction.get_meta('user_id'):
             raise ERROR_PERMISSION_DENIED()
 
+        if 'settings' in params:
+            if 'date_range' in params['settings']:
+                params['settings']['date_range'] = {
+                    'enabled': params['settings']['date_range'].get('enabled', False)
+                }
+            else:
+                params['settings'].update({'date_range': {'enabled': domain_dashboard_vo.settings.date_range.enabled}})
+
+            if 'currency' in params['settings']:
+                params['settings']['currency'] = {
+                    'enabled': params['settings']['currency'].get('enabled', False)
+                }
+            else:
+                params['settings'].update({'currency': {'enabled': domain_dashboard_vo.settings.currency.enabled}})
+
         version_change_keys = ['layouts', 'dashboard_options', 'dashboard_options_schema']
         if self._check_version_change(domain_dashboard_vo, params, version_change_keys):
+            self.domain_dashboard_mgr.increase_version(domain_dashboard_vo)
             self.version_mgr.create_version_by_domain_dashboard_vo(domain_dashboard_vo, params)
 
         return self.domain_dashboard_mgr.update_domain_dashboard_by_vo(params, domain_dashboard_vo)
@@ -178,7 +194,7 @@ class DomainDashboardService(BaseService):
         if current_version == version:
             raise ERROR_LATEST_VERSION(version=version)
 
-        return self.version_mgr.delete_version(domain_dashboard_id, version, domain_id)
+        self.version_mgr.delete_version(domain_dashboard_id, version, domain_id)
 
     @transaction(append_meta={'authorization.scope': 'DOMAIN'})
     @check_required(['domain_dashboard_id', 'version', 'domain_id'])
@@ -212,6 +228,9 @@ class DomainDashboardService(BaseService):
         params['layouts'] = version_vo.layouts
         params['dashboard_options'] = version_vo.dashboard_options
         params['dashboard_options_schema'] = version_vo.dashboard_options_schema
+
+        self.domain_dashboard_mgr.increase_version(domain_dashboard_vo)
+        self.version_mgr.create_version_by_domain_dashboard_vo(domain_dashboard_vo, params)
 
         return self.domain_dashboard_mgr.update_domain_dashboard_by_vo(params, domain_dashboard_vo)
 
@@ -270,6 +289,11 @@ class DomainDashboardService(BaseService):
         query = params.get('query', {})
         domain_dashboard_version_vos, total_count = self.version_mgr.list_versions(query)
         domain_dashboard_vo = self.domain_dashboard_mgr.get_domain_dashboard(domain_dashboard_id, domain_id)
+
+        if domain_dashboard_vo.viewers == 'PRIVATE' and \
+                domain_dashboard_vo.user_id != self.transaction.get_meta('user_id'):
+            raise ERROR_PERMISSION_DENIED()
+
         return domain_dashboard_version_vos, total_count, domain_dashboard_vo.version
 
     @transaction(append_meta={'authorization.scope': 'DOMAIN'})
@@ -342,11 +366,10 @@ class DomainDashboardService(BaseService):
             if layouts_from_params := params.get('layouts'):
                 if layouts != layouts_from_params:
                     return True
-            elif options_from_params := params.get('dashboard_options'):
+            if options_from_params := params.get('dashboard_options'):
                 if dashboard_options != options_from_params:
                     return True
-            elif schema_from_params := params.get('dashboard_options_schema'):
+            if schema_from_params := params.get('dashboard_options_schema'):
                 if schema_from_params != dashboard_options_schema:
                     return True
-            else:
-                return False
+            return False
