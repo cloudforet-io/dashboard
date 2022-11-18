@@ -49,7 +49,7 @@ class DomainDashboardService(BaseService):
         domain_dashboard_vo = self.domain_dashboard_mgr.create_domain_dashboard(params)
 
         version_keys = ['layouts', 'dashboard_options', 'dashboard_options_schema']
-        if set(version_keys) <= params.keys():
+        if any(set(version_keys) & set(params.keys())):
             self.version_mgr.create_version_by_domain_dashboard_vo(domain_dashboard_vo, params)
 
         return domain_dashboard_vo
@@ -81,29 +81,16 @@ class DomainDashboardService(BaseService):
 
         domain_dashboard_vo: DomainDashboard = self.domain_dashboard_mgr.get_domain_dashboard(domain_dashboard_id,
                                                                                               domain_id)
-        version_vo = None
 
         if domain_dashboard_vo.viewers == 'PRIVATE' and \
                 domain_dashboard_vo.user_id != self.transaction.get_meta('user_id'):
             raise ERROR_PERMISSION_DENIED()
 
         if 'settings' in params:
-            if 'date_range' in params['settings']:
-                params['settings']['date_range'] = {
-                    'enabled': params['settings']['date_range'].get('enabled', False)
-                }
-            else:
-                params['settings'].update({'date_range': {'enabled': domain_dashboard_vo.settings.date_range.enabled}})
-
-            if 'currency' in params['settings']:
-                params['settings']['currency'] = {
-                    'enabled': params['settings']['currency'].get('enabled', False)
-                }
-            else:
-                params['settings'].update({'currency': {'enabled': domain_dashboard_vo.settings.currency.enabled}})
+            params['settings'] = self._create_settings_in_params(domain_dashboard_vo, params['settings'])
 
         version_change_keys = ['layouts', 'dashboard_options', 'dashboard_options_schema']
-        if self._check_version_change(domain_dashboard_vo, params, version_change_keys):
+        if self._has_version_key_in_params(domain_dashboard_vo, params, version_change_keys):
             self.domain_dashboard_mgr.increase_version(domain_dashboard_vo)
             self.version_mgr.create_version_by_domain_dashboard_vo(domain_dashboard_vo, params)
 
@@ -357,7 +344,7 @@ class DomainDashboardService(BaseService):
         return self.domain_dashboard_mgr.stat_domain_dashboards(query)
 
     @staticmethod
-    def _check_version_change(domain_dashboard_vo, params, version_change_keys):
+    def _has_version_key_in_params(domain_dashboard_vo, params, version_change_keys):
         layouts = domain_dashboard_vo.layouts
         dashboard_options = domain_dashboard_vo.dashboard_options
         dashboard_options_schema = domain_dashboard_vo.dashboard_options_schema
@@ -373,3 +360,21 @@ class DomainDashboardService(BaseService):
                 if schema_from_params != dashboard_options_schema:
                     return True
             return False
+
+    @staticmethod
+    def _create_settings_in_params(domain_dashboard_vo, settings):
+        if 'date_range' in settings:
+            settings['date_range'] = {
+                'enabled': settings['date_range'].get('enabled', False)
+            }
+        else:
+            settings.update({'date_range': {'enabled': domain_dashboard_vo.settings.date_range.enabled}})
+
+        if 'currency' in settings:
+            settings['currency'] = {
+                'enabled': settings['currency'].get('enabled', False)
+            }
+        else:
+            settings.update({'currency': {'enabled': domain_dashboard_vo.settings.currency.enabled}})
+
+        return settings
