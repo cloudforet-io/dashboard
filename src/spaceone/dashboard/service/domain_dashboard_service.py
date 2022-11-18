@@ -49,8 +49,7 @@ class DomainDashboardService(BaseService):
         domain_dashboard_vo = self.domain_dashboard_mgr.create_domain_dashboard(params)
 
         version_keys = ['layouts', 'dashboard_options', 'dashboard_options_schema']
-        if any(key for key in params
-               if key in version_keys):
+        if any(set(version_keys) & set(params.keys())):
             self.version_mgr.create_version_by_domain_dashboard_vo(domain_dashboard_vo, params)
 
         return domain_dashboard_vo
@@ -88,7 +87,7 @@ class DomainDashboardService(BaseService):
             raise ERROR_PERMISSION_DENIED()
 
         if 'settings' in params:
-            self._create_settings_in_params(domain_dashboard_vo, params['settings'])
+            params['settings'] = self._create_settings_in_params(domain_dashboard_vo, params['settings'])
 
         version_change_keys = ['layouts', 'dashboard_options', 'dashboard_options_schema']
         if self._has_version_key_in_params(domain_dashboard_vo, params, version_change_keys):
@@ -377,3 +376,5 @@ class DomainDashboardService(BaseService):
             }
         else:
             settings.update({'currency': {'enabled': domain_dashboard_vo.settings.currency.enabled}})
+
+        return settings

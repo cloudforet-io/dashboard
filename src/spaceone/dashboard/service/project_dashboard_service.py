@@ -50,8 +50,7 @@ class ProjectDashboardService(BaseService):
         project_dashboard_vo = self.project_dashboard_mgr.create_project_dashboard(params)
 
         version_keys = ['layouts', 'dashboard_options', 'dashboard_options_schema']
-        if any(key for key in params
-               if key in version_keys):
+        if any(set(version_keys) & set(params.keys())):
             self.version_mgr.create_version_by_project_dashboard_vo(project_dashboard_vo, params)
 
         return project_dashboard_vo
@@ -89,7 +88,7 @@ class ProjectDashboardService(BaseService):
             raise ERROR_PERMISSION_DENIED()
 
         if 'settings' in params:
-            self._create_settings_in_params(project_dashboard_vo, params['settings'])
+            params['settings'] = self._create_settings_in_params(project_dashboard_vo, params['settings'])
 
         version_change_keys = ['layouts', 'dashboard_options', 'dashboard_options_schema']
         if self._has_version_key_in_params(project_dashboard_vo, params, version_change_keys):
@@ -381,3 +380,5 @@ class ProjectDashboardService(BaseService):
             }
         else:
             settings.update({'currency': {'enabled': project_dashboard_vo.settings.currency.enabled}})
+
+        return settings
