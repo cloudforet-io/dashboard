@@ -51,7 +51,7 @@ class ProjectDashboard(MongoModel):
             'name',
             'viewers',
             'version',
-            'project_id'
+            'project_id',
             'user_id',
             'domain_id'
         ],
