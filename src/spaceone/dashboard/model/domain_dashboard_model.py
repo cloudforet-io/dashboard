@@ -25,9 +25,9 @@ class DomainDashboard(MongoModel):
     viewers = StringField(max_length=255, choices=('PUBLIC', 'PRIVATE'))
     version = IntField(default=1)
     layouts = ListField(DictField(default={}))
-    dashboard_options = DictField(default={})
+    variables = DictField(default={})
     settings = EmbeddedDocumentField(Settings, default=Settings)
-    dashboard_options_schema = DictField(default={})
+    variables_schema = DictField(default={})
     labels = ListField(StringField())
     tags = DictField(default={})
     user_id = StringField(max_length=40)
@@ -39,9 +39,9 @@ class DomainDashboard(MongoModel):
         'updatable_fields': [
             'name',
             'layouts',
-            'dashboard_options',
+            'variables',
             'settings',
-            'dashboard_options_schema',
+            'variables_schema',
             'labels',
             'tags'
         ],

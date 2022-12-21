@@ -19,7 +19,7 @@ def CustomWidgetInfo(custom_widget_vo: CustomWidget, minimal=False):
 
     if not minimal:
         info.update({
-            'widget_options': change_struct_type(custom_widget_vo.widget_options),
+            'options': change_struct_type(custom_widget_vo.options),
             'inherit_options': change_struct_type(custom_widget_vo.inherit_options),
             'labels': change_list_value_type(custom_widget_vo.labels),
             'tags': change_struct_type(custom_widget_vo.tags),

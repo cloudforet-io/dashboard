@@ -8,7 +8,7 @@ class CustomWidget(MongoModel):
     widget_name = StringField(max_length=40)
     title = StringField(max_length=255)
     version = StringField(max_length=40)
-    widget_options = DictField(default={})
+    options = DictField(default={})
     inherit_options = DictField(default={})
     labels = ListField(StringField())
     tags = DictField(default={})
@@ -21,7 +21,7 @@ class CustomWidget(MongoModel):
         'updatable_fields': [
             'widget_name',
             'title',
-            'widget_options',
+            'options',
             'inherit_options',
             'labels',
             'tags'

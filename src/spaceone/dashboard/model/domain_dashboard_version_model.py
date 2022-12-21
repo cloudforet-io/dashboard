@@ -20,9 +20,9 @@ class DomainDashboardVersion(MongoModel):
     domain_dashboard_id = StringField(max_length=40)
     version = IntField()
     layouts = ListField(DictField(default={}))
-    dashboard_options = DictField(default={})
+    variables = DictField(default={})
     settings = EmbeddedDocumentField(Settings, default=Settings)
-    dashboard_options_schema = DictField(default={})
+    variables_schema = DictField(default={})
     domain_id = StringField(max_length=40)
     created_at = DateTimeField(auto_now_add=True)
 

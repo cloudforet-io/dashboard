@@ -11,7 +11,7 @@ class DomainDashboardFactory(factory.mongoengine.MongoEngineFactory):
     domain_dashboard_id = factory.LazyAttribute(lambda o: utils.generate_id('domain-dash'))
     name = factory.LazyAttribute(lambda o: utils.random_string())
     layouts = []
-    dashboard_options = {
+    variables = {
         'group_by': 'product',
         'project_id': []
     }
@@ -19,7 +19,7 @@ class DomainDashboardFactory(factory.mongoengine.MongoEngineFactory):
         'date_range': {'enabled': True},
         'currency': {'enabled': True},
     }
-    dashboard_options_schema = {}
+    variables_schema = {}
     labels = ['a', 'b', 'c']
     tags = {'type': 'test',
             'env': 'dev'}

@@ -44,7 +44,7 @@ class TestCustomWidgetService(unittest.TestCase):
             'widget_name': 'widget-name',
             'title': 'test',
             'version': 'v1',
-            'widget_options': {'group_by': 'product'},
+            'options': {'group_by': 'product'},
             'inherit_options': {'a': {'enabled': True}},
             'tags': {'type': 'test'},
             'domain_id': 'domain-12345'
@@ -66,7 +66,7 @@ class TestCustomWidgetService(unittest.TestCase):
         params = {
             'custom_widget_id': custom_widget_vo.custom_widget_id,
             'title': 'update widget test',
-            'widget_options': {'group_by': 'product2'},
+            'options': {'group_by': 'product2'},
             'inherit_options': {'b': {'enabled': True}},
             'tags': {'type': 'test from params'},
             'domain_id': self.domain_id
