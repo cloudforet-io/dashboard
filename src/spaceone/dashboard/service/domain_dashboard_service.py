@@ -29,9 +29,9 @@ class DomainDashboardService(BaseService):
                 'name': 'str',
                 'viewers': 'str',
                 'layouts': 'list',
-                'dashboard_options': 'dict',
+                'variables': 'dict',
                 'settings': 'dict',
-                'dashboard_options_schema': 'dict',
+                'variables_schema': 'dict',
                 'labels': 'list',
                 'tags': 'dict',
                 'domain_id': 'str'
@@ -48,7 +48,7 @@ class DomainDashboardService(BaseService):
 
         domain_dashboard_vo = self.domain_dashboard_mgr.create_domain_dashboard(params)
 
-        version_keys = ['layouts', 'dashboard_options', 'dashboard_options_schema']
+        version_keys = ['layouts', 'variables', 'variables_schema']
         if any(set(version_keys) & set(params.keys())):
             self.version_mgr.create_version_by_domain_dashboard_vo(domain_dashboard_vo, params)
 
@@ -64,9 +64,9 @@ class DomainDashboardService(BaseService):
                 'domain_dashboard_id': 'str',
                 'name': 'str',
                 'layouts': 'list',
-                'dashboard_options': 'dict',
+                'variables': 'dict',
                 'settings': 'dict',
-                'dashboard_options_schema': 'list',
+                'variables_schema': 'list',
                 'labels': 'list',
                 'tags': 'dict',
                 'domain_id': 'str'
@@ -89,7 +89,7 @@ class DomainDashboardService(BaseService):
         if 'settings' in params:
             params['settings'] = self._create_settings_in_params(domain_dashboard_vo, params['settings'])
 
-        version_change_keys = ['layouts', 'dashboard_options', 'dashboard_options_schema']
+        version_change_keys = ['layouts', 'variables', 'variables_schema']
         if self._has_version_key_in_params(domain_dashboard_vo, params, version_change_keys):
             self.domain_dashboard_mgr.increase_version(domain_dashboard_vo)
             self.version_mgr.create_version_by_domain_dashboard_vo(domain_dashboard_vo, params)
@@ -213,8 +213,8 @@ class DomainDashboardService(BaseService):
         version_vo: DomainDashboardVersion = self.version_mgr.get_version(domain_dashboard_id, version, domain_id)
 
         params['layouts'] = version_vo.layouts
-        params['dashboard_options'] = version_vo.dashboard_options
-        params['dashboard_options_schema'] = version_vo.dashboard_options_schema
+        params['variables'] = version_vo.variables
+        params['variables_schema'] = version_vo.variables_schema
 
         self.domain_dashboard_mgr.increase_version(domain_dashboard_vo)
         self.version_mgr.create_version_by_domain_dashboard_vo(domain_dashboard_vo, params)
@@ -346,18 +346,18 @@ class DomainDashboardService(BaseService):
     @staticmethod
     def _has_version_key_in_params(domain_dashboard_vo, params, version_change_keys):
         layouts = domain_dashboard_vo.layouts
-        dashboard_options = domain_dashboard_vo.dashboard_options
-        dashboard_options_schema = domain_dashboard_vo.dashboard_options_schema
+        variables = domain_dashboard_vo.variables
+        variables_schema = domain_dashboard_vo.variables_schema
 
         if any(key for key in params if key in version_change_keys):
             if layouts_from_params := params.get('layouts'):
                 if layouts != layouts_from_params:
                     return True
-            if options_from_params := params.get('dashboard_options'):
-                if dashboard_options != options_from_params:
+            if options_from_params := params.get('variables'):
+                if variables != options_from_params:
                     return True
-            if schema_from_params := params.get('dashboard_options_schema'):
-                if schema_from_params != dashboard_options_schema:
+            if schema_from_params := params.get('variables_schema'):
+                if schema_from_params != variables_schema:
                     return True
             return False
 

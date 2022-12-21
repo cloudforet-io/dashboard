@@ -22,9 +22,9 @@ def DomainDashboardInfo(domain_dashboard_vo: DomainDashboard, minimal=False):
         info.update({
             'layouts': change_list_value_type(
                 domain_dashboard_vo.layouts) if domain_dashboard_vo.layouts else None,
-            'dashboard_options': change_struct_type(domain_dashboard_vo.dashboard_options),
+            'variables': change_struct_type(domain_dashboard_vo.variables),
             'settings': _DomainDashboardSettingsInfo(domain_dashboard_vo.settings),
-            'dashboard_options_schema': change_struct_type(domain_dashboard_vo.dashboard_options_schema),
+            'variables_schema': change_struct_type(domain_dashboard_vo.variables_schema),
             'tags': change_struct_type(domain_dashboard_vo.tags),
             'created_at': utils.datetime_to_iso8601(domain_dashboard_vo.created_at),
             'updated_at': utils.datetime_to_iso8601(domain_dashboard_vo.updated_at)

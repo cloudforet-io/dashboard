@@ -12,7 +12,7 @@ class ProjectDashboardFactory(factory.mongoengine.MongoEngineFactory):
     project_id = factory.LazyAttribute(lambda o: utils.generate_id('project'))
     name = factory.LazyAttribute(lambda o: utils.random_string())
     layouts = []
-    dashboard_options = {
+    variables = {
         'group_by': 'product',
         'project_id': []
     }
@@ -20,7 +20,7 @@ class ProjectDashboardFactory(factory.mongoengine.MongoEngineFactory):
         'date_range': {'enabled': True},
         'currency': {'enabled': True},
     }
-    dashboard_options_schema = {}
+    variables_schema = {}
     labels = ['a', 'b', 'c']
     tags = {'type': 'test',
             'env': 'dev'}

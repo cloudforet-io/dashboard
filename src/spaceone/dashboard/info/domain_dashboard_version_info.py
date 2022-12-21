@@ -29,9 +29,9 @@ def DomainDashboardVersionInfo(domain_dashboard_version_vo: DomainDashboardVersi
         info.update({
             'layouts': change_list_value_type(
                 domain_dashboard_version_vo.layouts) if domain_dashboard_version_vo.layouts else None,
-            'dashboard_options': change_struct_type(domain_dashboard_version_vo.dashboard_options),
+            'variables': change_struct_type(domain_dashboard_version_vo.variables),
             'settings': _DomainDashboardVersionSettingsInfo(domain_dashboard_version_vo.settings),
-            'dashboard_options_schema': change_struct_type(domain_dashboard_version_vo.dashboard_options_schema)
+            'variables_schema': change_struct_type(domain_dashboard_version_vo.variables_schema)
         })
 
     return domain_dashboard_pb2.DomainDashboardVersionInfo(**info)

@@ -30,9 +30,9 @@ def ProjectDashboardVersionInfo(project_dashboard_version_vo: ProjectDashboardVe
         info.update({
             'layouts': change_list_value_type(
                 project_dashboard_version_vo.layouts) if project_dashboard_version_vo.layouts else None,
-            'dashboard_options': change_struct_type(project_dashboard_version_vo.dashboard_options),
+            'variables': change_struct_type(project_dashboard_version_vo.variables),
             'settings': _ProjectDashboardVersionSettingsInfo(project_dashboard_version_vo.settings),
-            'dashboard_options_schema': change_struct_type(project_dashboard_version_vo.dashboard_options_schema)
+            'variables_schema': change_struct_type(project_dashboard_version_vo.variables_schema)
         })
 
     return project_dashboard_pb2.ProjectDashboardVersionInfo(**info)

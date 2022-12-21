@@ -23,9 +23,9 @@ def ProjectDashboardInfo(project_dashboard_vo: ProjectDashboard, minimal=False):
         info.update({
             'layouts': change_list_value_type(
                 project_dashboard_vo.layouts) if project_dashboard_vo.layouts else None,
-            'dashboard_options': change_struct_type(project_dashboard_vo.dashboard_options),
+            'variables': change_struct_type(project_dashboard_vo.variables),
             'settings': _ProjectDashboardSettingsInfo(project_dashboard_vo.settings),
-            'dashboard_options_schema': change_struct_type(project_dashboard_vo.dashboard_options_schema),
+            'variables_schema': change_struct_type(project_dashboard_vo.variables_schema),
             'tags': change_struct_type(project_dashboard_vo.tags),
             'created_at': utils.datetime_to_iso8601(project_dashboard_vo.created_at),
             'updated_at': utils.datetime_to_iso8601(project_dashboard_vo.updated_at)

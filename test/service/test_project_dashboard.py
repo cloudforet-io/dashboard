@@ -50,7 +50,7 @@ class TestProjectDashboardService(unittest.TestCase):
             'name': 'test',
             'viewers': 'PUBLIC',
             'domain_id': 'domain-12345',
-            'dashboard_options': {
+            'variables': {
                 'project_id': 'project-1234'
             },
             'settings': {
@@ -72,8 +72,8 @@ class TestProjectDashboardService(unittest.TestCase):
 
         self.assertIsInstance(project_dashboard_vo, ProjectDashboard)
         self.assertEqual(params['name'], project_dashboard_vo.name)
-        self.assertEqual(params['dashboard_options']['project_id'],
-                         project_dashboard_vo.dashboard_options.get('project_id'))
+        self.assertEqual(params['variables']['project_id'],
+                         project_dashboard_vo.variables.get('project_id'))
 
     def test_update_project_dashboard(self):
         project_dashboard_vo = ProjectDashboardFactory(domain_id=self.domain_id)
@@ -147,9 +147,9 @@ class TestProjectDashboardService(unittest.TestCase):
         ProjectDashboardVersionFactory(
             project_dashboard_id=project_dashboard_vo.project_dashboard_id,
             layouts=project_dashboard_vo.layouts,
-            dashboard_options=project_dashboard_vo.dashboard_options,
+            variables=project_dashboard_vo.variables,
             version=1,
-            dashboard_options_schema=project_dashboard_vo.dashboard_options_schema,
+            variables_schema=project_dashboard_vo.variables_schema,
             domain_id=self.domain_id
         )
 
@@ -198,9 +198,9 @@ class TestProjectDashboardService(unittest.TestCase):
         first_version = ProjectDashboardVersionFactory(
             project_dashboard_id=project_dashboard_vo.project_dashboard_id,
             layouts=project_dashboard_vo.layouts,
-            dashboard_options=project_dashboard_vo.dashboard_options,
+            variables=project_dashboard_vo.variables,
             version=1,
-            dashboard_options_schema=project_dashboard_vo.dashboard_options_schema,
+            variables_schema=project_dashboard_vo.variables_schema,
             domain_id=self.domain_id
         )
 
@@ -234,17 +234,17 @@ class TestProjectDashboardService(unittest.TestCase):
         self.assertIsInstance(project_dashboard_vo, ProjectDashboard)
         self.assertEqual(project_dashboard_vo.version, 3)
         self.assertEqual(project_dashboard_vo.layouts, first_version.layouts)
-        self.assertEqual(project_dashboard_vo.dashboard_options, first_version.dashboard_options)
-        self.assertEqual(project_dashboard_vo.dashboard_options_schema, first_version.dashboard_options_schema)
+        self.assertEqual(project_dashboard_vo.variables, first_version.variables)
+        self.assertEqual(project_dashboard_vo.variables_schema, first_version.variables_schema)
 
     def test_get_version(self):
         project_dashboard_vo = ProjectDashboardFactory(domain_id=self.domain_id)
         ProjectDashboardVersionFactory(
             project_dashboard_id=project_dashboard_vo.project_dashboard_id,
             layouts=project_dashboard_vo.layouts,
-            dashboard_options=project_dashboard_vo.dashboard_options,
+            variables=project_dashboard_vo.variables,
             version=1,
-            dashboard_options_schema=project_dashboard_vo.dashboard_options_schema,
+            variables_schema=project_dashboard_vo.variables_schema,
             domain_id=self.domain_id
         )
 
@@ -264,9 +264,9 @@ class TestProjectDashboardService(unittest.TestCase):
         self.assertEqual(project_dashboard_version_vo.version, 1)
         self.assertEqual(project_dashboard_version_vo.project_dashboard_id, project_dashboard_vo.project_dashboard_id)
         self.assertEqual(project_dashboard_version_vo.layouts, project_dashboard_vo.layouts)
-        self.assertEqual(project_dashboard_version_vo.dashboard_options, project_dashboard_vo.dashboard_options)
-        self.assertEqual(project_dashboard_version_vo.dashboard_options_schema,
-                         project_dashboard_vo.dashboard_options_schema)
+        self.assertEqual(project_dashboard_version_vo.variables, project_dashboard_vo.variables)
+        self.assertEqual(project_dashboard_version_vo.variables_schema,
+                         project_dashboard_vo.variables_schema)
 
     def test_list_versions(self):
         project_dashboard_vo = ProjectDashboardFactory(domain_id=self.domain_id)

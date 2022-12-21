@@ -12,7 +12,7 @@ class CustomWidgetFactory(factory.mongoengine.MongoEngineFactory):
     widget_name = factory.LazyAttribute(lambda o: utils.random_string())
     title = factory.LazyAttribute(lambda o: utils.random_string())
     version = 'v1'
-    widget_options = {
+    options = {
         'group_by': 'product',
     }
     inherit_options = {
