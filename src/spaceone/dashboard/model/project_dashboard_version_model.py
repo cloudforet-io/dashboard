@@ -19,7 +19,7 @@ class Settings(EmbeddedDocument):
 class ProjectDashboardVersion(MongoModel):
     project_dashboard_id = StringField(max_length=40)
     version = IntField()
-    layouts = ListField(DictField(default={}))
+    layouts = ListField(default=[])
     variables = DictField(default={})
     settings = EmbeddedDocumentField(Settings, default=Settings)
     variables_schema = DictField(default={})
