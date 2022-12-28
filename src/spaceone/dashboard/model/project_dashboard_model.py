@@ -24,7 +24,7 @@ class ProjectDashboard(MongoModel):
     name = StringField(max_length=255)
     viewers = StringField(max_length=255, choices=('PUBLIC', 'PRIVATE'))
     version = IntField(default=1)
-    layouts = ListField(DictField(default={}))
+    layouts = ListField(default=[])
     variables = DictField(default={})
     settings = EmbeddedDocumentField(Settings, default=Settings)
     variables_schema = DictField(default={})

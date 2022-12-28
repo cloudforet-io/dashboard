@@ -156,7 +156,7 @@ class TestDomainDashboardService(unittest.TestCase):
         params = {
             'domain_dashboard_id': domain_dashboard_vo.domain_dashboard_id,
             'name': 'update domain dashboard test',
-            'layouts': [{'name': 'widget4'}],
+            'layouts': [[{'name': 'widget4'}]],
             'settings': {
                 'date_range': {'enabled': False},
                 'currency': {'enabled': False}
@@ -208,7 +208,7 @@ class TestDomainDashboardService(unittest.TestCase):
         params = {
             'domain_dashboard_id': domain_dashboard_vo.domain_dashboard_id,
             'name': 'update domain dashboard test',
-            'layouts': [{'name': 'widget4'}],
+            'layouts': [[{'name': 'widget4'}]],
             'settings': {
                 'date_range': {'enabled': False},
                 'currency': {'enabled': False}
