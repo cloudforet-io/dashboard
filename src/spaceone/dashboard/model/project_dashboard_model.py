@@ -21,7 +21,7 @@ class Settings(EmbeddedDocument):
 
 class ProjectDashboard(MongoModel):
     project_dashboard_id = StringField(max_length=40, generate_id='project-dash', unique=True)
-    name = StringField(max_length=255)
+    name = StringField(max_length=255, unique_with='project_id')
     viewers = StringField(max_length=255, choices=('PUBLIC', 'PRIVATE'))
     version = IntField(default=1)
     layouts = ListField(default=[])

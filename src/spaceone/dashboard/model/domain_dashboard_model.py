@@ -21,7 +21,7 @@ class Settings(EmbeddedDocument):
 
 class DomainDashboard(MongoModel):
     domain_dashboard_id = StringField(max_length=40, generate_id='domain-dash', unique=True)
-    name = StringField(max_length=255)
+    name = StringField(max_length=255, unique_with='domain_id')
     viewers = StringField(max_length=255, choices=('PUBLIC', 'PRIVATE'))
     version = IntField(default=1)
     layouts = ListField(default=[])
