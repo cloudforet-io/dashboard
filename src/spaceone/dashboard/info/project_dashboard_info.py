@@ -24,7 +24,7 @@ def ProjectDashboardInfo(project_dashboard_vo: ProjectDashboard, minimal=False):
             'layouts': change_list_value_type(
                 project_dashboard_vo.layouts) if project_dashboard_vo.layouts else None,
             'variables': change_struct_type(project_dashboard_vo.variables),
-            'settings': _ProjectDashboardSettingsInfo(project_dashboard_vo.settings),
+            'settings': change_struct_type(project_dashboard_vo.settings),
             'variables_schema': change_struct_type(project_dashboard_vo.variables_schema),
             'tags': change_struct_type(project_dashboard_vo.tags),
             'created_at': utils.datetime_to_iso8601(project_dashboard_vo.created_at),
@@ -37,35 +37,3 @@ def ProjectDashboardInfo(project_dashboard_vo: ProjectDashboard, minimal=False):
 def ProjectDashboardsInfo(project_dashboard_vos, total_count, **kwargs):
     return project_dashboard_pb2.ProjectDashboardsInfo(results=list(
         map(functools.partial(ProjectDashboardInfo, **kwargs), project_dashboard_vos)), total_count=total_count)
-
-
-def _DateRangeInfo(date_range):
-    if date_range:
-        info = {
-            'enabled': date_range.enabled,
-        }
-        return project_dashboard_pb2.ProjectDashboardDateRange(**info)
-    else:
-        return None
-
-
-def _CurrencyInfo(currency):
-    if currency:
-        info = {
-            'enabled': currency.enabled
-        }
-        return project_dashboard_pb2.ProjectDashboardCurrency(**info)
-    else:
-        return None
-
-
-def _ProjectDashboardSettingsInfo(options):
-    if options:
-        info = {
-            'date_range': _DateRangeInfo(options.date_range),
-            'currency': _CurrencyInfo(options.currency)
-        }
-
-        return project_dashboard_pb2.ProjectDashboardSettings(**info)
-    else:
-        return None

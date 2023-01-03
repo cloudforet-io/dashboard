@@ -1,3 +1,4 @@
+import copy
 import logging
 
 from spaceone.core.service import *
@@ -88,7 +89,7 @@ class ProjectDashboardService(BaseService):
             raise ERROR_PERMISSION_DENIED()
 
         if 'settings' in params:
-            params['settings'] = self._create_settings_in_params(project_dashboard_vo, params['settings'])
+            params['settings'] = self._merge_settings(project_dashboard_vo.settings, params['settings'])
 
         version_change_keys = ['layouts', 'variables', 'variables_schema']
         if self._has_version_key_in_params(project_dashboard_vo, params, version_change_keys):
@@ -366,19 +367,12 @@ class ProjectDashboardService(BaseService):
             return False
 
     @staticmethod
-    def _create_settings_in_params(project_dashboard_vo, settings):
-        if 'date_range' in settings:
-            settings['date_range'] = {
-                'enabled': settings['date_range'].get('enabled', False)
-            }
-        else:
-            settings.update({'date_range': {'enabled': project_dashboard_vo.settings.date_range.enabled}})
+    def _merge_settings(old_settings, new_settings):
+        settings = copy.deepcopy(old_settings)
 
-        if 'currency' in settings:
-            settings['currency'] = {
-                'enabled': settings['currency'].get('enabled', False)
-            }
+        if old_settings:
+            for key, value in new_settings.items():
+                settings.update({key: value})
+            return settings
         else:
-            settings.update({'currency': {'enabled': project_dashboard_vo.settings.currency.enabled}})
-
-        return settings
+            return new_settings
