@@ -371,7 +371,7 @@ class ProjectDashboardService(BaseService):
         settings = copy.deepcopy(old_settings)
 
         if old_settings:
-            settings.update(old_settings)
+            settings.update(new_settings)
             return settings
         else:
             return new_settings
