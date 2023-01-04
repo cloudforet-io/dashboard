@@ -1,3 +1,4 @@
+import copy
 import logging
 
 from spaceone.core.service import *
@@ -66,6 +67,9 @@ class CustomWidgetService(BaseService):
         domain_id = params['domain_id']
 
         custom_widget_vo: CustomWidget = self.custom_widget_mgr.get_custom_widget(custom_widget_id, domain_id)
+
+        if 'settings' in params:
+            params['settings'] = self._merge_settings(custom_widget_vo.settings, params['settings'])
 
         return self.custom_widget_mgr.update_custom_widget_by_vo(params, custom_widget_vo)
 
@@ -145,3 +149,13 @@ class CustomWidgetService(BaseService):
         """
         query = params.get('query', {})
         return self.custom_widget_mgr.stat_custom_widgets(query)
+
+    @staticmethod
+    def _merge_settings(old_settings, new_settings):
+        settings = copy.deepcopy(old_settings)
+
+        if old_settings:
+            settings.update(new_settings)
+            return settings
+        else:
+            return new_settings
