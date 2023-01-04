@@ -367,8 +367,7 @@ class DomainDashboardService(BaseService):
         settings = copy.deepcopy(old_settings)
 
         if old_settings:
-            for key, value in new_settings.items():
-                settings.update({key: value})
+            settings.update(old_settings)
             return settings
         else:
             return new_settings

@@ -41,7 +41,6 @@ class CustomWidget(MongoModel):
             'widget_name',
             'title',
             'version',
-            'settings',
             'user_id',
             'domain_id'
         ]
