@@ -23,7 +23,7 @@ def DomainDashboardInfo(domain_dashboard_vo: DomainDashboard, minimal=False):
             'layouts': change_list_value_type(
                 domain_dashboard_vo.layouts) if domain_dashboard_vo.layouts else None,
             'variables': change_struct_type(domain_dashboard_vo.variables),
-            'settings': _DomainDashboardSettingsInfo(domain_dashboard_vo.settings),
+            'settings': change_struct_type(domain_dashboard_vo.settings),
             'variables_schema': change_struct_type(domain_dashboard_vo.variables_schema),
             'tags': change_struct_type(domain_dashboard_vo.tags),
             'created_at': utils.datetime_to_iso8601(domain_dashboard_vo.created_at),
@@ -36,35 +36,3 @@ def DomainDashboardInfo(domain_dashboard_vo: DomainDashboard, minimal=False):
 def DomainDashboardsInfo(domain_dashboard_vos, total_count, **kwargs):
     return domain_dashboard_pb2.DomainDashboardsInfo(results=list(
         map(functools.partial(DomainDashboardInfo, **kwargs), domain_dashboard_vos)), total_count=total_count)
-
-
-def _DateRangeInfo(date_range):
-    if date_range:
-        info = {
-            'enabled': date_range.enabled,
-        }
-        return domain_dashboard_pb2.DomainDashboardDateRange(**info)
-    else:
-        return None
-
-
-def _CurrencyInfo(currency):
-    if currency:
-        info = {
-            'enabled': currency.enabled
-        }
-        return domain_dashboard_pb2.DomainDashboardCurrency(**info)
-    else:
-        return None
-
-
-def _DomainDashboardSettingsInfo(options):
-    if options:
-        info = {
-            'date_range': _DateRangeInfo(options.date_range),
-            'currency': _CurrencyInfo(options.currency)
-        }
-
-        return domain_dashboard_pb2.DomainDashboardSettings(**info)
-    else:
-        return None

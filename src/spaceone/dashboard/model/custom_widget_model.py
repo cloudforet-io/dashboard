@@ -9,6 +9,7 @@ class CustomWidget(MongoModel):
     title = StringField(max_length=255)
     version = StringField(max_length=40)
     options = DictField(default={})
+    settings = DictField(default={})
     inherit_options = DictField(default={})
     labels = ListField(StringField())
     tags = DictField(default={})
@@ -22,6 +23,7 @@ class CustomWidget(MongoModel):
             'widget_name',
             'title',
             'options',
+            'settings',
             'inherit_options',
             'labels',
             'tags'

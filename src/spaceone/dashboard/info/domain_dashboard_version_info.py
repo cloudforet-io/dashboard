@@ -30,7 +30,7 @@ def DomainDashboardVersionInfo(domain_dashboard_version_vo: DomainDashboardVersi
             'layouts': change_list_value_type(
                 domain_dashboard_version_vo.layouts) if domain_dashboard_version_vo.layouts else None,
             'variables': change_struct_type(domain_dashboard_version_vo.variables),
-            'settings': _DomainDashboardVersionSettingsInfo(domain_dashboard_version_vo.settings),
+            'settings': change_struct_type(domain_dashboard_version_vo.settings),
             'variables_schema': change_struct_type(domain_dashboard_version_vo.variables_schema)
         })
 
@@ -41,35 +41,3 @@ def DomainDashboardVersionsInfo(domain_dashboard_version_vos, total_count, **kwa
     return domain_dashboard_pb2.DomainDashboardVersionsInfo(results=list(
         map(functools.partial(DomainDashboardVersionInfo, **kwargs), domain_dashboard_version_vos)),
         total_count=total_count)
-
-
-def _DateRangeInfo(date_range):
-    if date_range:
-        info = {
-            'enabled': date_range.enabled,
-        }
-        return domain_dashboard_pb2.DomainDashboardDateRange(**info)
-    else:
-        return None
-
-
-def _CurrencyInfo(currency):
-    if currency:
-        info = {
-            'enabled': currency.enabled
-        }
-        return domain_dashboard_pb2.DomainDashboardCurrency(**info)
-    else:
-        return None
-
-
-def _DomainDashboardVersionSettingsInfo(options):
-    if options:
-        info = {
-            'date_range': _DateRangeInfo(options.date_range),
-            'currency': _CurrencyInfo(options.currency)
-        }
-
-        return domain_dashboard_pb2.DomainDashboardSettings(**info)
-    else:
-        return None
