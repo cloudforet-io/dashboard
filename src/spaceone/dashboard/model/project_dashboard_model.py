@@ -5,7 +5,7 @@ from spaceone.core.model.mongo_model import MongoModel
 
 class ProjectDashboard(MongoModel):
     project_dashboard_id = StringField(max_length=40, generate_id='project-dash', unique=True)
-    name = StringField(max_length=255, unique_with=['domain_id', 'project_id'])
+    name = StringField(max_length=255, unique_with=['domain_id', 'project_id', 'user_id'])
     viewers = StringField(max_length=255, choices=('PUBLIC', 'PRIVATE'))
     version = IntField(default=1)
     layouts = ListField(default=[])
