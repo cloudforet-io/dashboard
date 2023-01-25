@@ -6,7 +6,7 @@ from spaceone.core.model.mongo_model import MongoModel
 
 class DomainDashboard(MongoModel):
     domain_dashboard_id = StringField(max_length=40, generate_id='domain-dash', unique=True)
-    name = StringField(max_length=255)
+    name = StringField(max_length=100)
     viewers = StringField(max_length=255, choices=('PUBLIC', 'PRIVATE'))
     version = IntField(default=1)
     layouts = ListField(default=[])
