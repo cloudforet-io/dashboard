@@ -65,8 +65,19 @@ class ProjectDashboard(MongoModel):
     def update(self, data):
         if 'name' in data:
             project_dashboard_vos = self.filter(name=data['name'], project_id=data['project_id'],
-                                                user_id=self.user_id, domain_id__ne=self.domain_id)
-            if project_dashboard_vos.count() > 0:
+                                                user_id=self.user_id, domain_id=self.domain_id)
+            if not project_dashboard_vos:
+                return super().update(data)
+
+            if self._is_same_project_dashboard_id(project_dashboard_vos, data):
+                return super().update(data)
+            else:
                 raise ERROR_NOT_UNIQUE(key='name', value=data['name'])
 
-        return super().update(data)
+    @staticmethod
+    def _is_same_project_dashboard_id(project_dashboard_vos, data):
+        if project_dashboard_vos.count() == 1 and \
+                project_dashboard_vos[0].domain_dashboard_id == data['domain_dashboard_id']:
+            return True
+        else:
+            return False
