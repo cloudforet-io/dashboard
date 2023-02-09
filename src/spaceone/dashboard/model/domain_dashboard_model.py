@@ -58,8 +58,10 @@ class DomainDashboard(MongoModel):
 
     def update(self, data):
         if 'name' in data:
-            domain_dashboard_vos = self.filter(name=data['name'], user_id=self.user_id, domain_id__ne=self.domain_id)
+            domain_dashboard_vos = self.filter(name=data['name'], user_id=self.user_id, domain_id=self.domain_id,
+                                               domain_dashboard_id__ne=self.domain_dashboard_id)
+
             if domain_dashboard_vos.count() > 0:
                 raise ERROR_NOT_UNIQUE(key='name', value=data['name'])
-
-        return super().update(data)
+            else:
+                return super().update(data)
