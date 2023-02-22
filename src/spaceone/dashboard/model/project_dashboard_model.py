@@ -64,7 +64,7 @@ class ProjectDashboard(MongoModel):
 
     def update(self, data):
         if 'name' in data:
-            project_dashboard_vos = self.filter(name=data['name'], project_id=data['project_id'],
+            project_dashboard_vos = self.filter(name=data['name'], project_id=self.project_id,
                                                 user_id=self.user_id, domain_id=self.domain_id,
                                                 project_dashboard_id__ne=self.project_dashboard_id)
 
