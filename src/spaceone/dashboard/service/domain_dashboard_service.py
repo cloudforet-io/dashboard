@@ -83,6 +83,9 @@ class DomainDashboardService(BaseService):
         domain_dashboard_vo: DomainDashboard = self.domain_dashboard_mgr.get_domain_dashboard(domain_dashboard_id,
                                                                                               domain_id)
 
+        if 'name' not in params:
+            params['name'] = domain_dashboard_vo.name
+
         if domain_dashboard_vo.viewers == 'PRIVATE' and \
                 domain_dashboard_vo.user_id != self.transaction.get_meta('user_id'):
             raise ERROR_PERMISSION_DENIED()
