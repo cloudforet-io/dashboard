@@ -25,7 +25,7 @@ class ProjectDashboardVersionManager(BaseManager):
             'layouts': params.get('layouts') if params.get('layouts') else project_dashboard_vo.layouts,
             'variables': params.get('variables') if params.get(
                 'variables') else project_dashboard_vo.variables,
-            'settings': params.get('settings') if params.get('settings') else project_dashboard_vo.settings.to_dict(),
+            'settings': params.get('settings') if params.get('settings') else project_dashboard_vo.settings,
             'variables_schema': params.get('variables_schema') if params.get(
                 'variables_schema') else project_dashboard_vo.variables_schema,
             'domain_id': project_dashboard_vo.domain_id
