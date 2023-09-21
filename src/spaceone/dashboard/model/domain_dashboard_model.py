@@ -65,3 +65,4 @@ class DomainDashboard(MongoModel):
                 raise ERROR_NOT_UNIQUE(key='name', value=data['name'])
             else:
                 return super().update(data)
+        return super().update(data)
