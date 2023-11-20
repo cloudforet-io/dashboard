@@ -24,7 +24,7 @@ class DomainDashboardVersionManager(BaseManager):
             'layouts': params.get('layouts') if params.get('layouts') else domain_dashboard_vo.layouts,
             'variables': params.get('variables') if params.get(
                 'variables') else domain_dashboard_vo.variables,
-            'settings': params.get('settings') if params.get('settings') else domain_dashboard_vo.settings.to_dict(),
+            'settings': params.get('settings') if params.get('settings') else domain_dashboard_vo.settings,
             'variables_schema': params.get('variables_schema') if params.get(
                 'variables_schema') else domain_dashboard_vo.variables_schema,
             'domain_id': domain_dashboard_vo.domain_id
