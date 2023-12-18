@@ -1,5 +1,2 @@
-from spaceone.dashboard.model.domain_dashboard_model import DomainDashboard
-from spaceone.dashboard.model.project_dashboard_model import ProjectDashboard
-from spaceone.dashboard.model.domain_dashboard_version_model import DomainDashboardVersion
-from spaceone.dashboard.model.project_dashboard_version_model import ProjectDashboardVersion
-from spaceone.dashboard.model.custom_widget_model import CustomWidget
+from spaceone.dashboard.model.dashboard_model import Dashboard
+from spaceone.dashboard.model.dashboard_version_model import DashboardVersion

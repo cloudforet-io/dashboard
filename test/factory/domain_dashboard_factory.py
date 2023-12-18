@@ -8,22 +8,20 @@ class DomainDashboardFactory(factory.mongoengine.MongoEngineFactory):
     class Meta:
         model = DomainDashboard
 
-    domain_dashboard_id = factory.LazyAttribute(lambda o: utils.generate_id('domain-dash'))
+    domain_dashboard_id = factory.LazyAttribute(
+        lambda o: utils.generate_id("domain-dash")
+    )
     name = factory.LazyAttribute(lambda o: utils.random_string())
     layouts = []
-    variables = {
-        'group_by': 'product',
-        'project_id': []
-    }
+    variables = {"group_by": "product", "project_id": []}
     settings = {
-        'date_range': {'enabled': True},
-        'currency': {'enabled': True},
+        "date_range": {"enabled": True},
+        "currency": {"enabled": True},
     }
     variables_schema = {}
-    labels = ['a', 'b', 'c']
-    tags = {'type': 'test',
-            'env': 'dev'}
-    user_id = 'cloudforet@gmail.com'
-    domain_id = factory.LazyAttribute(lambda o: utils.generate_id('domain'))
-    created_at = factory.Faker('date_time')
-    updated_at = factory.Faker('date_time')
+    labels = ["a", "b", "c"]
+    tags = {"type": "test", "env": "dev"}
+    user_id = "cloudforet@gmail.com"
+    domain_id = factory.LazyAttribute(lambda o: utils.generate_id("domain"))
+    created_at = factory.Faker("date_time")
+    updated_at = factory.Faker("date_time")

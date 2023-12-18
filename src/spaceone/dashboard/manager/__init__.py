@@ -1,5 +1,2 @@
-from spaceone.dashboard.manager.domain_dashboard_manager import DomainDashboardManager
-from spaceone.dashboard.manager.project_dashboard_manager import ProjectDashboardManager
-from spaceone.dashboard.manager.domain_dashboard_version_manager import DomainDashboardVersionManager
-from spaceone.dashboard.manager.project_dashboard_version_manager import ProjectDashboardVersionManager
-from spaceone.dashboard.manager.custom_widget_manager import CustomWidgetManager
+from spaceone.dashboard.manager.dashboard_manager import DashboardManager
+from spaceone.dashboard.manager.dashboard_version_manager import DashboardVersionManager

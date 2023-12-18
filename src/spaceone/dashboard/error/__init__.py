@@ -1,1 +1,1 @@
-from spaceone.dashboard.error.common_dashboard import *
+from spaceone.dashboard.error.dashboard import *
