@@ -1,23 +1,19 @@
 import functools
-from spaceone.api.dashboard.v1 import dashboard_pb2
+from spaceone.api.dashboard.v1 import private_dashboard_pb2
 from spaceone.core.pygrpc.message_type import *
 from spaceone.core import utils
-from spaceone.dashboard.model.dashboard_model import Dashboard
+from spaceone.dashboard.model.private_dashboard_model import PrivateDashboard
 
-__all__ = ["DashboardInfo", "DashboardsInfo"]
+__all__ = ["PrivateDashboardInfo", "PrivateDashboardsInfo"]
 
 
-def DashboardInfo(dashboard_vo: Dashboard, minimal=False):
+def PrivateDashboardInfo(dashboard_vo: PrivateDashboard, minimal=False):
     info = {
-        "dashboard_id": dashboard_vo.dashboard_id,
+        "private_dashboard_id": dashboard_vo.private_dashboard_id,
         "name": dashboard_vo.name,
-        "dashboard_type": dashboard_vo.dashboard_type,
         "version": dashboard_vo.version,
         "labels": change_list_value_type(dashboard_vo.labels),
-        "resource_group": dashboard_vo.resource_group,
         "user_id": dashboard_vo.user_id,
-        "project_id": dashboard_vo.project_id,
-        "workspace_id": dashboard_vo.workspace_id,
         "domain_id": dashboard_vo.domain_id,
     }
 
@@ -36,11 +32,13 @@ def DashboardInfo(dashboard_vo: Dashboard, minimal=False):
             }
         )
 
-    return dashboard_pb2.DashboardInfo(**info)
+    return private_dashboard_pb2.PrivateDashboardInfo(**info)
 
 
-def DashboardsInfo(dashboard_vos, total_count, **kwargs):
-    return dashboard_pb2.DashboardsInfo(
-        results=list(map(functools.partial(DashboardInfo, **kwargs), dashboard_vos)),
+def PrivateDashboardsInfo(dashboard_vos, total_count, **kwargs):
+    return private_dashboard_pb2.PrivateDashboardsInfo(
+        results=list(
+            map(functools.partial(PrivateDashboardInfo, **kwargs), dashboard_vos)
+        ),
         total_count=total_count,
     )
