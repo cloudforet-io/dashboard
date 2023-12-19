@@ -1,17 +1,17 @@
 import functools
-from spaceone.api.dashboard.v1 import dashboard_pb2
+from spaceone.api.dashboard.v1 import public_dashboard_pb2
 from spaceone.core.pygrpc.message_type import *
 from spaceone.core import utils
-from spaceone.dashboard.model import DashboardVersion
+from spaceone.dashboard.model import PublicDashboardVersion
 
-__all__ = ["DashboardVersionInfo", "DashboardVersionsInfo"]
+__all__ = ["PublicDashboardVersionInfo", "PublicDashboardVersionsInfo"]
 
 
-def DashboardVersionInfo(
-    dashboard_version_vo: DashboardVersion, minimal=False, latest_version=None
+def PublicDashboardVersionInfo(
+    dashboard_version_vo: PublicDashboardVersion, minimal=False, latest_version=None
 ):
     info = {
-        "dashboard_id": dashboard_version_vo.dashboard_id,
+        "public_dashboard_id": dashboard_version_vo.public_dashboard_id,
         "version": dashboard_version_vo.version,
         "created_at": utils.datetime_to_iso8601(dashboard_version_vo.created_at),
         "domain_id": dashboard_version_vo.domain_id,
@@ -37,14 +37,14 @@ def DashboardVersionInfo(
             }
         )
 
-    return dashboard_pb2.DashboardVersionInfo(**info)
+    return public_dashboard_pb2.PublicDashboardVersionInfo(**info)
 
 
-def DashboardVersionsInfo(dashboard_version_vos, total_count, **kwargs):
-    return dashboard_pb2.DashboardVersionsInfo(
+def PublicDashboardVersionsInfo(dashboard_version_vos, total_count, **kwargs):
+    return public_dashboard_pb2.PublicDashboardVersionsInfo(
         results=list(
             map(
-                functools.partial(DashboardVersionInfo, **kwargs),
+                functools.partial(PublicDashboardVersionInfo, **kwargs),
                 dashboard_version_vos,
             )
         ),

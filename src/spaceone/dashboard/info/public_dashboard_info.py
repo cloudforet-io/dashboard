@@ -1,21 +1,19 @@
 import functools
-from spaceone.api.dashboard.v1 import dashboard_pb2
+from spaceone.api.dashboard.v1 import public_dashboard_pb2
 from spaceone.core.pygrpc.message_type import *
 from spaceone.core import utils
-from spaceone.dashboard.model.dashboard_model import Dashboard
+from spaceone.dashboard.model.public_dashboard_model import PublicDashboard
 
-__all__ = ["DashboardInfo", "DashboardsInfo"]
+__all__ = ["PublicDashboardInfo", "PublicDashboardsInfo"]
 
 
-def DashboardInfo(dashboard_vo: Dashboard, minimal=False):
+def PublicDashboardInfo(dashboard_vo: PublicDashboard, minimal=False):
     info = {
-        "dashboard_id": dashboard_vo.dashboard_id,
+        "public_dashboard_id": dashboard_vo.public_dashboard_id,
         "name": dashboard_vo.name,
-        "dashboard_type": dashboard_vo.dashboard_type,
         "version": dashboard_vo.version,
         "labels": change_list_value_type(dashboard_vo.labels),
         "resource_group": dashboard_vo.resource_group,
-        "user_id": dashboard_vo.user_id,
         "project_id": dashboard_vo.project_id,
         "workspace_id": dashboard_vo.workspace_id,
         "domain_id": dashboard_vo.domain_id,
@@ -36,11 +34,13 @@ def DashboardInfo(dashboard_vo: Dashboard, minimal=False):
             }
         )
 
-    return dashboard_pb2.DashboardInfo(**info)
+    return public_dashboard_pb2.PublicDashboardInfo(**info)
 
 
-def DashboardsInfo(dashboard_vos, total_count, **kwargs):
-    return dashboard_pb2.DashboardsInfo(
-        results=list(map(functools.partial(DashboardInfo, **kwargs), dashboard_vos)),
+def PublicDashboardsInfo(dashboard_vos, total_count, **kwargs):
+    return public_dashboard_pb2.PublicDashboardsInfo(
+        results=list(
+            map(functools.partial(PublicDashboardInfo, **kwargs), dashboard_vos)
+        ),
         total_count=total_count,
     )

@@ -1,2 +1,4 @@
-from spaceone.dashboard.model.dashboard_model import Dashboard
-from spaceone.dashboard.model.dashboard_version_model import DashboardVersion
+from spaceone.dashboard.model.public_dashboard_model import PublicDashboard
+from spaceone.dashboard.model.public_dashboard_version_model import (
+    PublicDashboardVersion,
+)

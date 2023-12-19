@@ -1,36 +1,36 @@
-from spaceone.api.dashboard.v1 import dashboard_pb2, dashboard_pb2_grpc
+from spaceone.api.dashboard.v1 import public_dashboard_pb2, public_dashboard_pb2_grpc
 from spaceone.core.pygrpc import BaseAPI
 
 
-class Dashboard(BaseAPI, dashboard_pb2_grpc.DashboardServicer):
-    pb2 = dashboard_pb2
-    pb2_grpc = dashboard_pb2_grpc
+class PublicDashboard(BaseAPI, public_dashboard_pb2_grpc.PublicDashboardServicer):
+    pb2 = public_dashboard_pb2
+    pb2_grpc = public_dashboard_pb2_grpc
 
     def create(self, request, context):
         params, metadata = self.parse_request(request, context)
 
         with self.locator.get_service(
-            "DashboardService", metadata
+            "PublicDashboardService", metadata
         ) as dashboard_service:
             return self.locator.get_info(
-                "DashboardInfo", dashboard_service.create(params)
+                "PublicDashboardInfo", dashboard_service.create(params)
             )
 
     def update(self, request, context):
         params, metadata = self.parse_request(request, context)
 
         with self.locator.get_service(
-            "DashboardService", metadata
+            "PublicDashboardService", metadata
         ) as dashboard_service:
             return self.locator.get_info(
-                "DashboardInfo", dashboard_service.update(params)
+                "PublicDashboardInfo", dashboard_service.update(params)
             )
 
     def delete(self, request, context):
         params, metadata = self.parse_request(request, context)
 
         with self.locator.get_service(
-            "DashboardService", metadata
+            "PublicDashboardService", metadata
         ) as dashboard_service:
             dashboard_service.delete(params)
             return self.locator.get_info("EmptyInfo")
@@ -39,15 +39,17 @@ class Dashboard(BaseAPI, dashboard_pb2_grpc.DashboardServicer):
         params, metadata = self.parse_request(request, context)
 
         with self.locator.get_service(
-            "DashboardService", metadata
+            "PublicDashboardService", metadata
         ) as dashboard_service:
-            return self.locator.get_info("DashboardInfo", dashboard_service.get(params))
+            return self.locator.get_info(
+                "PublicDashboardInfo", dashboard_service.get(params)
+            )
 
     def delete_version(self, request, context):
         params, metadata = self.parse_request(request, context)
 
         with self.locator.get_service(
-            "DashboardService", metadata
+            "PublicDashboardService", metadata
         ) as dashboard_service:
             dashboard_service.delete_version(params)
             return self.locator.get_info("EmptyInfo")
@@ -56,51 +58,52 @@ class Dashboard(BaseAPI, dashboard_pb2_grpc.DashboardServicer):
         params, metadata = self.parse_request(request, context)
 
         with self.locator.get_service(
-            "DashboardService", metadata
+            "PublicDashboardService", metadata
         ) as dashboard_service:
             return self.locator.get_info(
-                "DashboardInfo", dashboard_service.revert_version(params)
+                "PublicDashboardInfo", dashboard_service.revert_version(params)
             )
 
     def get_version(self, request, context):
         params, metadata = self.parse_request(request, context)
 
         with self.locator.get_service(
-            "DashboardService", metadata
+            "PublicDashboardService", metadata
         ) as dashboard_service:
             return self.locator.get_info(
-                "DashboardVersionInfo", dashboard_service.get_version(params)
+                "PublicDashboardVersionInfo",
+                dashboard_service.get_version(params),
             )
 
     def list_versions(self, request, context):
         params, metadata = self.parse_request(request, context)
 
         with self.locator.get_service(
-            "DashboardService", metadata
+            "PublicDashboardService", metadata
         ) as dashboard_service:
             (
-                dashboard_version_vos,
+                public_dashboard_version_vos,
                 total_count,
-                dashboard_version,
+                public_dashboard_version,
             ) = dashboard_service.list_versions(params)
             return self.locator.get_info(
-                "DashboardVersionsInfo",
-                dashboard_version_vos,
+                "PublicDashboardVersionsInfo",
+                public_dashboard_version_vos,
                 total_count,
                 minimal=self.get_minimal(params),
-                latest_version=dashboard_version,
+                latest_version=public_dashboard_version,
             )
 
     def list(self, request, context):
         params, metadata = self.parse_request(request, context)
 
         with self.locator.get_service(
-            "DashboardService", metadata
+            "PublicDashboardService", metadata
         ) as dashboard_service:
-            dashboard_vos, total_count = dashboard_service.list(params)
+            public_dashboard_vos, total_count = dashboard_service.list(params)
             return self.locator.get_info(
-                "DashboardsInfo",
-                dashboard_vos,
+                "PublicDashboardsInfo",
+                public_dashboard_vos,
                 total_count,
                 minimal=self.get_minimal(params),
             )
@@ -109,7 +112,7 @@ class Dashboard(BaseAPI, dashboard_pb2_grpc.DashboardServicer):
         params, metadata = self.parse_request(request, context)
 
         with self.locator.get_service(
-            "DashboardService", metadata
+            "PublicDashboardService", metadata
         ) as dashboard_service:
             return self.locator.get_info(
                 "StatisticsInfo", dashboard_service.stat(params)

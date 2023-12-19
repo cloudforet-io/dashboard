@@ -1,1 +1,1 @@
-from spaceone.dashboard.service.dashboard_service import DashboardService
+from spaceone.dashboard.service.public_dashboard_service import PublicDashboardService

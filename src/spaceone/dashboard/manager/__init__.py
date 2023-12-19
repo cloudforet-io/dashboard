@@ -1,3 +1,5 @@
-from spaceone.dashboard.manager.dashboard_manager import DashboardManager
-from spaceone.dashboard.manager.dashboard_version_manager import DashboardVersionManager
+from spaceone.dashboard.manager.public_dashboard_manager import PublicDashboardManager
+from spaceone.dashboard.manager.public_dashboard_version_manager import (
+    PublicDashboardVersionManager,
+)
 from spaceone.dashboard.manager.identity_manager import IdentityManager
