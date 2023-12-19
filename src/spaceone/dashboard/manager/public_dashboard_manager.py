@@ -71,9 +71,7 @@ class PublicDashboardManager(BaseManager):
 
         return self.dashboard_model.get(**conditions)
 
-    def list_public_dashboards(self, query=None):
-        if query is None:
-            query = {}
+    def list_public_dashboards(self, query: dict) -> dict:
         return self.dashboard_model.query(**query)
 
     def stat_public_dashboards(self, query: dict) -> dict:

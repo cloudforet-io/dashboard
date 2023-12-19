@@ -34,9 +34,9 @@ class PublicDashboardService(BaseService):
         permission="dashboard:PublicDashboard.write",
         role_types=["DOMAIN_ADMIN", "WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
     )
-    @check_required(["name", "dashboard_type", "domain_id"])
+    @check_required(["name", "domain_id"])
     def create(self, params: dict) -> PublicDashboard:
-        """Register domain_dashboard
+        """Register public_dashboard
 
         Args:
             params (dict): {
@@ -55,7 +55,7 @@ class PublicDashboardService(BaseService):
             }
 
         Returns:
-            dashboard_vo (object)
+            public_dashboard_vo (object)
         """
 
         resource_group = params["resource_group"]
@@ -89,7 +89,7 @@ class PublicDashboardService(BaseService):
     )
     @check_required(["public_dashboard_id", "domain_id"])
     def update(self, params):
-        """Update domain_dashboard
+        """Update public_dashboard
 
         Args:
             params (dict): {
@@ -107,7 +107,7 @@ class PublicDashboardService(BaseService):
             }
 
         Returns:
-            dashboard_vo (object)
+            public_dashboard_vo (object)
         """
 
         public_dashboard_id = params["public_dashboard_id"]
@@ -140,7 +140,7 @@ class PublicDashboardService(BaseService):
     )
     @check_required(["public_dashboard_id", "domain_id"])
     def delete(self, params):
-        """Deregister domain_dashboard
+        """Deregister public_dashboard
 
         Args:
             params (dict): {
@@ -162,11 +162,11 @@ class PublicDashboardService(BaseService):
             public_dashboard_id, domain_id, workspace_id, user_projects
         )
 
-        if domain_dashboard_version_vos := self.version_mgr.filter_versions(
+        if public_dashboard_version_vos := self.version_mgr.filter_versions(
             public_dashboard_id=dashboard_vo.public_dashboard_id, domain_id=domain_id
         ):
             self.version_mgr.delete_versions_by_public_dashboard_version_vos(
-                domain_dashboard_version_vos
+                public_dashboard_version_vos
             )
 
         self.dashboard_mgr.delete_by_public_dashboard_vo(dashboard_vo)
@@ -179,7 +179,7 @@ class PublicDashboardService(BaseService):
     @change_value_by_rule("APPEND", "user_projects", "*")
     @check_required(["public_dashboard_id", "domain_id"])
     def get(self, params):
-        """Get domain_dashboard
+        """Get public_dashboard
 
         Args:
             params (dict): {
@@ -190,7 +190,7 @@ class PublicDashboardService(BaseService):
             }
 
         Returns:
-            dashboard_vo (object)
+            public_dashboard_vo (object)
         """
         public_dashboard_id = params["public_dashboard_id"]
         domain_id = params["domain_id"]
@@ -258,7 +258,7 @@ class PublicDashboardService(BaseService):
             }
 
         Returns:
-            dashboard_vo (object)
+            public_dashboard_vo (object)
         """
 
         public_dashboard_id = params["public_dashboard_id"]
@@ -304,7 +304,7 @@ class PublicDashboardService(BaseService):
             }
 
         Returns:
-            domain_dashboard_version_vo (object)
+            public_dashboard_version_vo (object)
         """
 
         public_dashboard_id = params["public_dashboard_id"]
@@ -336,7 +336,7 @@ class PublicDashboardService(BaseService):
             }
 
         Returns:
-            domain_dashboard_version_vos (object)
+            public_dashboard_version_vos (object)
             total_count
         """
         public_dashboard_id = params["public_dashboard_id"]
@@ -345,14 +345,14 @@ class PublicDashboardService(BaseService):
         user_projects = params.get("user_projects")
 
         query = params.get("query", {})
-        domain_dashboard_version_vos, total_count = self.version_mgr.list_versions(
+        public_dashboard_version_vos, total_count = self.version_mgr.list_versions(
             query
         )
         dashboard_vo = self.dashboard_mgr.get_public_dashboard(
             public_dashboard_id, domain_id, workspace_id, user_projects
         )
 
-        return domain_dashboard_version_vos, total_count, dashboard_vo.version
+        return public_dashboard_version_vos, total_count, dashboard_vo.version
 
     @transaction(
         permission="dashboard:PublicDashboard.read",
@@ -361,7 +361,7 @@ class PublicDashboardService(BaseService):
     @change_value_by_rule("APPEND", "workspace_id", "*")
     @change_value_by_rule("APPEND", "user_projects", "*")
     @check_required(["domain_id"])
-    @append_query_filter(["public_dashboard_id", "name", "viewers", "domain_id"])
+    @append_query_filter(["public_dashboard_id", "name", "domain_id"])
     @append_keyword_filter(["public_dashboard_id", "name"])
     def list(self, params):
         """List public_dashboards
@@ -378,7 +378,7 @@ class PublicDashboardService(BaseService):
             }
 
         Returns:
-            domain_dashboard_vos (object)
+            public_dashboard_vos (object)
             total_count
         """
 
