@@ -18,6 +18,8 @@ _LOGGER = logging.getLogger(__name__)
 @mutation_handler
 @event_handler
 class DashboardService(BaseService):
+    resource = "Dashboard"
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.dashboard_mgr: DashboardManager = self.locator.get_manager(
