@@ -52,7 +52,9 @@ class PrivateDashboard(MongoModel):
 
     @classmethod
     def create(cls, data):
-        dashboard_vos = cls.filter(name=data["name"], domain_id=data["domain_id"])
+        dashboard_vos = cls.filter(
+            name=data["name"], user_id=data["user_id"], domain_id=data["domain_id"]
+        )
 
         if dashboard_vos.count() > 0:
             raise ERROR_NOT_UNIQUE(key="name", value=data["name"])
@@ -61,9 +63,10 @@ class PrivateDashboard(MongoModel):
     def update(self, data):
         if "name" in data:
             dashboard_vos = self.filter(
+                private_dashboard_id__ne=self.private_dashboard_id,
                 name=data["name"],
                 domain_id=self.domain_id,
-                private_dashboard_id__ne=self.private_dashboard_id,
+                user_id=self.user_id,
             )
 
             if dashboard_vos.count() > 0:
