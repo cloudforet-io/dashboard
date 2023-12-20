@@ -65,9 +65,7 @@ class PrivateDashboardVersionManager(BaseManager):
             domain_id=domain_id,
         )
 
-    def list_versions(self, query: dict = None) -> dict:
-        if query is None:
-            query = {}
+    def list_versions(self, query: dict) -> dict:
         return self.version_model.query(**query)
 
     def filter_versions(self, **conditions) -> dict:

@@ -28,7 +28,7 @@ class PrivateDashboardManager(BaseManager):
 
     def update_private_dashboard(self, params: dict) -> PrivateDashboard:
         dashboard_vo: PrivateDashboard = self.get_private_dashboard(
-            params["private_dashboard_id"], params["domain_id"]
+            params["private_dashboard_id"], params["workspace_id"], params["domain_id"]
         )
         return self.update_private_dashboard_by_vo(params, dashboard_vo)
 
@@ -46,18 +46,20 @@ class PrivateDashboardManager(BaseManager):
         return dashboard_vo.update(params)
 
     def delete_private_dashboard(
-        self, private_dashboard_id: str, domain_id: str
+        self, private_dashboard_id: str, workspace_id: str, domain_id: str
     ) -> None:
         dashboard_vo: PrivateDashboard = self.get_private_dashboard(
-            private_dashboard_id, domain_id
+            private_dashboard_id, workspace_id, domain_id
         )
         dashboard_vo.delete()
 
     def get_private_dashboard(
-        self, private_dashboard_id: str, domain_id: str
+        self, private_dashboard_id: str, workspace_id: str, domain_id: str
     ) -> PrivateDashboard:
         return self.dashboard_model.get(
-            private_dashboard_id=private_dashboard_id, domain_id=domain_id
+            private_dashboard_id=private_dashboard_id,
+            workspace_id=workspace_id,
+            domain_id=domain_id,
         )
 
     def list_private_dashboards(self, query: dict) -> dict:
