@@ -10,7 +10,7 @@ class PrivateDashboardVersionManager(BaseManager):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.version_model: PrivateDashboardVersion = self.locator.get_model(
-            "DashboardVersion"
+            "PrivateDashboardVersion"
         )
 
     def create_version_by_private_dashboard_vo(
