@@ -17,6 +17,7 @@ class PrivateDashboard(MongoModel):
     labels = ListField(StringField())
     tags = DictField(default={})
     user_id = StringField(max_length=40)
+    workspace_id = StringField(max_length=40)
     domain_id = StringField(max_length=40)
     created_at = DateTimeField(auto_now_add=True)
     updated_at = DateTimeField(auto_now=True)
@@ -36,6 +37,7 @@ class PrivateDashboard(MongoModel):
             "name",
             "version",
             "user_id",
+            "workspace_id",
             "domain_id",
         ],
         "ordering": ["name"],
@@ -43,6 +45,7 @@ class PrivateDashboard(MongoModel):
             "name",
             "labels",
             "user_id",
+            "workspace_id",
             "domain_id",
         ],
     }
