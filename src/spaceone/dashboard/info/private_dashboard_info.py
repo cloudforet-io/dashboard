@@ -14,6 +14,7 @@ def PrivateDashboardInfo(dashboard_vo: PrivateDashboard, minimal=False):
         "version": dashboard_vo.version,
         "labels": change_list_value_type(dashboard_vo.labels),
         "user_id": dashboard_vo.user_id,
+        "workspace_id": dashboard_vo.workspace_id,
         "domain_id": dashboard_vo.domain_id,
     }
 
