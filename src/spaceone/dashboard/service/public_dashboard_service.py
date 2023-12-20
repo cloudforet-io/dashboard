@@ -48,9 +48,9 @@ class PublicDashboardService(BaseService):
                 'labels': 'list',
                 'tags': 'dict',
                 'resource_group': 'str',      # required
+                'workspace_id': 'str',
                 'project_id': 'str',
                 'domain_id': 'str'            # injected from auth (required)
-                'workspace_id': 'str',        # injected from auth
                 'user_projects': 'list'       # injected from auth
             }
 
@@ -175,8 +175,6 @@ class PublicDashboardService(BaseService):
         permission="dashboard:PublicDashboard.read",
         role_types=["DOMAIN_ADMIN", "WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
     )
-    @change_value_by_rule("APPEND", "workspace_id", "*")
-    @change_value_by_rule("APPEND", "user_projects", "*")
     @check_required(["public_dashboard_id", "domain_id"])
     def get(self, params):
         """Get public_dashboard
@@ -288,8 +286,6 @@ class PublicDashboardService(BaseService):
         permission="dashboard:PublicDashboard.read",
         role_types=["DOMAIN_ADMIN", "WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
     )
-    @change_value_by_rule("APPEND", "workspace_id", "*")
-    @change_value_by_rule("APPEND", "user_projects", "*")
     @check_required(["public_dashboard_id", "version", "domain_id"])
     def get_version(self, params):
         """Get version of domain dashboard
@@ -317,8 +313,6 @@ class PublicDashboardService(BaseService):
         permission="dashboard:PublicDashboard.read",
         role_types=["DOMAIN_ADMIN", "WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
     )
-    @change_value_by_rule("APPEND", "workspace_id", "*")
-    @change_value_by_rule("APPEND", "user_projects", "*")
     @check_required(["public_dashboard_id", "domain_id"])
     @append_query_filter(["public_dashboard_id", "version", "domain_id"])
     @append_keyword_filter(["public_dashboard_id", "version"])
@@ -358,10 +352,10 @@ class PublicDashboardService(BaseService):
         permission="dashboard:PublicDashboard.read",
         role_types=["DOMAIN_ADMIN", "WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
     )
-    @change_value_by_rule("APPEND", "workspace_id", "*")
-    @change_value_by_rule("APPEND", "user_projects", "*")
     @check_required(["domain_id"])
-    @append_query_filter(["public_dashboard_id", "name", "domain_id"])
+    @append_query_filter(
+        ["public_dashboard_id", "name", "domain_id", "workspace_id", "user_projects"]
+    )
     @append_keyword_filter(["public_dashboard_id", "name"])
     def list(self, params):
         """List public_dashboards
@@ -390,10 +384,8 @@ class PublicDashboardService(BaseService):
         permission="dashboard:PublicDashboard.read",
         role_types=["DOMAIN_ADMIN", "WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
     )
-    @change_value_by_rule("APPEND", "workspace_id", "*")
-    @change_value_by_rule("APPEND", "user_projects", "*")
     @check_required(["query", "domain_id"])
-    @append_query_filter(["domain_id"])
+    @append_query_filter(["domain_id", "workspace_id", "user_projects"])
     @append_keyword_filter(["public_dashboard_id", "name"])
     def stat(self, params):
         """
