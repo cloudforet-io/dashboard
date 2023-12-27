@@ -44,6 +44,7 @@ class PublicDashboard(MongoModel):
             "workspace_id",
             "domain_id",
         ],
+        "change_query_keys": {"user_projects": "project_id"},
         "ordering": ["name"],
         "indexes": [
             "name",
