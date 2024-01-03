@@ -58,7 +58,12 @@ class PublicDashboard(MongoModel):
 
     @classmethod
     def create(cls, data):
-        dashboard_vos = cls.filter(name=data["name"], project_id=["project_id"], workspace_id=["workspace_id"], domain_id=data["domain_id"])
+        dashboard_vos = cls.filter(
+            name=data["name"],
+            project_id=data["project_id"],
+            workspace_id=data["workspace_id"],
+            domain_id=data["domain_id"],
+        )
 
         if dashboard_vos.count() > 0:
             raise ERROR_NOT_UNIQUE(key="name", value=data["name"])
