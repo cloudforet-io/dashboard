@@ -53,7 +53,11 @@ class PrivateDashboard(MongoModel):
     @classmethod
     def create(cls, data):
         dashboard_vos = cls.filter(
-            name=data["name"], user_id=data["user_id"], domain_id=data["domain_id"]
+            name=data["name"],
+            user_id=data["user_id"],
+            project_id=data["project_id"],
+            workspace_id=data["workspace_id"],
+            domain_id=data["domain_id"],
         )
 
         if dashboard_vos.count() > 0:
