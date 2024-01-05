@@ -1,5 +1,3 @@
 spaceone-api
 mongoengine
-boto3
-mongomock
 parameterized
