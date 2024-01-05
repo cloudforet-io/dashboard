@@ -74,6 +74,8 @@ class PublicDashboard(MongoModel):
             dashboard_vos = self.filter(
                 name=data["name"],
                 domain_id=self.domain_id,
+                workspace_id=self.workspace_id,
+                project_id=self.project_id,
                 public_dashboard_id__ne=self.public_dashboard_id,
             )
 
