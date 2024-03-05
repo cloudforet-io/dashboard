@@ -14,6 +14,7 @@ class PrivateDashboard(MongoModel):
     variables = DictField(default={})
     settings = DictField(default={})
     variables_schema = DictField(default={})
+    display_info = DictField(default={})
     labels = ListField(StringField())
     tags = DictField(default={})
     user_id = StringField(max_length=40)
@@ -29,6 +30,7 @@ class PrivateDashboard(MongoModel):
             "variables",
             "settings",
             "variables_schema",
+            "display_info",
             "labels",
             "tags",
         ],
@@ -36,6 +38,7 @@ class PrivateDashboard(MongoModel):
             "private_dashboard_id",
             "name",
             "version",
+            "display_info",
             "user_id",
             "workspace_id",
             "domain_id",
