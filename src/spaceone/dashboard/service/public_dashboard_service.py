@@ -34,17 +34,20 @@ class PublicDashboardService(BaseService):
         permission="dashboard:PublicDashboard.write",
         role_types=["DOMAIN_ADMIN", "WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
     )
-    @check_required(["name", "domain_id"])
+    @check_required(["name", "template_id", "template_type", "domain_id"])
     def create(self, params: dict) -> PublicDashboard:
         """Register public_dashboard
 
         Args:
             params (dict): {
                 'name': 'str',                # required
+                'template_id': 'str',         # required
+                'template_type': 'str',       # required
                 'layouts': 'list',
                 'variables': 'dict',
                 'settings': 'dict',
                 'variables_schema': 'dict',
+                'display_info': 'dict',
                 'labels': 'list',
                 'tags': 'dict',
                 'resource_group': 'str',      # required
@@ -95,10 +98,13 @@ class PublicDashboardService(BaseService):
             params (dict): {
                 'public_dashboard_id': 'str',   # required
                 'name': 'str',
+                'template_id': 'str',
+                'template_type': 'str',
                 'layouts': 'list',
                 'variables': 'dict',
                 'settings': 'dict',
                 'variables_schema': 'list',
+                'display_info': 'dict',
                 'labels': 'list',
                 'tags': 'dict',
                 'domain_id': 'str'              # injected from auth (required)

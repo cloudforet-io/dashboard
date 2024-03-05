@@ -9,6 +9,10 @@ class PrivateDashboard(MongoModel):
         max_length=40, generate_id="private-dash", unique=True
     )
     name = StringField(max_length=100)
+    template_id = StringField(max_length=100, default="blank")
+    template_type = StringField(
+        max_length=40, choices=("MANAGED", "CUSTOM", "EXTENSION")
+    )
     version = IntField(default=1)
     layouts = ListField(default=[])
     variables = DictField(default={})
@@ -26,6 +30,8 @@ class PrivateDashboard(MongoModel):
     meta = {
         "updatable_fields": [
             "name",
+            "template_id",
+            "template_type",
             "layouts",
             "variables",
             "settings",
@@ -38,6 +44,8 @@ class PrivateDashboard(MongoModel):
             "private_dashboard_id",
             "name",
             "version",
+            "template_id",
+            "template_type",
             "display_info",
             "user_id",
             "workspace_id",
@@ -46,6 +54,7 @@ class PrivateDashboard(MongoModel):
         "ordering": ["name"],
         "indexes": [
             "name",
+            "template_type",
             "labels",
             "user_id",
             "workspace_id",
