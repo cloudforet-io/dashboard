@@ -12,6 +12,8 @@ def PublicDashboardInfo(dashboard_vo: PublicDashboard, minimal=False):
         "public_dashboard_id": dashboard_vo.public_dashboard_id,
         "name": dashboard_vo.name,
         "version": dashboard_vo.version,
+        "template_id": dashboard_vo.template_id,
+        "template_type": dashboard_vo.template_type,
         "display_info": change_struct_type(dashboard_vo.display_info),
         "labels": change_list_value_type(dashboard_vo.labels),
         "resource_group": dashboard_vo.resource_group,

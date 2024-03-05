@@ -12,6 +12,8 @@ def PrivateDashboardInfo(dashboard_vo: PrivateDashboard, minimal=False):
         "private_dashboard_id": dashboard_vo.private_dashboard_id,
         "name": dashboard_vo.name,
         "version": dashboard_vo.version,
+        "template_id": dashboard_vo.template_id,
+        "template_type": dashboard_vo.template_type,
         "display_info": change_struct_type(dashboard_vo.display_info),
         "labels": change_list_value_type(dashboard_vo.labels),
         "user_id": dashboard_vo.user_id,

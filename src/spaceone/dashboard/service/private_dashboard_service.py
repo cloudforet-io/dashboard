@@ -34,13 +34,17 @@ class PrivateDashboardService(BaseService):
         permission="dashboard:PrivateDashboard.write",
         role_types=["WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
     )
-    @check_required(["name", "workspace_id", "domain_id"])
+    @check_required(
+        ["name", "template_id", "template_type", "workspace_id", "domain_id"]
+    )
     def create(self, params: dict) -> PrivateDashboard:
         """Register private_dashboard
 
         Args:
             params (dict): {
                 'name': 'str',                 # required
+                'template_id': 'str',          # required
+                'template_type': 'str',        # required
                 'layouts': 'list',
                 'variables': 'dict',
                 'settings': 'dict',

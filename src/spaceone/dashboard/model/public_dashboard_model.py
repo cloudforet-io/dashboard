@@ -9,6 +9,10 @@ class PublicDashboard(MongoModel):
         max_length=40, generate_id="public-dash", unique=True
     )
     name = StringField(max_length=100)
+    template_id = StringField(max_length=100, default="blank")
+    template_type = StringField(
+        max_length=40, choices=("MANAGED", "CUSTOM", "EXTENSION")
+    )
     version = IntField(default=1)
     layouts = ListField(default=[])
     variables = DictField(default={})
@@ -29,6 +33,8 @@ class PublicDashboard(MongoModel):
     meta = {
         "updatable_fields": [
             "name",
+            "template_id",
+            "template_type",
             "layouts",
             "variables",
             "settings",
@@ -41,6 +47,8 @@ class PublicDashboard(MongoModel):
             "public_dashboard_id",
             "name",
             "version",
+            "template_id",
+            "template_type",
             "display_info",
             "resource_group",
             "project_id",
@@ -52,6 +60,7 @@ class PublicDashboard(MongoModel):
         "indexes": [
             "name",
             "labels",
+            "template_type",
             "resource_group",
             "project_id",
             "workspace_id",
