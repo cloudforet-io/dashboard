@@ -26,12 +26,6 @@ class PublicDashboardManager(BaseManager):
 
         return dashboard_vo
 
-    def update_public_dashboard(self, params: dict) -> PublicDashboard:
-        dashboard_vo: PublicDashboard = self.get_public_dashboard(
-            params["public_dashboard_id"], params["domain_id"]
-        )
-        return self.update_public_dashboard_by_vo(params, dashboard_vo)
-
     def update_public_dashboard_by_vo(
         self, params: dict, dashboard_vo: PublicDashboard
     ) -> PublicDashboard:

@@ -123,8 +123,13 @@ class PublicDashboardService(BaseService):
             params["name"] = dashboard_vo.name
 
         if "settings" in params:
-            params["settings"] = self._merge_settings(
+            params["settings"] = self._merge_dict(
                 dashboard_vo.settings, params["settings"]
+            )
+
+        if "display_info" in params:
+            params["display_info"] = self._merge_dict(
+                dashboard_vo.display_info, params["display_info"]
             )
 
         version_change_keys = ["layouts", "variables", "variables_schema"]
@@ -427,11 +432,11 @@ class PublicDashboardService(BaseService):
             return False
 
     @staticmethod
-    def _merge_settings(old_settings: dict, new_settings: dict) -> dict:
-        settings = copy.deepcopy(old_settings)
+    def _merge_dict(old_dict: dict, new_dict: dict) -> dict:
+        settings = copy.deepcopy(old_dict)
 
-        if old_settings:
-            settings.update(new_settings)
+        if old_dict:
+            settings.update(new_dict)
             return settings
         else:
-            return new_settings
+            return new_dict

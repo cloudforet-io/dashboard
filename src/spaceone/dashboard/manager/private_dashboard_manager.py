@@ -26,12 +26,6 @@ class PrivateDashboardManager(BaseManager):
 
         return dashboard_vo
 
-    def update_private_dashboard(self, params: dict) -> PrivateDashboard:
-        dashboard_vo: PrivateDashboard = self.get_private_dashboard(
-            params["private_dashboard_id"], params["workspace_id"], params["domain_id"]
-        )
-        return self.update_private_dashboard_by_vo(params, dashboard_vo)
-
     def update_private_dashboard_by_vo(
         self, params: dict, dashboard_vo: PrivateDashboard
     ) -> PrivateDashboard:

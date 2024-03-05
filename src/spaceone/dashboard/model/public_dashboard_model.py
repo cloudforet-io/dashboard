@@ -14,6 +14,7 @@ class PublicDashboard(MongoModel):
     variables = DictField(default={})
     settings = DictField(default={})
     variables_schema = DictField(default={})
+    display_info = DictField(default={})
     labels = ListField(StringField())
     tags = DictField(default={})
     resource_group = StringField(
@@ -32,6 +33,7 @@ class PublicDashboard(MongoModel):
             "variables",
             "settings",
             "variables_schema",
+            "display_info",
             "labels",
             "tags",
         ],
@@ -39,6 +41,7 @@ class PublicDashboard(MongoModel):
             "public_dashboard_id",
             "name",
             "version",
+            "display_info",
             "resource_group",
             "project_id",
             "workspace_id",
