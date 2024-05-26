@@ -1,5 +1,6 @@
 from spaceone.api.dashboard.v1 import private_dashboard_pb2, private_dashboard_pb2_grpc
 from spaceone.core.pygrpc import BaseAPI
+from spaceone.dashboard.service.private_dashboard_service import PrivateDashboardService
 
 
 class PrivateDashboard(BaseAPI, private_dashboard_pb2_grpc.PrivateDashboardServicer):
@@ -8,112 +9,36 @@ class PrivateDashboard(BaseAPI, private_dashboard_pb2_grpc.PrivateDashboardServi
 
     def create(self, request, context):
         params, metadata = self.parse_request(request, context)
-
-        with self.locator.get_service(
-            "PrivateDashboardService", metadata
-        ) as dashboard_service:
-            return self.locator.get_info(
-                "PrivateDashboardInfo", dashboard_service.create(params)
-            )
+        pri_dash_svc = PrivateDashboardService(metadata)
+        response: dict = pri_dash_svc.create(params)
+        return self.dict_to_message(response)
 
     def update(self, request, context):
         params, metadata = self.parse_request(request, context)
-
-        with self.locator.get_service(
-            "PrivateDashboardService", metadata
-        ) as dashboard_service:
-            return self.locator.get_info(
-                "PrivateDashboardInfo", dashboard_service.update(params)
-            )
+        pri_dash_svc = PrivateDashboardService(metadata)
+        response: dict = pri_dash_svc.update(params)
+        return self.dict_to_message(response)
 
     def delete(self, request, context):
         params, metadata = self.parse_request(request, context)
-
-        with self.locator.get_service(
-            "PrivateDashboardService", metadata
-        ) as dashboard_service:
-            dashboard_service.delete(params)
-            return self.locator.get_info("EmptyInfo")
+        pri_dash_svc = PrivateDashboardService(metadata)
+        pri_dash_svc.delete(params)
+        return self.empty()
 
     def get(self, request, context):
         params, metadata = self.parse_request(request, context)
-
-        with self.locator.get_service(
-            "PrivateDashboardService", metadata
-        ) as dashboard_service:
-            return self.locator.get_info(
-                "PrivateDashboardInfo", dashboard_service.get(params)
-            )
-
-    def delete_version(self, request, context):
-        params, metadata = self.parse_request(request, context)
-
-        with self.locator.get_service(
-            "PrivateDashboardService", metadata
-        ) as dashboard_service:
-            dashboard_service.delete_version(params)
-            return self.locator.get_info("EmptyInfo")
-
-    def revert_version(self, request, context):
-        params, metadata = self.parse_request(request, context)
-
-        with self.locator.get_service(
-            "PrivateDashboardService", metadata
-        ) as dashboard_service:
-            return self.locator.get_info(
-                "PrivateDashboardInfo", dashboard_service.revert_version(params)
-            )
-
-    def get_version(self, request, context):
-        params, metadata = self.parse_request(request, context)
-
-        with self.locator.get_service(
-            "PrivateDashboardService", metadata
-        ) as dashboard_service:
-            return self.locator.get_info(
-                "PrivateDashboardVersionInfo",
-                dashboard_service.get_version(params),
-            )
-
-    def list_versions(self, request, context):
-        params, metadata = self.parse_request(request, context)
-
-        with self.locator.get_service(
-            "PrivateDashboardService", metadata
-        ) as dashboard_service:
-            (
-                private_dashboard_version_vos,
-                total_count,
-                private_dashboard_version,
-            ) = dashboard_service.list_versions(params)
-            return self.locator.get_info(
-                "PrivateDashboardVersionsInfo",
-                private_dashboard_version_vos,
-                total_count,
-                minimal=self.get_minimal(params),
-                latest_version=private_dashboard_version,
-            )
+        pub_dash_svc = PrivateDashboardService(metadata)
+        response: dict = pub_dash_svc.get(params)
+        return self.dict_to_message(response)
 
     def list(self, request, context):
         params, metadata = self.parse_request(request, context)
-
-        with self.locator.get_service(
-            "PrivateDashboardService", metadata
-        ) as dashboard_service:
-            private_dashboard_vos, total_count = dashboard_service.list(params)
-            return self.locator.get_info(
-                "PrivateDashboardsInfo",
-                private_dashboard_vos,
-                total_count,
-                minimal=self.get_minimal(params),
-            )
+        pri_dash_svc = PrivateDashboardService(metadata)
+        response: dict = pri_dash_svc.list(params)
+        return self.dict_to_message(response)
 
     def stat(self, request, context):
         params, metadata = self.parse_request(request, context)
-
-        with self.locator.get_service(
-            "PrivateDashboardService", metadata
-        ) as dashboard_service:
-            return self.locator.get_info(
-                "StatisticsInfo", dashboard_service.stat(params)
-            )
+        pri_dash_svc = PrivateDashboardService(metadata)
+        response: dict = pri_dash_svc.stat(params)
+        return self.dict_to_message(response)
