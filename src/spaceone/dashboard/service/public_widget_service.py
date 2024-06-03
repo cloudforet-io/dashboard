@@ -2,12 +2,12 @@ import logging
 from typing import Union
 
 from spaceone.core.service import *
-from spaceone.core.error import *
 from spaceone.dashboard.manager.public_widget_manager import PublicWidgetManager
 from spaceone.dashboard.manager.public_dashboard_manager import PublicDashboardManager
 from spaceone.dashboard.model.public_widget.request import *
 from spaceone.dashboard.model.public_widget.response import *
 from spaceone.dashboard.model.public_widget.database import PublicWidget
+from spaceone.dashboard.error.dashboard import ERROR_NOT_SUPPORTED_VERSION
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -51,12 +51,15 @@ class PublicWidgetService(BaseService):
         """
 
         pub_dashboard_mgr = PublicDashboardManager()
-        pub_dashboard_mgr.get_public_dashboard(
+        pub_dashboard_vo = pub_dashboard_mgr.get_public_dashboard(
             params.dashboard_id,
             params.domain_id,
             params.workspace_id,
             params.user_projects,
         )
+
+        if pub_dashboard_vo.version == "1.0":
+            raise ERROR_NOT_SUPPORTED_VERSION(version=pub_dashboard_vo.version)
 
         pub_widget_vo = self.pub_widget_mgr.create_public_widget(params.dict())
 

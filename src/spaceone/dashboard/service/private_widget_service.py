@@ -2,12 +2,11 @@ import logging
 from typing import Union
 
 from spaceone.core.service import *
-from spaceone.core.error import *
 from spaceone.dashboard.manager.private_widget_manager import PrivateWidgetManager
 from spaceone.dashboard.manager.private_dashboard_manager import PrivateDashboardManager
 from spaceone.dashboard.model.private_widget.request import *
 from spaceone.dashboard.model.private_widget.response import *
-from spaceone.dashboard.model.private_widget.database import PrivateWidget
+from spaceone.dashboard.error.dashboard import ERROR_NOT_SUPPORTED_VERSION
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -50,11 +49,14 @@ class PrivateWidgetService(BaseService):
         """
 
         pri_dashboard_mgr = PrivateDashboardManager()
-        pri_dashboard_mgr.get_private_dashboard(
+        pri_dashboard_vo = pri_dashboard_mgr.get_private_dashboard(
             params.dashboard_id,
             params.domain_id,
             params.user_id,
         )
+
+        if pri_dashboard_vo.version == "1.0":
+            raise ERROR_NOT_SUPPORTED_VERSION(version=pri_dashboard_vo.version)
 
         pri_widget_vo = self.pri_widget_mgr.create_private_widget(params.dict())
 
