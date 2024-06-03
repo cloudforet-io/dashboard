@@ -1,26 +1,20 @@
 from datetime import datetime
-from typing import Union, List, Any
+from typing import Union, List
 from pydantic import BaseModel
 from spaceone.core import utils
 
-__all__ = ["PrivateDashboardResponse", "PrivateDashboardsResponse"]
+__all__ = ["PrivateWidgetResponse", "PrivateWidgetsResponse"]
 
 
-class PrivateDashboardResponse(BaseModel):
-    dashboard_id: Union[str, None] = None
+class PrivateWidgetResponse(BaseModel):
+    widget_id: Union[str, None] = None
     name: Union[str, None] = None
     description: Union[str, None] = None
-    version: Union[str, None] = None
-    layouts: Union[List[Any], None] = None
-    vars: Union[dict, None] = None
+    widget_type: Union[str, None] = None
     options: Union[dict, None] = None
-    variables: Union[dict, None] = None
-    variables_schema: Union[dict, None] = None
-    labels: Union[List[str], None] = None
     tags: Union[dict, None] = None
-    folder_id: Union[str, None] = None
+    dashboard_id: Union[str, None] = None
     user_id: Union[str, None] = None
-    workspace_id: Union[str, None] = None
     domain_id: Union[str, None] = None
     created_at: Union[datetime, None] = None
     updated_at: Union[datetime, None] = None
@@ -32,6 +26,6 @@ class PrivateDashboardResponse(BaseModel):
         return data
 
 
-class PrivateDashboardsResponse(BaseModel):
-    results: List[PrivateDashboardResponse]
+class PrivateWidgetsResponse(BaseModel):
+    results: List[PrivateWidgetResponse]
     total_count: int

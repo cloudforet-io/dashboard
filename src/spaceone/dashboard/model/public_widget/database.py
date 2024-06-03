@@ -3,20 +3,16 @@ from mongoengine import *
 from spaceone.core.model.mongo_model import MongoModel
 
 
-class PublicDashboard(MongoModel):
-    dashboard_id = StringField(
-        max_length=40, generate_id="public-dash", unique=True
+class PublicWidget(MongoModel):
+    widget_id = StringField(
+        max_length=40, generate_id="public-widget", unique=True
     )
     name = StringField(max_length=100)
     description = StringField(default=None)
-    version = StringField(max_length=40, default="2.0")
-    layouts = ListField(default=None)
-    vars = DictField(default=None)
-    options = DictField(default=None)
-    variables = DictField(default=None)
-    variables_schema = DictField(default=None)
-    labels = ListField(StringField())
-    tags = DictField(default=None)
+    widget_type = StringField(max_length=40, default="NONE")
+    options = DictField(default=None, null=True)
+    tags = DictField(default={})
+    dashboard_id = StringField(max_length=40)
     resource_group = StringField(
         max_length=40, choices=("DOMAIN", "WORKSPACE", "PROJECT")
     )
@@ -30,18 +26,15 @@ class PublicDashboard(MongoModel):
         "updatable_fields": [
             "name",
             "description",
-            "layouts",
-            "vars",
+            "widget_type",
             "options",
-            "variables",
-            "variables_schema",
-            "labels",
             "tags",
         ],
         "minimal_fields": [
-            "dashboard_id",
+            "widget_id",
             "name",
-            "version",
+            "widget_type",
+            "dashboard_id",
             "resource_group",
             "project_id",
             "workspace_id",
@@ -51,6 +44,8 @@ class PublicDashboard(MongoModel):
         "ordering": ["name"],
         "indexes": [
             "name",
+            "widget_type",
+            "dashboard_id",
             "resource_group",
             "project_id",
             "workspace_id",

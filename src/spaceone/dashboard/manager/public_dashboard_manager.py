@@ -18,7 +18,7 @@ class PublicDashboardManager(BaseManager):
             _LOGGER.info(
                 f"[create_public_dashboard._rollback] "
                 f"Delete vo : {vo.name} "
-                f"({vo.public_dashboard_id})"
+                f"({vo.dashboard_id})"
             )
             vo.delete()
 
@@ -33,7 +33,7 @@ class PublicDashboardManager(BaseManager):
         def _rollback(old_data: dict) -> None:
             _LOGGER.info(
                 f"[update_public_dashboard_by_vo._rollback] Revert Data : "
-                f'{old_data["public_dashboard_id"]}'
+                f'{old_data["dashboard_id"]}'
             )
             dashboard_vo.update(old_data)
 
@@ -46,13 +46,13 @@ class PublicDashboardManager(BaseManager):
 
     def get_public_dashboard(
         self,
-        public_dashboard_id: str,
+        dashboard_id: str,
         domain_id: str,
         workspace_id: str = None,
         user_projects=None,
     ) -> PublicDashboard:
         conditions = {
-            "public_dashboard_id": public_dashboard_id,
+            "dashboard_id": dashboard_id,
             "domain_id": domain_id,
         }
 

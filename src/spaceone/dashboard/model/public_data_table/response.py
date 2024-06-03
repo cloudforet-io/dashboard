@@ -1,26 +1,25 @@
 from datetime import datetime
-from typing import Union, List, Any
+from typing import Union, List, Literal
 from pydantic import BaseModel
 from spaceone.core import utils
 
-from spaceone.dashboard.model.public_dashboard.request import ResourceGroup
+__all__ = ["PublicDataTableResponse", "PublicDataTablesResponse"]
 
-__all__ = ["PublicDashboardResponse", "PublicDashboardsResponse"]
+ResourceGroup = Literal["DOMAIN", "WORKSPACE", "PROJECT"]
 
 
-class PublicDashboardResponse(BaseModel):
-    dashboard_id: Union[str, None] = None
+class PublicDataTableResponse(BaseModel):
+    data_table_id: Union[str, None] = None
     name: Union[str, None] = None
-    description: Union[str, None] = None
-    version: Union[str, None] = None
-    layouts: Union[List[Any], None] = None
-    vars: Union[dict, None] = None
+    data_type: Union[str, None] = None
+    source_type: Union[str, None] = None
+    operator: Union[str, None] = None
     options: Union[dict, None] = None
-    variables: Union[dict, None] = None
-    variables_schema: Union[dict, None] = None
-    labels: Union[List[str], None] = None
     tags: Union[dict, None] = None
-    folder_id: Union[str, None] = None
+    labels_info: Union[dict, None] = None
+    data_info: Union[dict, None] = None
+    dashboard_id: Union[str, None] = None
+    widget_id: Union[str, None] = None
     resource_group: Union[ResourceGroup, None] = None
     project_id: Union[str, None] = None
     workspace_id: Union[str, None] = None
@@ -35,6 +34,6 @@ class PublicDashboardResponse(BaseModel):
         return data
 
 
-class PublicDashboardsResponse(BaseModel):
-    results: List[PublicDashboardResponse]
+class PublicDataTablesResponse(BaseModel):
+    results: List[PublicDataTableResponse]
     total_count: int

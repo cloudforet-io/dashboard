@@ -18,7 +18,7 @@ class PrivateDashboardManager(BaseManager):
             _LOGGER.info(
                 f"[create_private_dashboard._rollback] "
                 f"Delete vo : {vo.name} "
-                f"({vo.private_dashboard_id})"
+                f"({vo.dashboard_id})"
             )
             vo.delete()
 
@@ -33,7 +33,7 @@ class PrivateDashboardManager(BaseManager):
         def _rollback(old_data: dict) -> None:
             _LOGGER.info(
                 f"[update_private_dashboard_by_vo._rollback] Revert Data : "
-                f'{old_data["private_dashboard_id"]}'
+                f'{old_data["dashboard_id"]}'
             )
             dashboard_vo.update(old_data)
 
@@ -46,12 +46,12 @@ class PrivateDashboardManager(BaseManager):
 
     def get_private_dashboard(
         self,
-        private_dashboard_id: str,
+        dashboard_id: str,
         domain_id: str,
         user_id: str,
     ) -> PrivateDashboard:
         return self.dashboard_model.get(
-            private_dashboard_id=private_dashboard_id,
+            dashboard_id=dashboard_id,
             domain_id=domain_id,
             user_id=user_id
         )

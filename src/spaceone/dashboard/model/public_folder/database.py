@@ -3,19 +3,11 @@ from mongoengine import *
 from spaceone.core.model.mongo_model import MongoModel
 
 
-class PublicDashboard(MongoModel):
-    dashboard_id = StringField(
-        max_length=40, generate_id="public-dash", unique=True
+class PublicFolder(MongoModel):
+    folder_id = StringField(
+        max_length=40, generate_id="public-folder", unique=True
     )
     name = StringField(max_length=100)
-    description = StringField(default=None)
-    version = StringField(max_length=40, default="2.0")
-    layouts = ListField(default=None)
-    vars = DictField(default=None)
-    options = DictField(default=None)
-    variables = DictField(default=None)
-    variables_schema = DictField(default=None)
-    labels = ListField(StringField())
     tags = DictField(default=None)
     resource_group = StringField(
         max_length=40, choices=("DOMAIN", "WORKSPACE", "PROJECT")
@@ -29,19 +21,11 @@ class PublicDashboard(MongoModel):
     meta = {
         "updatable_fields": [
             "name",
-            "description",
-            "layouts",
-            "vars",
-            "options",
-            "variables",
-            "variables_schema",
-            "labels",
             "tags",
         ],
         "minimal_fields": [
-            "dashboard_id",
+            "folder_id",
             "name",
-            "version",
             "resource_group",
             "project_id",
             "workspace_id",

@@ -1,24 +1,15 @@
 from datetime import datetime
-from typing import Union, List, Any
+from typing import Union, List
 from pydantic import BaseModel
 from spaceone.core import utils
 
-__all__ = ["PrivateDashboardResponse", "PrivateDashboardsResponse"]
+__all__ = ["PrivateFolderResponse", "PrivateFoldersResponse"]
 
 
-class PrivateDashboardResponse(BaseModel):
-    dashboard_id: Union[str, None] = None
-    name: Union[str, None] = None
-    description: Union[str, None] = None
-    version: Union[str, None] = None
-    layouts: Union[List[Any], None] = None
-    vars: Union[dict, None] = None
-    options: Union[dict, None] = None
-    variables: Union[dict, None] = None
-    variables_schema: Union[dict, None] = None
-    labels: Union[List[str], None] = None
-    tags: Union[dict, None] = None
+class PrivateFolderResponse(BaseModel):
     folder_id: Union[str, None] = None
+    name: Union[str, None] = None
+    tags: Union[dict, None] = None
     user_id: Union[str, None] = None
     workspace_id: Union[str, None] = None
     domain_id: Union[str, None] = None
@@ -32,6 +23,6 @@ class PrivateDashboardResponse(BaseModel):
         return data
 
 
-class PrivateDashboardsResponse(BaseModel):
-    results: List[PrivateDashboardResponse]
+class PrivateFoldersResponse(BaseModel):
+    results: List[PrivateFolderResponse]
     total_count: int

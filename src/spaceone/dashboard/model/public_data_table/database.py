@@ -3,20 +3,18 @@ from mongoengine import *
 from spaceone.core.model.mongo_model import MongoModel
 
 
-class PublicDashboard(MongoModel):
-    dashboard_id = StringField(
-        max_length=40, generate_id="public-dash", unique=True
-    )
-    name = StringField(max_length=100)
-    description = StringField(default=None)
-    version = StringField(max_length=40, default="2.0")
-    layouts = ListField(default=None)
-    vars = DictField(default=None)
-    options = DictField(default=None)
-    variables = DictField(default=None)
-    variables_schema = DictField(default=None)
-    labels = ListField(StringField())
+class PublicDataTable(MongoModel):
+    data_table_id = StringField(max_length=40, generate_id="public-dt", unique=True)
+    name = StringField(max_length=100, default=None, null=True)
+    data_type = StringField(max_length=40, choices=("ADDED", "TRANSFORMED"))
+    source_type = StringField(max_length=40, default=None, null=True)
+    operator = StringField(max_length=40, default=None, null=True)
+    options = DictField(required=True, default=None)
     tags = DictField(default=None)
+    labels_info = DictField(default=None)
+    data_info = DictField(default=None)
+    dashboard_id = StringField(max_length=40)
+    widget_id = StringField(max_length=40)
     resource_group = StringField(
         max_length=40, choices=("DOMAIN", "WORKSPACE", "PROJECT")
     )
@@ -29,19 +27,17 @@ class PublicDashboard(MongoModel):
     meta = {
         "updatable_fields": [
             "name",
-            "description",
-            "layouts",
-            "vars",
             "options",
-            "variables",
-            "variables_schema",
-            "labels",
             "tags",
         ],
         "minimal_fields": [
-            "dashboard_id",
+            "data_table_id",
             "name",
-            "version",
+            "data_type",
+            "source_type",
+            "operator",
+            "dashboard_id",
+            "widget_id",
             "resource_group",
             "project_id",
             "workspace_id",
@@ -51,6 +47,11 @@ class PublicDashboard(MongoModel):
         "ordering": ["name"],
         "indexes": [
             "name",
+            "data_type",
+            "source_type",
+            "operator",
+            "dashboard_id",
+            "widget_id",
             "resource_group",
             "project_id",
             "workspace_id",
