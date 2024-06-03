@@ -12,7 +12,7 @@ class PrivateDataTable(BaseAPI, private_data_table_pb2_grpc.PrivateDataTableServ
     pb2 = private_data_table_pb2
     pb2_grpc = private_data_table_pb2_grpc
 
-    def create(self, request, context):
+    def add(self, request, context):
         params, metadata = self.parse_request(request, context)
         pri_data_table_svc = PrivateDataTableService(metadata)
         response: dict = pri_data_table_svc.add(params)

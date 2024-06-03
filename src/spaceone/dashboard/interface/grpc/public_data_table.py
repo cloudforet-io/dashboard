@@ -7,7 +7,7 @@ class PublicDataTable(BaseAPI, public_data_table_pb2_grpc.PublicDataTableService
     pb2 = public_data_table_pb2
     pb2_grpc = public_data_table_pb2_grpc
 
-    def create(self, request, context):
+    def add(self, request, context):
         params, metadata = self.parse_request(request, context)
         pub_data_table_svc = PublicDataTableService(metadata)
         response: dict = pub_data_table_svc.add(params)
