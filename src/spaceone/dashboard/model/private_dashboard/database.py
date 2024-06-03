@@ -4,11 +4,9 @@ from spaceone.core.model.mongo_model import MongoModel
 
 
 class PrivateDashboard(MongoModel):
-    dashboard_id = StringField(
-        max_length=40, generate_id="private-dash", unique=True
-    )
+    dashboard_id = StringField(max_length=40, generate_id="private-dash", unique=True)
     description = StringField(default=None)
-    name = StringField(max_length=100, unique_with=["user_id", "workspace_id", "domain_id"])
+    name = StringField(max_length=100)
     version = StringField(max_length=40, default="2.0")
     layouts = ListField(default=None)
     vars = DictField(default=None)
