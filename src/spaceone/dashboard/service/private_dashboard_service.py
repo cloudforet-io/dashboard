@@ -1,14 +1,14 @@
-import copy
 import logging
+from typing import Union
 
 from spaceone.core.service import *
-from spaceone.dashboard.manager import (
-    PrivateDashboardManager,
-    PrivateDashboardVersionManager,
-    IdentityManager,
-)
-from spaceone.dashboard.model import PrivateDashboard, PrivateDashboardVersion
-from spaceone.dashboard.error import *
+from spaceone.core.error import *
+from spaceone.dashboard.manager.private_dashboard_manager import PrivateDashboardManager
+from spaceone.dashboard.manager.private_folder_manager import PrivateFolderManager
+from spaceone.dashboard.manager.identity_manager import IdentityManager
+from spaceone.dashboard.model.private_dashboard.request import *
+from spaceone.dashboard.model.private_dashboard.response import *
+from spaceone.dashboard.model.private_dashboard.database import PrivateDashboard
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -22,400 +22,215 @@ class PrivateDashboardService(BaseService):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.dashboard_mgr: PrivateDashboardManager = self.locator.get_manager(
-            "PrivateDashboardManager"
-        )
-        self.version_mgr: PrivateDashboardVersionManager = self.locator.get_manager(
-            "PrivateDashboardVersionManager"
-        )
-        self.identity_mgr: IdentityManager = self.locator.get_manager("IdentityManager")
+        self.pri_dashboard_mgr = PrivateDashboardManager()
+        self.identity_mgr = IdentityManager()
 
     @transaction(
         permission="dashboard:PrivateDashboard.write",
-        role_types=["WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
+        role_types=["USER"],
     )
-    @check_required(
-        ["name", "template_id", "template_type", "workspace_id", "domain_id"]
-    )
-    def create(self, params: dict) -> PrivateDashboard:
-        """Register private_dashboard
+    @convert_model
+    def create(
+        self, params: PrivateDashboardCreateRequest
+    ) -> Union[PrivateDashboardResponse, dict]:
+        """Create private dashboard
 
         Args:
             params (dict): {
-                'name': 'str',                 # required
-                'template_id': 'str',          # required
-                'template_type': 'str',        # required
+                'name': 'str',                  # required
+                'description': 'str',
                 'layouts': 'list',
+                'vars': 'dict',
+                'options': 'dict',
                 'variables': 'dict',
-                'settings': 'dict',
                 'variables_schema': 'dict',
                 'labels': 'list',
                 'tags': 'dict',
-                'domain_id': 'str',            # injected from auth (required)
-                'workspace_id': 'str',         # injected from auth (required)
+                'folder_id': 'str',
+                'workspace_id': 'str',
+                'user_id': 'str',               # injected from auth (required)
+                'domain_id': 'str'              # injected from auth (required)
             }
 
         Returns:
-            private_dashboard_vo (object)
+            PrivateDashboardResponse:
         """
 
-        params["user_id"] = self.transaction.get_meta("authorization.user_id")
-
-        dashboard_vo = self.dashboard_mgr.create_private_dashboard(params)
-
-        version_keys = ["layouts", "variables", "variables_schema"]
-        if any(set(version_keys) & set(params.keys())):
-            self.version_mgr.create_version_by_private_dashboard_vo(
-                dashboard_vo, params
+        if params.folder_id:
+            pri_folder_mgr = PrivateFolderManager()
+            pri_folder_mgr.get_private_folder(
+                params.folder_id, params.domain_id, params.user_id
             )
 
-        return dashboard_vo
+        if params.workspace_id:
+            self.identity_mgr.check_workspace(params.workspace_id, params.domain_id)
+
+        pri_dashboard_vo = self.pri_dashboard_mgr.create_private_dashboard(
+            params.dict()
+        )
+        return PrivateDashboardResponse(**pri_dashboard_vo.to_dict())
 
     @transaction(
         permission="dashboard:PrivateDashboard.write",
-        role_types=["WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
+        role_types=["USER"],
     )
-    @check_required(["private_dashboard_id", "workspace_id", "domain_id"])
-    def update(self, params):
-        """Update private_dashboard
+    @convert_model
+    def update(
+        self, params: PrivateDashboardUpdateRequest
+    ) -> Union[PrivateDashboardResponse, dict]:
+        """Update private dashboard
 
         Args:
             params (dict): {
-                'private_dashboard_id': 'str',   # required
+                'dashboard_id': 'str',   # required
                 'name': 'str',
+                'description': 'str',
                 'layouts': 'list',
+                'vars': 'dict',
+                'options': 'dict',
                 'variables': 'dict',
-                'settings': 'dict',
                 'variables_schema': 'list',
                 'labels': 'list',
                 'tags': 'dict',
-                'domain_id': 'str',              # injected from auth (required)
-                'workspace_id': 'str',           # injected from auth (required)
+                'folder_id': 'str',
+                'user_id': 'str',               # injected from auth (required)
+                'domain_id': 'str'              # injected from auth (required)
             }
 
         Returns:
-            private_dashboard_vo (object)
+            PrivateDashboardResponse:
         """
 
-        private_dashboard_id = params["private_dashboard_id"]
-        workspace_id = params["workspace_id"]
-        domain_id = params["domain_id"]
-
-        dashboard_vo: PrivateDashboard = self.dashboard_mgr.get_private_dashboard(
-            private_dashboard_id, workspace_id, domain_id
+        pri_dashboard_vo: PrivateDashboard = (
+            self.pri_dashboard_mgr.get_private_dashboard(
+                params.dashboard_id, params.domain_id, params.user_id
+            )
         )
 
-        if "name" not in params:
-            params["name"] = dashboard_vo.name
-
-        if "settings" in params:
-            params["settings"] = self._merge_dict(
-                dashboard_vo.settings, params["settings"]
+        if params.folder_id:
+            pri_folder_mgr = PrivateFolderManager()
+            pri_folder_mgr.get_private_folder(
+                params.folder_id, params.domain_id, params.user_id
             )
 
-        if "display_info" in params:
-            params["display_info"] = self._merge_dict(
-                dashboard_vo.display_info, params["display_info"]
-            )
+        pri_dashboard_vo = self.pri_dashboard_mgr.update_private_dashboard_by_vo(
+            params.dict(exclude_unset=True), pri_dashboard_vo
+        )
 
-        version_change_keys = ["layouts", "variables", "variables_schema"]
-        if self._has_version_key_in_params(dashboard_vo, params, version_change_keys):
-            self.dashboard_mgr.increase_version(dashboard_vo)
-            self.version_mgr.create_version_by_private_dashboard_vo(
-                dashboard_vo, params
-            )
-
-        return self.dashboard_mgr.update_private_dashboard_by_vo(params, dashboard_vo)
+        return PrivateDashboardResponse(**pri_dashboard_vo.to_dict())
 
     @transaction(
         permission="dashboard:PrivateDashboard.write",
-        role_types=["WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
+        role_types=["USER"],
     )
-    @check_required(["private_dashboard_id", "workspace_id", "domain_id"])
-    def delete(self, params):
-        """Deregister private_dashboard
+    @convert_model
+    def delete(self, params: PrivateDashboardDeleteRequest) -> None:
+        """Delete private dashboard
 
         Args:
             params (dict): {
-                'private_dashboard_id': 'str',  # required
-                'domain_id': 'str',             # injected from auth (required)
-                'workspace_id': 'str',          # injected from auth (required)
-            }
-
-        Returns:
-            None
-        """
-        private_dashboard_id = params["private_dashboard_id"]
-        workspace_id = params["workspace_id"]
-        domain_id = params["domain_id"]
-
-        dashboard_vo: PrivateDashboard = self.dashboard_mgr.get_private_dashboard(
-            private_dashboard_id, workspace_id, domain_id
-        )
-
-        if private_dashboard_version_vos := self.version_mgr.filter_versions(
-            private_dashboard_id=dashboard_vo.private_dashboard_id, domain_id=domain_id
-        ):
-            self.version_mgr.delete_versions_by_private_dashboard_version_vos(
-                private_dashboard_version_vos
-            )
-
-        self.dashboard_mgr.delete_by_private_dashboard_vo(dashboard_vo)
-
-    @transaction(
-        permission="dashboard:PrivateDashboard.read",
-        role_types=["WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
-    )
-    @check_required(["private_dashboard_id", "workspace_id", "domain_id"])
-    def get(self, params):
-        """Get private_dashboard
-
-        Args:
-            params (dict): {
-                'private_dashboard_id': 'str',   # required
-                'domain_id': 'str',              # injected from auth (required)
-                'workspace_id': 'str',           # injected from auth (required)
-            }
-
-        Returns:
-            private_dashboard_vo (object)
-        """
-        private_dashboard_id = params["private_dashboard_id"]
-        workspace_id = params["workspace_id"]
-        domain_id = params["domain_id"]
-
-        dashboard_vo = self.dashboard_mgr.get_private_dashboard(
-            private_dashboard_id, workspace_id, domain_id
-        )
-
-        return dashboard_vo
-
-    @transaction(
-        permission="dashboard:PrivateDashboard.write",
-        role_types=["WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
-    )
-    @check_required(["private_dashboard_id", "version", "workspace_id", "domain_id"])
-    def delete_version(self, params):
-        """delete version of domain dashboard
-
-        Args:
-            params (dict): {
-                'private_dashboard_id': 'str',   # required
-                'version': 'int',                # required
-                'domain_id': 'str',              # injected from auth (required)
-                'workspace_id': 'str',           # injected from auth (required)
-                'user_id': 'str'                 # injected from auth (required)
+                'dashboard_id': 'str',   # required
+                'user_id': 'str',               # injected from auth (required)
+                'domain_id': 'str'              # injected from auth (required)
             }
 
         Returns:
             None
         """
 
-        private_dashboard_id = params["private_dashboard_id"]
-        version = params["version"]
-        workspace_id = params["workspace_id"]
-        domain_id = params["domain_id"]
-
-        dashboard_vo = self.dashboard_mgr.get_private_dashboard(
-            private_dashboard_id, workspace_id, domain_id
+        pri_dashboard_vo = self.pri_dashboard_mgr.get_private_dashboard(
+            params.dashboard_id, params.domain_id, params.user_id
         )
 
-        current_version = dashboard_vo.version
-        if current_version == version:
-            raise ERROR_LATEST_VERSION(version=version)
-
-        self.version_mgr.delete_version(private_dashboard_id, version, domain_id)
-
-    @transaction(
-        permission="dashboard:PrivateDashboard.write",
-        role_types=["WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
-    )
-    @check_required(["private_dashboard_id", "version", "workspace_id", "domain_id"])
-    def revert_version(self, params):
-        """Revert version of domain dashboard
-
-        Args:
-            params (dict): {
-                'private_dashboard_id': 'str',    # required
-                'version': 'int',                 # required
-                'domain_id': 'str',               # injected from auth (required)
-                'domain_id': 'str',               # injected from auth (required)
-                'workspace_id': 'str',            # injected from auth (required)
-            }
-
-        Returns:
-            private_dashboard_vo (object)
-        """
-
-        private_dashboard_id = params["private_dashboard_id"]
-        version = params["version"]
-        workspace_id = params["workspace_id"]
-        domain_id = params["domain_id"]
-
-        dashboard_vo: PrivateDashboard = self.dashboard_mgr.get_private_dashboard(
-            private_dashboard_id, workspace_id, domain_id
-        )
-
-        version_vo: PrivateDashboardVersion = self.version_mgr.get_version(
-            private_dashboard_id, version, domain_id
-        )
-
-        params["layouts"] = version_vo.layouts
-        params["variables"] = version_vo.variables
-        params["variables_schema"] = version_vo.variables_schema
-
-        self.dashboard_mgr.increase_version(dashboard_vo)
-        self.version_mgr.create_version_by_private_dashboard_vo(dashboard_vo, params)
-
-        return self.dashboard_mgr.update_private_dashboard_by_vo(params, dashboard_vo)
+        self.pri_dashboard_mgr.delete_private_dashboard_by_vo(pri_dashboard_vo)
 
     @transaction(
         permission="dashboard:PrivateDashboard.read",
-        role_types=["WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
+        role_types=["USER"],
     )
-    @check_required(["private_dashboard_id", "version", "workspace_id", "domain_id"])
-    def get_version(self, params):
-        """Get version of domain dashboard
+    @convert_model
+    def get(
+        self, params: PrivateDashboardGetRequest
+    ) -> Union[PrivateDashboardResponse, dict]:
+        """Get private dashboard
 
         Args:
             params (dict): {
-                'private_dashboard_id': 'str',   # required
-                'version': 'int',                # required
-                'domain_id': 'str',              # injected from auth (required)
-                'workspace_id': 'str',           # injected from auth (required)
+                'dashboard_id': 'str',   # required
+                'user_id': 'str',               # injected from auth (required)
+                'domain_id': 'str'              # injected from auth (required)
             }
 
         Returns:
-            private_dashboard_version_vo (object)
+            PrivateDashboardResponse:
         """
 
-        private_dashboard_id = params["private_dashboard_id"]
-        version = params["version"]
-        domain_id = params["domain_id"]
+        pri_dashboard_vo = self.pri_dashboard_mgr.get_private_dashboard(
+            params.dashboard_id, params.domain_id, params.user_id
+        )
 
-        return self.version_mgr.get_version(private_dashboard_id, version, domain_id)
+        return PrivateDashboardResponse(**pri_dashboard_vo.to_dict())
 
     @transaction(
         permission="dashboard:PrivateDashboard.read",
-        role_types=["WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
+        role_types=["USER"],
     )
-    @check_required(["private_dashboard_id", "workspace_id", "domain_id"])
-    @append_query_filter(["private_dashboard_id", "version", "domain_id"])
-    @append_keyword_filter(["private_dashboard_id", "version"])
-    def list_versions(self, params):
-        """List versions of domain dashboard
+    @append_query_filter(
+        ["dashboard_id", "name", "domain_id", "workspace_id", "user_id", "folder_id"]
+    )
+    @append_keyword_filter(["dashboard_id", "name"])
+    @convert_model
+    def list(
+        self, params: PrivateDashboardSearchQueryRequest
+    ) -> Union[PrivateDashboardsResponse, dict]:
+        """List private dashboards
 
         Args:
             params (dict): {
-                'private_dashboard_id': 'str',                   # required
                 'query': 'dict (spaceone.api.core.v1.Query)'
-                'version': 'int',
-                'domain_id': 'str',                              # injected from auth (required)
-                'workspace_id': 'str',                           # injected from auth (required)
+                'dashboard_id': 'str',
+                'name': 'str',
+                'folder_id': 'str',
+                'user_id': 'str',                               # injected from auth (required)
+                'workspace_id': 'str',
+                'domain_id': 'str',                             # injected from auth (required)
             }
 
         Returns:
-            private_dashboard_version_vos (object)
-            total_count
+            PrivateDashboardsResponse:
         """
-        private_dashboard_id = params["private_dashboard_id"]
-        workspace_id = params["workspace_id"]
-        domain_id = params["domain_id"]
 
-        query = params.get("query", {})
-        private_dashboard_version_vos, total_count = self.version_mgr.list_versions(
+        query = params.query or {}
+        pri_dashboard_vos, total_count = self.pri_dashboard_mgr.list_private_dashboards(
             query
         )
-        dashboard_vo = self.dashboard_mgr.get_private_dashboard(
-            private_dashboard_id, workspace_id, domain_id
+        pri_dashboards_info = [
+            pri_dashboard_vo.to_dict() for pri_dashboard_vo in pri_dashboard_vos
+        ]
+        return PrivateDashboardsResponse(
+            results=pri_dashboards_info, total_count=total_count
         )
 
-        return private_dashboard_version_vos, total_count, dashboard_vo.version
-
     @transaction(
         permission="dashboard:PrivateDashboard.read",
-        role_types=["WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
+        role_types=["USER"],
     )
-    @check_required(["workspace_id", "domain_id"])
-    @append_query_filter(["private_dashboard_id", "name", "domain_id", "workspace_id"])
-    @append_keyword_filter(["private_dashboard_id", "name"])
-    def list(self, params):
-        """List private_dashboards
-
-        Args:
-            params (dict): {
-                'query': 'dict (spaceone.api.core.v1.Query)'
-                'private_dashboard_id': 'str',
-                'name': 'str',
-                'domain_id': 'str',                           # injected from auth (required)
-                'workspace_id': 'str',                        # injected from auth (required)
-            }
-
-        Returns:
-            private_dashboard_vos (object)
-            total_count
-        """
-
-        user_id = self.transaction.get_meta("authorization.user_id")
-
-        query = params.get("query", {})
-        query["filter"].append({"k": "user_id", "v": user_id, "o": "eq"})
-
-        return self.dashboard_mgr.list_private_dashboards(query)
-
-    @transaction(
-        permission="dashboard:PrivateDashboard.read",
-        role_types=["WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
-    )
-    @check_required(["query", "workspace_id", "domain_id"])
-    @append_query_filter(["domain_id", "workspace_id"])
-    @append_keyword_filter(["private_dashboard_id"])
-    def stat(self, params):
+    @append_query_filter(["domain_id", "user_id"])
+    @append_keyword_filter(["dashboard_id", "name"])
+    @convert_model
+    def stat(self, params: PrivateDashboardStatQueryRequest) -> dict:
         """
         Args:
             params (dict): {
                 'query': 'dict (spaceone.api.core.v1.StatisticsQuery)'
-                'domain_id': 'str',                                      # injected from auth (required)
-                'workspace_id': 'str',                                   # injected from auth (required)
+                'user_id': 'str',                                       # injected from auth (required)
+                'domain_id': 'str'                                      # injected from auth (required)
             }
 
         Returns:
-            values (list) : 'list of statistics data'
+            dict:
 
         """
-        user_id = self.transaction.get_meta("authorization.user_id")
 
-        query = params.get("query", {})
-        query["filter"].append({"k": "user_id", "v": user_id, "o": "eq"})
-
-        return self.dashboard_mgr.stat_private_dashboards(query)
-
-    @staticmethod
-    def _has_version_key_in_params(
-        dashboard_vo: PrivateDashboard, params: dict, version_change_keys: list
-    ) -> bool:
-        layouts = dashboard_vo.layouts
-        variables = dashboard_vo.variables
-        variables_schema = dashboard_vo.variables_schema
-
-        if any(key for key in params if key in version_change_keys):
-            if layouts_from_params := params.get("layouts"):
-                if layouts != layouts_from_params:
-                    return True
-            if options_from_params := params.get("variables"):
-                if variables != options_from_params:
-                    return True
-            if schema_from_params := params.get("variables_schema"):
-                if schema_from_params != variables_schema:
-                    return True
-            return False
-
-    @staticmethod
-    def _merge_dict(old_dict: dict, new_dict: dict) -> dict:
-        settings = copy.deepcopy(old_dict)
-
-        if old_dict:
-            settings.update(new_dict)
-            return settings
-        else:
-            return new_dict
+        query = params.query or {}
+        return self.pri_dashboard_mgr.stat_private_dashboards(query)

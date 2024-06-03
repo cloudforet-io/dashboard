@@ -1,6 +1,9 @@
 import logging
+from typing import Tuple
+from mongoengine import QuerySet
+
 from spaceone.core.manager import BaseManager
-from spaceone.dashboard.model.public_dashboard_model import PublicDashboard
+from spaceone.dashboard.model.public_dashboard.database import PublicDashboard
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -8,16 +11,14 @@ _LOGGER = logging.getLogger(__name__)
 class PublicDashboardManager(BaseManager):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.dashboard_model: PublicDashboard = self.locator.get_model(
-            "PublicDashboard"
-        )
+        self.dashboard_model = PublicDashboard
 
     def create_public_dashboard(self, params: dict) -> PublicDashboard:
         def _rollback(vo: PublicDashboard) -> None:
             _LOGGER.info(
                 f"[create_public_dashboard._rollback] "
                 f"Delete vo : {vo.name} "
-                f"({vo.public_dashboard_id})"
+                f"({vo.dashboard_id})"
             )
             vo.delete()
 
@@ -32,28 +33,26 @@ class PublicDashboardManager(BaseManager):
         def _rollback(old_data: dict) -> None:
             _LOGGER.info(
                 f"[update_public_dashboard_by_vo._rollback] Revert Data : "
-                f'{old_data["public_dashboard_id"]}'
+                f'{old_data["dashboard_id"]}'
             )
             dashboard_vo.update(old_data)
 
         self.transaction.add_rollback(_rollback, dashboard_vo.to_dict())
         return dashboard_vo.update(params)
 
-    def delete_public_dashboard(self, public_dashboard_id: str, domain_id: str) -> None:
-        dashboard_vo: PublicDashboard = self.get_public_dashboard(
-            public_dashboard_id, domain_id
-        )
+    @staticmethod
+    def delete_public_dashboard_by_vo(dashboard_vo: PublicDashboard) -> None:
         dashboard_vo.delete()
 
     def get_public_dashboard(
         self,
-        public_dashboard_id: str,
+        dashboard_id: str,
         domain_id: str,
         workspace_id: str = None,
         user_projects=None,
     ) -> PublicDashboard:
         conditions = {
-            "public_dashboard_id": public_dashboard_id,
+            "dashboard_id": dashboard_id,
             "domain_id": domain_id,
         }
 
@@ -65,23 +64,11 @@ class PublicDashboardManager(BaseManager):
 
         return self.dashboard_model.get(**conditions)
 
-    def list_public_dashboards(self, query: dict) -> dict:
+    def filter_public_dashboards(self, **conditions) -> QuerySet:
+        return self.dashboard_model.filter(**conditions)
+
+    def list_public_dashboards(self, query: dict) -> Tuple[QuerySet, int]:
         return self.dashboard_model.query(**query)
 
     def stat_public_dashboards(self, query: dict) -> dict:
         return self.dashboard_model.stat(**query)
-
-    def increase_version(self, dashboard_vo: PublicDashboard) -> None:
-        def _rollback(vo: PublicDashboard):
-            _LOGGER.info(
-                f"[increase_version._rollback] Decrease Version : "
-                f"{vo.public_dashboard_id}"
-            )
-            vo.decrement("version")
-
-        dashboard_vo.increment("version")
-        self.transaction.add_rollback(_rollback, dashboard_vo)
-
-    @staticmethod
-    def delete_by_public_dashboard_vo(dashboard_vo: PublicDashboard) -> None:
-        dashboard_vo.delete()
