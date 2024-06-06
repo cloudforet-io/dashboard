@@ -28,6 +28,8 @@ class PrivateDataTable(MongoModel):
             "name",
             "options",
             "tags",
+            "labels_info",
+            "data_info",
         ],
         "minimal_fields": [
             "data_table_id",
