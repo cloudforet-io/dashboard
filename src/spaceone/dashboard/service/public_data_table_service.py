@@ -1,10 +1,17 @@
 import logging
-from typing import Union
+import copy
+from typing import Union, Tuple
 
 from spaceone.core.service import *
 from spaceone.core.error import *
 from spaceone.dashboard.manager.public_data_table_manager import PublicDataTableManager
 from spaceone.dashboard.manager.public_widget_manager import PublicWidgetManager
+from spaceone.dashboard.manager.data_table_manager.data_source_manager import (
+    DataSourceManager,
+)
+from spaceone.dashboard.manager.data_table_manager.data_transformation_manager import (
+    DataTransformationManager,
+)
 from spaceone.dashboard.model.public_data_table.request import *
 from spaceone.dashboard.model.public_data_table.response import *
 from spaceone.dashboard.model.public_data_table.database import PublicDataTable
@@ -22,6 +29,7 @@ class PublicDataTableService(BaseService):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.pub_data_table_mgr = PublicDataTableManager()
+        self.ds_mgr = DataSourceManager()
 
     @transaction(
         permission="dashboard:PublicDataTable.write",
@@ -57,8 +65,20 @@ class PublicDataTableService(BaseService):
             params.user_projects,
         )
 
+        # Get data and labels info from options
+        data_info, labels_info = self._get_data_and_labels_info(params.options)
+
+        # Load data source to verify options
+        self.ds_mgr.load_data_source(
+            params.source_type,
+            params.options,
+            "DAILY",
+        )
+
         params_dict = params.dict()
-        params_dict["data_type"] = "TRANSFORMED"
+        params_dict["data_type"] = "ADDED"
+        params_dict["data_info"] = data_info
+        params_dict["labels_info"] = labels_info
 
         pub_data_table_vo = self.pub_data_table_mgr.create_public_data_table(
             params_dict
@@ -143,8 +163,37 @@ class PublicDataTableService(BaseService):
             )
         )
 
+        params_dict = params.dict(exclude_unset=True)
+
+        if options := params_dict.get("options"):
+            if pub_data_table_vo.data_type == "ADDED":
+                # Load data source to verify options
+                self.ds_mgr.load_data_source(
+                    pub_data_table_vo.source_type,
+                    options,
+                    "DAILY",
+                )
+
+                # change timediff format
+                if timediff := options.get("timediff"):
+                    if years := timediff.get("years"):
+                        options["timediff"] = {"years": years}
+                    elif months := timediff.get("months"):
+                        options["timediff"] = {"months": months}
+                    elif days := timediff.get("days"):
+                        options["timediff"] = {"days": days}
+
+                    params_dict["options"] = options
+
+                # Get data and labels info from options
+                data_info, labels_info = self._get_data_and_labels_info(options)
+                params_dict["data_info"] = data_info
+                params_dict["labels_info"] = labels_info
+            else:
+                pass
+
         pub_data_table_vo = self.pub_data_table_mgr.update_public_data_table_by_vo(
-            params.dict(exclude_unset=True), pub_data_table_vo
+            params_dict, pub_data_table_vo
         )
 
         return PublicDataTableResponse(**pub_data_table_vo.to_dict())
@@ -214,12 +263,21 @@ class PublicDataTableService(BaseService):
             )
         )
 
-        # TODO: Implement load public data table
-
-        return {
-            "results": [],
-            "total_count": 0,
-        }
+        if pub_data_table_vo.data_type == "ADDED":
+            return self.ds_mgr.load_data_source(
+                pub_data_table_vo.source_type,
+                pub_data_table_vo.options,
+                params.granularity,
+                params.start,
+                params.end,
+                params.sort,
+                params.page,
+            )
+        else:
+            return {
+                "results": [],
+                "total_count": 0,
+            }
 
     @transaction(
         permission="dashboard:PublicDataTable.read",
@@ -309,3 +367,48 @@ class PublicDataTableService(BaseService):
         return PublicDataTablesResponse(
             results=pub_data_tables_info, total_count=total_count
         )
+
+    @staticmethod
+    def _get_data_and_labels_info(options: dict) -> Tuple[dict, dict]:
+        data_name = options.get("data_name")
+        data_unit = options.get("data_unit")
+        group_by = options.get("group_by")
+        date_format = options.get("date_format", "SINGLE")
+
+        if data_name is None:
+            raise ERROR_REQUIRED_PARAMETER(key="options.data_name")
+
+        data_info = {data_name: {}}
+
+        if data_unit:
+            data_info[data_name]["unit"] = data_unit
+
+        labels_info = {}
+
+        if group_by:
+            for group_option in copy.deepcopy(group_by):
+                if isinstance(group_option, dict):
+                    group_name = group_option.get("name")
+                    group_key = group_option.get("key")
+                    name = group_name or group_key
+                    if name is None:
+                        raise ERROR_REQUIRED_PARAMETER(key="options.group_by.key")
+
+                    if group_name:
+                        del group_option["name"]
+
+                    if group_key:
+                        del group_option["key"]
+
+                    labels_info[group_name] = group_option
+                else:
+                    labels_info[group_option] = {}
+
+        if date_format == "SINGLE":
+            labels_info["date"] = {}
+        else:
+            labels_info["year"] = {}
+            labels_info["month"] = {}
+            labels_info["day"] = {}
+
+        return data_info, labels_info
