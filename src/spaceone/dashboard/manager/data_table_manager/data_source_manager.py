@@ -1,4 +1,5 @@
 import logging
+import copy
 from typing import Literal, Tuple
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
@@ -18,6 +19,59 @@ class DataSourceManager(DataTableManager):
         super().__init__(*args, **kwargs)
         self.cost_analysis_mgr = CostAnalysisManager()
         self.inventory_mgr = InventoryManager()
+
+    @staticmethod
+    def get_data_and_labels_info(options: dict) -> Tuple[dict, dict]:
+        data_name = options.get("data_name")
+        data_unit = options.get("data_unit")
+        group_by = options.get("group_by")
+        date_format = options.get("date_format", "SINGLE")
+        additional_labels = options.get("additional_labels")
+
+        if data_name is None:
+            raise ERROR_REQUIRED_PARAMETER(key="options.data_name")
+
+        data_info = {data_name: {}}
+
+        if data_unit:
+            data_info[data_name]["unit"] = data_unit
+
+        labels_info = {}
+
+        if group_by:
+            for group_option in copy.deepcopy(group_by):
+                if isinstance(group_option, dict):
+                    group_name = group_option.get("name")
+                    group_key = group_option.get("key")
+                    if "." in group_key:
+                        group_key = group_key.split(".")[-1]
+
+                    name = group_name or group_key
+                    if name is None:
+                        raise ERROR_REQUIRED_PARAMETER(key="options.group_by.key")
+
+                    if group_name:
+                        del group_option["name"]
+
+                    if group_key:
+                        del group_option["key"]
+
+                    labels_info[group_name] = group_option
+                else:
+                    labels_info[group_option] = {}
+
+        if additional_labels:
+            for key in additional_labels.keys():
+                labels_info[key] = {}
+
+        if date_format == "SINGLE":
+            labels_info["Date"] = {}
+        else:
+            labels_info["Year"] = {}
+            labels_info["Month"] = {}
+            labels_info["Day"] = {}
+
+        return data_info, labels_info
 
     def load_data_source(
         self,
@@ -82,8 +136,7 @@ class DataSourceManager(DataTableManager):
         response = self.inventory_mgr.analyze_metric_data(params)
         results = response.get("results", [])
 
-        if date_format == "SEPARATE":
-            results = self._change_datetime_format(results)
+        results = self._change_datetime_format(results, date_format)
 
         self.df = pd.DataFrame(results)
 
@@ -122,27 +175,29 @@ class DataSourceManager(DataTableManager):
         response = self.cost_analysis_mgr.analyze_cost(params)
         results = response.get("results", [])
 
-        if date_format == "SEPARATE":
-            results = self._change_datetime_format(results)
+        results = self._change_datetime_format(results, date_format)
 
         self.df = pd.DataFrame(results)
 
     @staticmethod
-    def _change_datetime_format(results: list) -> list:
+    def _change_datetime_format(results: list, date_format: str) -> list:
         changed_results = []
         for result in results:
             if date := result.get("date"):
-                if len(date) == 4:
-                    result["year"] = date
-                elif len(date) == 7:
-                    year, month = date.split("-")
-                    result["year"] = year
-                    result["month"] = month
-                elif len(date) == 10:
-                    year, month, day = date.split("-")
-                    result["year"] = year
-                    result["month"] = month
-                    result["day"] = day
+                if date_format == "SINGLE":
+                    result["Date"] = date
+                else:
+                    if len(date) == 4:
+                        result["Year"] = date
+                    elif len(date) == 7:
+                        year, month = date.split("-")
+                        result["Year"] = year
+                        result["Month"] = month
+                    elif len(date) == 10:
+                        year, month, day = date.split("-")
+                        result["Year"] = year
+                        result["Month"] = month
+                        result["Day"] = day
 
                 del result["date"]
             changed_results.append(result)
