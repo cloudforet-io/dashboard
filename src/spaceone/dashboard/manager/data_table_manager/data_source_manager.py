@@ -1,4 +1,5 @@
 import logging
+import copy
 from typing import Literal, Tuple
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
@@ -19,6 +20,105 @@ class DataSourceManager(DataTableManager):
         self.cost_analysis_mgr = CostAnalysisManager()
         self.inventory_mgr = InventoryManager()
 
+    @staticmethod
+    def get_data_and_labels_info(options: dict) -> Tuple[dict, dict]:
+        data_name = options.get("data_name")
+        data_unit = options.get("data_unit")
+        group_by = options.get("group_by")
+        date_format = options.get("date_format", "SINGLE")
+        additional_labels = options.get("additional_labels")
+
+        if data_name is None:
+            raise ERROR_REQUIRED_PARAMETER(key="options.data_name")
+
+        data_info = {data_name: {}}
+
+        if data_unit:
+            data_info[data_name]["unit"] = data_unit
+
+        labels_info = {}
+
+        if group_by:
+            for group_option in copy.deepcopy(group_by):
+                if isinstance(group_option, dict):
+                    group_name = group_option.get("name")
+                    group_key = group_option.get("key")
+                    if "." in group_key:
+                        group_key = group_key.split(".")[-1]
+
+                    name = group_name or group_key
+                    if name is None:
+                        raise ERROR_REQUIRED_PARAMETER(key="options.group_by.key")
+
+                    if group_name:
+                        del group_option["name"]
+
+                    if group_key:
+                        del group_option["key"]
+
+                    labels_info[group_name] = group_option
+                else:
+                    labels_info[group_option] = {}
+
+        if additional_labels:
+            for key in additional_labels.keys():
+                labels_info[key] = {}
+
+        if date_format == "SINGLE":
+            labels_info["Date"] = {}
+        else:
+            labels_info["Year"] = {}
+            labels_info["Month"] = {}
+            labels_info["Day"] = {}
+
+        return data_info, labels_info
+
+    def load_data_table_from_widget(
+        self, source_type: str, options: dict, query: dict, vars: dict = None
+    ) -> dict:
+        self._check_query(query)
+        granularity = query["granularity"]
+        start = query["start"]
+        end = query["end"]
+        fields = query.get("fields")
+        group_by = query.get("group_by")
+        filter = query.get("filter")
+        sort = query.get("sort")
+        page = query.get("page")
+
+        self.load_data_source(source_type, options, granularity, start, end, vars=vars)
+
+        if filter:
+            self.apply_filter(filter)
+
+        if fields:
+            self.group_by(fields, group_by)
+
+        return self.response(sort, page)
+
+    @staticmethod
+    def _check_query(query: dict) -> None:
+        if "granularity" not in query:
+            raise ERROR_REQUIRED_PARAMETER(key="query.granularity")
+
+        if "start" not in query:
+            raise ERROR_REQUIRED_PARAMETER(key="query.start")
+
+        if "end" not in query:
+            raise ERROR_REQUIRED_PARAMETER(key="query.end")
+
+        if "fields" not in query:
+            raise ERROR_REQUIRED_PARAMETER(key="query.fields")
+
+        if "select" in query:
+            raise ERROR_NOT_SUPPORTED_QUERY_OPTION(key="query.select")
+
+        if "field_group" in query:
+            raise ERROR_NOT_SUPPORTED_QUERY_OPTION(key="query.field_group")
+
+        if "filter_or" in query:
+            raise ERROR_NOT_SUPPORTED_QUERY_OPTION(key="query.filter_or")
+
     def load_data_source(
         self,
         source_type: str,
@@ -28,6 +128,7 @@ class DataSourceManager(DataTableManager):
         end: str = None,
         sort: list = None,
         page: dict = None,
+        vars: dict = None,
     ) -> dict:
         start, end = self._get_time_from_granularity(granularity, start, end)
 
@@ -35,9 +136,9 @@ class DataSourceManager(DataTableManager):
             start, end = self._change_time(start, end, timediff)
 
         if source_type == "COST":
-            self._analyze_cost(options, granularity, start, end)
+            self._analyze_cost(options, granularity, start, end, vars)
         elif source_type == "ASSET":
-            self._analyze_asset(options, granularity, start, end)
+            self._analyze_asset(options, granularity, start, end, vars)
         else:
             raise ERROR_NOT_SUPPORTED_SOURCE_TYPE(source_type=source_type)
 
@@ -56,6 +157,7 @@ class DataSourceManager(DataTableManager):
         granularity: GRANULARITY,
         start: str,
         end: str,
+        vars: dict = None,
     ) -> None:
         asset_info = options.get("ASSET", {})
         metric_id = asset_info.get("metric_id")
@@ -75,6 +177,7 @@ class DataSourceManager(DataTableManager):
             options.get("group_by"),
             options.get("filter"),
             options.get("filter_or"),
+            vars=vars,
         )
 
         params = {"metric_id": metric_id, "query": query}
@@ -82,8 +185,7 @@ class DataSourceManager(DataTableManager):
         response = self.inventory_mgr.analyze_metric_data(params)
         results = response.get("results", [])
 
-        if date_format == "SEPARATE":
-            results = self._change_datetime_format(results)
+        results = self._change_datetime_format(results, date_format)
 
         self.df = pd.DataFrame(results)
 
@@ -93,6 +195,7 @@ class DataSourceManager(DataTableManager):
         granularity: GRANULARITY,
         start: str,
         end: str,
+        vars: dict = None,
     ) -> None:
         cost_info = options.get("COST", {})
         data_source_id = cost_info.get("data_source_id")
@@ -115,6 +218,7 @@ class DataSourceManager(DataTableManager):
             options.get("group_by"),
             options.get("filter"),
             options.get("filter_or"),
+            vars=vars,
         )
 
         params = {"data_source_id": data_source_id, "query": query}
@@ -122,27 +226,29 @@ class DataSourceManager(DataTableManager):
         response = self.cost_analysis_mgr.analyze_cost(params)
         results = response.get("results", [])
 
-        if date_format == "SEPARATE":
-            results = self._change_datetime_format(results)
+        results = self._change_datetime_format(results, date_format)
 
         self.df = pd.DataFrame(results)
 
     @staticmethod
-    def _change_datetime_format(results: list) -> list:
+    def _change_datetime_format(results: list, date_format: str) -> list:
         changed_results = []
         for result in results:
             if date := result.get("date"):
-                if len(date) == 4:
-                    result["year"] = date
-                elif len(date) == 7:
-                    year, month = date.split("-")
-                    result["year"] = year
-                    result["month"] = month
-                elif len(date) == 10:
-                    year, month, day = date.split("-")
-                    result["year"] = year
-                    result["month"] = month
-                    result["day"] = day
+                if date_format == "SINGLE":
+                    result["Date"] = date
+                else:
+                    if len(date) == 4:
+                        result["Year"] = date
+                    elif len(date) == 7:
+                        year, month = date.split("-")
+                        result["Year"] = year
+                        result["Month"] = month
+                    elif len(date) == 10:
+                        year, month, day = date.split("-")
+                        result["Year"] = year
+                        result["Month"] = month
+                        result["Day"] = day
 
                 del result["date"]
             changed_results.append(result)
@@ -234,7 +340,17 @@ class DataSourceManager(DataTableManager):
         group_by: list = None,
         filter: list = None,
         filter_or: list = None,
+        vars: dict = None,
     ):
+        if vars:
+            filter = filter or []
+            for key, value in vars.items():
+                if key in ["workspace_id", "project_id", "service_account_id"]:
+                    if isinstance(value, list):
+                        filter.append({"key": key, "value": value, "operator": "in"})
+                    else:
+                        filter.append({"key": key, "value": value, "operator": "eq"})
+
         return {
             "granularity": granularity,
             "start": start,

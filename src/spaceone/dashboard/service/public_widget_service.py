@@ -4,10 +4,17 @@ from typing import Union
 from spaceone.core.service import *
 from spaceone.dashboard.manager.public_widget_manager import PublicWidgetManager
 from spaceone.dashboard.manager.public_dashboard_manager import PublicDashboardManager
+from spaceone.dashboard.manager.public_data_table_manager import PublicDataTableManager
+from spaceone.dashboard.manager.data_table_manager.data_source_manager import (
+    DataSourceManager,
+)
 from spaceone.dashboard.model.public_widget.request import *
 from spaceone.dashboard.model.public_widget.response import *
 from spaceone.dashboard.model.public_widget.database import PublicWidget
-from spaceone.dashboard.error.dashboard import ERROR_NOT_SUPPORTED_VERSION
+from spaceone.dashboard.error.dashboard import (
+    ERROR_NOT_SUPPORTED_VERSION,
+    ERROR_INVALID_PARAMETER,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -145,7 +152,8 @@ class PublicWidgetService(BaseService):
         Args:
             params (dict): {
                 'widget_id': 'str',             # required
-                'query': 'dict (spaceone.api.core.v1.TimeSeriesAnalyzeQuery)', # required
+                'data_table_id': 'str',         # required
+                'query': 'dict (spaceone.api.core.v1.AnalyzeQuery)', # required
                 'vars': 'dict',
                 'workspace_id': 'str',          # injected from auth
                 'domain_id': 'str'              # injected from auth (required)
@@ -163,12 +171,32 @@ class PublicWidgetService(BaseService):
             params.user_projects,
         )
 
-        # TODO: Implement load public widget
+        pub_data_table_mgr = PublicDataTableManager()
+        pub_data_table_vo = pub_data_table_mgr.get_public_data_table(
+            params.data_table_id,
+            params.domain_id,
+            params.workspace_id,
+            params.user_projects,
+        )
 
-        return {
-            "results": [],
-            "total_count": 0,
-        }
+        if pub_data_table_vo.widget_id != pub_widget_vo.widget_id:
+            raise ERROR_INVALID_PARAMETER(
+                key="data_table_id", reason="Data table does not belong to the widget."
+            )
+
+        if pub_data_table_vo.data_type == "ADDED":
+            ds_mgr = DataSourceManager()
+            return ds_mgr.load_data_table_from_widget(
+                pub_data_table_vo.source_type,
+                pub_data_table_vo.options,
+                params.query,
+                params.vars,
+            )
+        else:
+            return {
+                "results": [],
+                "total_count": 0,
+            }
 
     @transaction(
         permission="dashboard:PublicWidget.read",

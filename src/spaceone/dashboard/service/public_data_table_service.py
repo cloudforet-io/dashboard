@@ -1,6 +1,5 @@
 import logging
-import copy
-from typing import Union, Tuple
+from typing import Union
 
 from spaceone.core.service import *
 from spaceone.core.error import *
@@ -66,7 +65,7 @@ class PublicDataTableService(BaseService):
         )
 
         # Get data and labels info from options
-        data_info, labels_info = self._get_data_and_labels_info(params.options)
+        data_info, labels_info = self.ds_mgr.get_data_and_labels_info(params.options)
 
         # Load data source to verify options
         self.ds_mgr.load_data_source(
@@ -186,7 +185,7 @@ class PublicDataTableService(BaseService):
                     params_dict["options"] = options
 
                 # Get data and labels info from options
-                data_info, labels_info = self._get_data_and_labels_info(options)
+                data_info, labels_info = self.ds_mgr.get_data_and_labels_info(options)
                 params_dict["data_info"] = data_info
                 params_dict["labels_info"] = labels_info
             else:
@@ -367,48 +366,3 @@ class PublicDataTableService(BaseService):
         return PublicDataTablesResponse(
             results=pub_data_tables_info, total_count=total_count
         )
-
-    @staticmethod
-    def _get_data_and_labels_info(options: dict) -> Tuple[dict, dict]:
-        data_name = options.get("data_name")
-        data_unit = options.get("data_unit")
-        group_by = options.get("group_by")
-        date_format = options.get("date_format", "SINGLE")
-
-        if data_name is None:
-            raise ERROR_REQUIRED_PARAMETER(key="options.data_name")
-
-        data_info = {data_name: {}}
-
-        if data_unit:
-            data_info[data_name]["unit"] = data_unit
-
-        labels_info = {}
-
-        if group_by:
-            for group_option in copy.deepcopy(group_by):
-                if isinstance(group_option, dict):
-                    group_name = group_option.get("name")
-                    group_key = group_option.get("key")
-                    name = group_name or group_key
-                    if name is None:
-                        raise ERROR_REQUIRED_PARAMETER(key="options.group_by.key")
-
-                    if group_name:
-                        del group_option["name"]
-
-                    if group_key:
-                        del group_option["key"]
-
-                    labels_info[group_name] = group_option
-                else:
-                    labels_info[group_option] = {}
-
-        if date_format == "SINGLE":
-            labels_info["date"] = {}
-        else:
-            labels_info["year"] = {}
-            labels_info["month"] = {}
-            labels_info["day"] = {}
-
-        return data_info, labels_info

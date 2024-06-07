@@ -7,3 +7,7 @@ class ERROR_NOT_SUPPORTED_SOURCE_TYPE(ERROR_INVALID_ARGUMENT):
 
 class ERROR_QUERY_OPTION(ERROR_INVALID_ARGUMENT):
     _message = "Query option is invalid. (key = {key})"
+
+
+class ERROR_NOT_SUPPORTED_QUERY_OPTION(ERROR_INVALID_ARGUMENT):
+    _message = "Query option is not supported. (key = {key})"

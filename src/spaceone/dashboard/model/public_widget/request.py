@@ -51,6 +51,7 @@ class PublicWidgetGetRequest(BaseModel):
 
 class PublicWidgetLoadRequest(BaseModel):
     widget_id: str
+    data_table_id: str
     query: dict
     vars: Union[dict, None] = None
     workspace_id: Union[str, None] = None
