@@ -4,9 +4,18 @@ from typing import Union
 from spaceone.core.service import *
 from spaceone.dashboard.manager.private_widget_manager import PrivateWidgetManager
 from spaceone.dashboard.manager.private_dashboard_manager import PrivateDashboardManager
+from spaceone.dashboard.manager.private_data_table_manager import (
+    PrivateDataTableManager,
+)
+from spaceone.dashboard.manager.data_table_manager.data_source_manager import (
+    DataSourceManager,
+)
 from spaceone.dashboard.model.private_widget.request import *
 from spaceone.dashboard.model.private_widget.response import *
-from spaceone.dashboard.error.dashboard import ERROR_NOT_SUPPORTED_VERSION
+from spaceone.dashboard.error.dashboard import (
+    ERROR_NOT_SUPPORTED_VERSION,
+    ERROR_INVALID_PARAMETER,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -138,7 +147,8 @@ class PrivateWidgetService(BaseService):
         Args:
             params (dict): {
                 'widget_id': 'str',             # required
-                'query': 'dict (spaceone.api.core.v1.TimeSeriesAnalyzeQuery)', # required
+                'data_table_id': 'str',         # required
+                'query': 'dict (spaceone.api.core.v1.AnalyzeQuery)', # required
                 'vars': 'dict',
                 'user_id': 'str',               # injected from auth (required)
                 'domain_id': 'str'              # injected from auth (required)
@@ -154,12 +164,31 @@ class PrivateWidgetService(BaseService):
             params.user_id,
         )
 
-        # TODO: Implement load public widget
+        pri_data_table_mgr = PrivateDataTableManager()
+        pri_data_table_vo = pri_data_table_mgr.get_private_data_table(
+            params.data_table_id,
+            params.domain_id,
+            params.user_id,
+        )
 
-        return {
-            "results": [],
-            "total_count": 0,
-        }
+        if pri_data_table_vo.widget_id != pri_widget_vo.widget_id:
+            raise ERROR_INVALID_PARAMETER(
+                key="data_table_id", reason="Data table does not belong to the widget."
+            )
+
+        if pri_data_table_vo.data_type == "ADDED":
+            ds_mgr = DataSourceManager()
+            return ds_mgr.load_data_table_from_widget(
+                pri_data_table_vo.source_type,
+                pri_data_table_vo.options,
+                params.query,
+                params.vars,
+            )
+        else:
+            return {
+                "results": [],
+                "total_count": 0,
+            }
 
     @transaction(
         permission="dashboard:PrivateWidget.read",

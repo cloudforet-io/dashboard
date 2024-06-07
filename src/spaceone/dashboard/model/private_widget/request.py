@@ -41,6 +41,7 @@ class PrivateWidgetDeleteRequest(BaseModel):
 
 class PrivateWidgetLoadRequest(BaseModel):
     widget_id: str
+    data_table_id: str
     query: dict
     vars: Union[dict, None] = None
     user_id: str
