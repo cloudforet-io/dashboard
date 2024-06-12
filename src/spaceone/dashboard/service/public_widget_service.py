@@ -89,6 +89,7 @@ class PublicWidgetService(BaseService):
                 'description': 'str',
                 'widget_type': 'str',
                 'options': 'dict',
+                'data_table_id': 'str',
                 'tags': 'dict',
                 'workspace_id': 'str',          # injected from auth
                 'domain_id': 'str'              # injected from auth (required)
@@ -105,6 +106,21 @@ class PublicWidgetService(BaseService):
             params.workspace_id,
             params.user_projects,
         )
+
+        if params.data_table_id is not None:
+            pub_data_table_mgr = PublicDataTableManager()
+            pub_data_table_vo = pub_data_table_mgr.get_public_data_table(
+                params.data_table_id,
+                params.domain_id,
+                params.workspace_id,
+                params.user_projects,
+            )
+
+            if pub_data_table_vo.widget_id != params.widget_id:
+                raise ERROR_INVALID_PARAMETER(
+                    key="data_table_id",
+                    reason="Data table is not belong to this widget.",
+                )
 
         pub_widget_vo = self.pub_widget_mgr.update_public_widget_by_vo(
             params.dict(exclude_unset=True), pub_widget_vo
@@ -152,7 +168,6 @@ class PublicWidgetService(BaseService):
         Args:
             params (dict): {
                 'widget_id': 'str',             # required
-                'data_table_id': 'str',         # required
                 'query': 'dict (spaceone.api.core.v1.AnalyzeQuery)', # required
                 'vars': 'dict',
                 'workspace_id': 'str',          # injected from auth
@@ -171,18 +186,18 @@ class PublicWidgetService(BaseService):
             params.user_projects,
         )
 
+        if pub_widget_vo.data_table_id is None:
+            raise ERROR_INVALID_PARAMETER(
+                key="widget_id", reason="Data table is not set."
+            )
+
         pub_data_table_mgr = PublicDataTableManager()
         pub_data_table_vo = pub_data_table_mgr.get_public_data_table(
-            params.data_table_id,
+            pub_widget_vo.data_table_id,
             params.domain_id,
             params.workspace_id,
             params.user_projects,
         )
-
-        if pub_data_table_vo.widget_id != pub_widget_vo.widget_id:
-            raise ERROR_INVALID_PARAMETER(
-                key="data_table_id", reason="Data table does not belong to the widget."
-            )
 
         if pub_data_table_vo.data_type == "ADDED":
             ds_mgr = DataSourceManager()

@@ -4,14 +4,13 @@ from spaceone.core.model.mongo_model import MongoModel
 
 
 class PublicWidget(MongoModel):
-    widget_id = StringField(
-        max_length=40, generate_id="public-widget", unique=True
-    )
+    widget_id = StringField(max_length=40, generate_id="public-widget", unique=True)
     name = StringField(max_length=100)
     description = StringField(default=None)
     widget_type = StringField(max_length=40, default="NONE")
     options = DictField(default=None, null=True)
-    tags = DictField(default={})
+    tags = DictField(default=None)
+    data_table_id = StringField(max_length=40, default=None, null=True)
     dashboard_id = StringField(max_length=40)
     resource_group = StringField(
         max_length=40, choices=("DOMAIN", "WORKSPACE", "PROJECT")
@@ -29,11 +28,13 @@ class PublicWidget(MongoModel):
             "widget_type",
             "options",
             "tags",
+            "data_table_id",
         ],
         "minimal_fields": [
             "widget_id",
             "name",
             "widget_type",
+            "data_table_id",
             "dashboard_id",
             "resource_group",
             "project_id",
@@ -45,6 +46,7 @@ class PublicWidget(MongoModel):
         "indexes": [
             "name",
             "widget_type",
+            "data_table_id",
             "dashboard_id",
             "resource_group",
             "project_id",
