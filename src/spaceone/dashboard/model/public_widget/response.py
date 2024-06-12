@@ -15,6 +15,7 @@ class PublicWidgetResponse(BaseModel):
     widget_type: Union[str, None] = None
     options: Union[dict, None] = None
     tags: Union[dict, None] = None
+    data_table_id: Union[str, None] = None
     dashboard_id: Union[str, None] = None
     resource_group: Union[ResourceGroup, None] = None
     project_id: Union[str, None] = None

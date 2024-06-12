@@ -88,6 +88,7 @@ class PrivateWidgetService(BaseService):
                 'description': 'str',
                 'widget_type': 'str',
                 'options': 'dict',
+                'data_table_id': 'str',
                 'tags': 'dict',
                 'user_id': 'str',               # injected from auth (required)
                 'domain_id': 'str'              # injected from auth (required)
@@ -102,6 +103,20 @@ class PrivateWidgetService(BaseService):
             params.domain_id,
             params.user_id,
         )
+
+        if params.data_table_id is not None:
+            pri_data_table_mgr = PrivateDataTableManager()
+            pri_data_table_vo = pri_data_table_mgr.get_private_data_table(
+                params.data_table_id,
+                params.domain_id,
+                params.user_id,
+            )
+
+            if pri_data_table_vo.widget_id != params.widget_id:
+                raise ERROR_INVALID_PARAMETER(
+                    key="data_table_id",
+                    reason="Data table is not belong to this widget.",
+                )
 
         pri_widget_vo = self.pri_widget_mgr.update_private_widget_by_vo(
             params.dict(exclude_unset=True), pri_widget_vo
@@ -147,7 +162,6 @@ class PrivateWidgetService(BaseService):
         Args:
             params (dict): {
                 'widget_id': 'str',             # required
-                'data_table_id': 'str',         # required
                 'query': 'dict (spaceone.api.core.v1.AnalyzeQuery)', # required
                 'vars': 'dict',
                 'user_id': 'str',               # injected from auth (required)
@@ -164,17 +178,17 @@ class PrivateWidgetService(BaseService):
             params.user_id,
         )
 
+        if pri_widget_vo.data_table_id is None:
+            raise ERROR_INVALID_PARAMETER(
+                key="widget_id", reason="Data table is not set."
+            )
+
         pri_data_table_mgr = PrivateDataTableManager()
         pri_data_table_vo = pri_data_table_mgr.get_private_data_table(
-            params.data_table_id,
+            pri_widget_vo.data_table_id,
             params.domain_id,
             params.user_id,
         )
-
-        if pri_data_table_vo.widget_id != pri_widget_vo.widget_id:
-            raise ERROR_INVALID_PARAMETER(
-                key="data_table_id", reason="Data table does not belong to the widget."
-            )
 
         if pri_data_table_vo.data_type == "ADDED":
             ds_mgr = DataSourceManager()

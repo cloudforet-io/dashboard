@@ -4,11 +4,9 @@ from spaceone.core.model.mongo_model import MongoModel
 
 
 class PrivateFolder(MongoModel):
-    folder_id = StringField(
-        max_length=40, generate_id="private-folder", unique=True
-    )
+    folder_id = StringField(max_length=40, generate_id="private-folder", unique=True)
     name = StringField(max_length=100)
-    tags = DictField(default={})
+    tags = DictField(default=None)
     resource_group = StringField(
         max_length=40, choices=("DOMAIN", "WORKSPACE", "PROJECT")
     )

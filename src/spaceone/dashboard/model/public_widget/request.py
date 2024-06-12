@@ -29,6 +29,7 @@ class PublicWidgetUpdateRequest(BaseModel):
     description: Union[str, None] = None
     widget_type: Union[str, None] = None
     options: Union[dict, None] = None
+    data_table_id: Union[str, None] = None
     tags: Union[dict, None] = None
     workspace_id: Union[str, None] = None
     domain_id: str
@@ -51,7 +52,6 @@ class PublicWidgetGetRequest(BaseModel):
 
 class PublicWidgetLoadRequest(BaseModel):
     widget_id: str
-    data_table_id: str
     query: dict
     vars: Union[dict, None] = None
     workspace_id: Union[str, None] = None

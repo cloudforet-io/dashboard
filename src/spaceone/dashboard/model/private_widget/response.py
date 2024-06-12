@@ -13,6 +13,7 @@ class PrivateWidgetResponse(BaseModel):
     widget_type: Union[str, None] = None
     options: Union[dict, None] = None
     tags: Union[dict, None] = None
+    data_table_id: Union[str, None] = None
     dashboard_id: Union[str, None] = None
     user_id: Union[str, None] = None
     domain_id: Union[str, None] = None
