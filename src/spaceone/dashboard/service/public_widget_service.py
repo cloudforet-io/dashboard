@@ -46,6 +46,7 @@ class PublicWidgetService(BaseService):
                 'name': 'str',
                 'description': 'str',
                 'widget_type': 'str',
+                'size': 'str',
                 'options': 'dict',
                 'tags': 'dict',
                 'workspace_id': 'str',          # injected from auth
@@ -88,6 +89,7 @@ class PublicWidgetService(BaseService):
                 'name': 'str',
                 'description': 'str',
                 'widget_type': 'str',
+                'size': 'str',
                 'options': 'dict',
                 'data_table_id': 'str',
                 'tags': 'dict',

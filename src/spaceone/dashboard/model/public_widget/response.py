@@ -13,6 +13,7 @@ class PublicWidgetResponse(BaseModel):
     name: Union[str, None] = None
     description: Union[str, None] = None
     widget_type: Union[str, None] = None
+    size: Union[str, None] = None
     options: Union[dict, None] = None
     tags: Union[dict, None] = None
     data_table_id: Union[str, None] = None

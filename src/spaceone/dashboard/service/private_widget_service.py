@@ -47,6 +47,7 @@ class PrivateWidgetService(BaseService):
                 'name': 'str',
                 'description': 'str',
                 'widget_type': 'str',
+                'size': 'str',
                 'options': 'dict',
                 'tags': 'dict',
                 'user_id': 'str',               # injected from auth (required)
@@ -87,6 +88,7 @@ class PrivateWidgetService(BaseService):
                 'name': 'str',
                 'description': 'str',
                 'widget_type': 'str',
+                'size': 'str',
                 'options': 'dict',
                 'data_table_id': 'str',
                 'tags': 'dict',
