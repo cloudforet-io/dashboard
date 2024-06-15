@@ -90,7 +90,7 @@ class DataTableManager(BaseManager):
                 else:
                     raise ERROR_QUERY_OPTION(key="filter")
 
-    def group_by(self, fields: dict, group_by: list = None) -> None:
+    def apply_group_by(self, fields: dict, group_by: list = None) -> None:
         if len(self.df) > 0:
             columns = list(fields.keys())
             if group_by:

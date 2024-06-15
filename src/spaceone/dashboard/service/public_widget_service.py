@@ -202,10 +202,10 @@ class PublicWidgetService(BaseService):
         )
 
         if pub_data_table_vo.data_type == "ADDED":
-            ds_mgr = DataSourceManager()
+            ds_mgr = DataSourceManager(
+                pub_data_table_vo.source_type, pub_data_table_vo.options
+            )
             return ds_mgr.load_data_table_from_widget(
-                pub_data_table_vo.source_type,
-                pub_data_table_vo.options,
                 params.query,
                 params.vars,
             )

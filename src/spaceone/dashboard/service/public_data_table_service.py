@@ -28,7 +28,7 @@ class PublicDataTableService(BaseService):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.pub_data_table_mgr = PublicDataTableManager()
-        self.ds_mgr = DataSourceManager()
+        self.df_mgr = DataTransformationManager()
 
     @transaction(
         permission="dashboard:PublicDataTable.write",
@@ -64,15 +64,16 @@ class PublicDataTableService(BaseService):
             params.user_projects,
         )
 
-        # Get data and labels info from options
-        data_info, labels_info = self.ds_mgr.get_data_and_labels_info(params.options)
-
-        # Load data source to verify options
-        self.ds_mgr.load_data_source(
+        ds_mgr = DataSourceManager(
             params.source_type,
             params.options,
-            "DAILY",
         )
+
+        # Load data source to verify options
+        ds_mgr.load_data_source()
+
+        # Get data and labels info from options
+        data_info, labels_info = ds_mgr.get_data_and_labels_info(params.options)
 
         params_dict = params.dict()
         params_dict["data_type"] = "ADDED"
@@ -122,11 +123,77 @@ class PublicDataTableService(BaseService):
         params_dict = params.dict()
         params_dict["data_type"] = "TRANSFORMED"
 
+        data_table_vos = self._get_data_table_from_options(params_dict)
+
+        if params_dict["operator"] == "JOIN":
+            self.df_mgr.join_data_tables(params_dict["options"], data_table_vos)
+        elif params_dict["operator"] == "CONCAT":
+            self.df_mgr.concat_data_tables(params_dict["options"], data_table_vos)
+        elif params_dict["operator"] == "AGGREGATE":
+            self.df_mgr.aggregate_data_table(params_dict["options"], data_table_vos[0])
+        elif params_dict["operator"] == "WHERE":
+            self.df_mgr.where_data_table(params_dict["options"], data_table_vos[0])
+        elif params_dict["operator"] == "EVALUATE":
+            self.df_mgr.evaluate_data_table(params_dict["options"], data_table_vos[0])
+
+        raise
         pub_data_table_vo = self.pub_data_table_mgr.create_public_data_table(
             params_dict
         )
 
         return PublicDataTableResponse(**pub_data_table_vo.to_dict())
+
+    def _get_data_table_from_options(self, params: dict) -> list:
+        operator = params["operator"]
+        options = params["options"]
+        widget_id = params["widget_id"]
+        domain_id = params["domain_id"]
+        workspace_id = params.get("workspace_id")
+        user_projects = params.get("user_projects")
+        data_table_vos = []
+
+        if operator in ["JOIN", "CONCAT"]:
+            if data_tables := options.get("data_tables"):
+                if len(data_tables) != 2:
+                    raise ERROR_INVALID_PARAMETER(
+                        key="options.data_tables",
+                        reason="It should have 2 data tables.",
+                    )
+
+                for data_table_id in data_tables:
+                    public_dt_vo = self.pub_data_table_mgr.get_public_data_table(
+                        data_table_id,
+                        domain_id,
+                        workspace_id,
+                        user_projects,
+                    )
+                    if public_dt_vo.widget_id != widget_id:
+                        raise ERROR_INVALID_PARAMETER(
+                            key="options.data_tables",
+                            reason="It should have same widget_id.",
+                        )
+                    data_table_vos.append(public_dt_vo)
+
+            else:
+                raise ERROR_REQUIRED_PARAMETER(key="options.data_tables")
+        else:
+            if data_table_id := options.get("data_table_id"):
+                public_dt_vo = self.pub_data_table_mgr.get_public_data_table(
+                    data_table_id,
+                    domain_id,
+                    workspace_id,
+                    user_projects,
+                )
+                if public_dt_vo.widget_id != widget_id:
+                    raise ERROR_INVALID_PARAMETER(
+                        key="options.data_table_id",
+                        reason="It should have same widget_id.",
+                    )
+                data_table_vos.append(public_dt_vo)
+            else:
+                raise ERROR_REQUIRED_PARAMETER(key="options.data_table_id")
+
+        return data_table_vos
 
     @transaction(
         permission="dashboard:PublicDataTable.write",
@@ -166,12 +233,13 @@ class PublicDataTableService(BaseService):
 
         if options := params_dict.get("options"):
             if pub_data_table_vo.data_type == "ADDED":
-                # Load data source to verify options
-                self.ds_mgr.load_data_source(
+                ds_mgr = DataSourceManager(
                     pub_data_table_vo.source_type,
-                    options,
-                    "DAILY",
+                    pub_data_table_vo.options,
                 )
+
+                # Load data source to verify options
+                ds_mgr.load_data_source()
 
                 # change timediff format
                 if timediff := options.get("timediff"):
@@ -185,7 +253,7 @@ class PublicDataTableService(BaseService):
                     params_dict["options"] = options
 
                 # Get data and labels info from options
-                data_info, labels_info = self.ds_mgr.get_data_and_labels_info(options)
+                data_info, labels_info = ds_mgr.get_data_and_labels_info(options)
                 params_dict["data_info"] = data_info
                 params_dict["labels_info"] = labels_info
             else:
@@ -263,15 +331,17 @@ class PublicDataTableService(BaseService):
         )
 
         if pub_data_table_vo.data_type == "ADDED":
-            return self.ds_mgr.load_data_source(
+            ds_mgr = DataSourceManager(
                 pub_data_table_vo.source_type,
                 pub_data_table_vo.options,
+            )
+            ds_mgr.load_data_source(
                 params.granularity,
                 params.start,
                 params.end,
-                params.sort,
-                params.page,
             )
+            return ds_mgr.response(params.sort, params.page)
+
         else:
             return {
                 "results": [],

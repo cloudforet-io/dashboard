@@ -30,7 +30,6 @@ class PrivateDataTableService(BaseService):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.pri_data_table_mgr = PrivateDataTableManager()
-        self.ds_mgr = DataSourceManager()
 
     @transaction(
         permission="dashboard:PrivateDataTable.write",
@@ -64,15 +63,16 @@ class PrivateDataTableService(BaseService):
             params.user_id,
         )
 
-        # Get data and labels info from options
-        data_info, labels_info = self.ds_mgr.get_data_and_labels_info(params.options)
-
-        # Load data source to verify options
-        self.ds_mgr.load_data_source(
+        ds_mgr = DataSourceManager(
             params.source_type,
             params.options,
-            "DAILY",
         )
+
+        # Load data source to verify options
+        ds_mgr.load_data_source()
+
+        # Get data and labels info from options
+        data_info, labels_info = ds_mgr.get_data_and_labels_info(params.options)
 
         params_dict = params.dict()
         params_dict["data_type"] = "ADDED"
@@ -160,12 +160,13 @@ class PrivateDataTableService(BaseService):
 
         if options := params_dict.get("options"):
             if pri_data_table_vo.data_type == "ADDED":
-                # Load data source to verify options
-                self.ds_mgr.load_data_source(
+                ds_mgr = DataSourceManager(
                     pri_data_table_vo.source_type,
-                    options,
-                    "DAILY",
+                    pri_data_table_vo.options,
                 )
+
+                # Load data source to verify options
+                ds_mgr.load_data_source()
 
                 # change timediff format
                 if timediff := options.get("timediff"):
@@ -179,7 +180,7 @@ class PrivateDataTableService(BaseService):
                     params_dict["options"] = options
 
                 # Get data and labels info from options
-                data_info, labels_info = self.ds_mgr.get_data_and_labels_info(options)
+                data_info, labels_info = ds_mgr.get_data_and_labels_info(options)
                 params_dict["data_info"] = data_info
                 params_dict["labels_info"] = labels_info
             else:
@@ -252,12 +253,23 @@ class PrivateDataTableService(BaseService):
             )
         )
 
-        # TODO: Implement load private data table
+        if pri_data_table_vo.data_type == "ADDED":
+            ds_mgr = DataSourceManager(
+                pri_data_table_vo.source_type,
+                pri_data_table_vo.options,
+            )
+            ds_mgr.load_data_source(
+                params.granularity,
+                params.start,
+                params.end,
+            )
+            return ds_mgr.response(params.sort, params.page)
 
-        return {
-            "results": [],
-            "total_count": 0,
-        }
+        else:
+            return {
+                "results": [],
+                "total_count": 0,
+            }
 
     @transaction(
         permission="dashboard:PrivateDataTable.read",
