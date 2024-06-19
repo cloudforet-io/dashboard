@@ -28,7 +28,6 @@ class PublicDataTableService(BaseService):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.pub_data_table_mgr = PublicDataTableManager()
-        self.ds_mgr = DataSourceManager()
 
     @transaction(
         permission="dashboard:PublicDataTable.write",
@@ -64,15 +63,16 @@ class PublicDataTableService(BaseService):
             params.user_projects,
         )
 
-        # Get data and labels info from options
-        data_info, labels_info = self.ds_mgr.get_data_and_labels_info(params.options)
-
-        # Load data source to verify options
-        self.ds_mgr.load_data_source(
+        ds_mgr = DataSourceManager(
             params.source_type,
             params.options,
-            "DAILY",
         )
+
+        # Load data source to verify options
+        ds_mgr.load_data_source()
+
+        # Get data and labels info from options
+        data_info, labels_info = ds_mgr.get_data_and_labels_info(params.options)
 
         params_dict = params.dict()
         params_dict["data_type"] = "ADDED"
@@ -118,6 +118,22 @@ class PublicDataTableService(BaseService):
             params.workspace_id,
             params.user_projects,
         )
+
+        operator = params.operator
+        options = params.options.get(operator, {})
+        data_table_vos = self._get_data_table_from_options(
+            operator,
+            options,
+            params.widget_id,
+            params.domain_id,
+            params.workspace_id,
+            params.user_projects,
+        )
+
+        dt_mgr = DataTransformationManager(operator, options, data_table_vos)
+
+        # Load data table to verify options
+        dt_mgr.load_data_table()
 
         params_dict = params.dict()
         params_dict["data_type"] = "TRANSFORMED"
@@ -166,12 +182,13 @@ class PublicDataTableService(BaseService):
 
         if options := params_dict.get("options"):
             if pub_data_table_vo.data_type == "ADDED":
-                # Load data source to verify options
-                self.ds_mgr.load_data_source(
+                ds_mgr = DataSourceManager(
                     pub_data_table_vo.source_type,
-                    options,
-                    "DAILY",
+                    pub_data_table_vo.options,
                 )
+
+                # Load data source to verify options
+                ds_mgr.load_data_source()
 
                 # change timediff format
                 if timediff := options.get("timediff"):
@@ -185,7 +202,7 @@ class PublicDataTableService(BaseService):
                     params_dict["options"] = options
 
                 # Get data and labels info from options
-                data_info, labels_info = self.ds_mgr.get_data_and_labels_info(options)
+                data_info, labels_info = ds_mgr.get_data_and_labels_info(options)
                 params_dict["data_info"] = data_info
                 params_dict["labels_info"] = labels_info
             else:
@@ -263,20 +280,37 @@ class PublicDataTableService(BaseService):
         )
 
         if pub_data_table_vo.data_type == "ADDED":
-            return self.ds_mgr.load_data_source(
+            ds_mgr = DataSourceManager(
                 pub_data_table_vo.source_type,
                 pub_data_table_vo.options,
+            )
+            ds_mgr.load_data_source(
                 params.granularity,
                 params.start,
                 params.end,
-                params.sort,
-                params.page,
             )
+            return ds_mgr.response(params.sort, params.page)
+
         else:
-            return {
-                "results": [],
-                "total_count": 0,
-            }
+            operator = pub_data_table_vo.operator
+            options = pub_data_table_vo.options.get(operator, {})
+            widget_id = pub_data_table_vo.widget_id
+            data_table_vos = self._get_data_table_from_options(
+                operator,
+                options,
+                widget_id,
+                params.domain_id,
+                params.workspace_id,
+                params.user_projects,
+            )
+
+            dt_mgr = DataTransformationManager(
+                operator,
+                options,
+                data_table_vos,
+            )
+            dt_mgr.load_data_table(params.granularity, params.start, params.end)
+            return dt_mgr.response(params.sort, params.page)
 
     @transaction(
         permission="dashboard:PublicDataTable.read",
@@ -366,3 +400,57 @@ class PublicDataTableService(BaseService):
         return PublicDataTablesResponse(
             results=pub_data_tables_info, total_count=total_count
         )
+
+    def _get_data_table_from_options(
+        self,
+        operator: str,
+        options: dict,
+        widget_id: str,
+        domain_id: str,
+        workspace_id: str = None,
+        user_projects: list = None,
+    ) -> list:
+        data_table_vos = []
+
+        if operator in ["JOIN", "CONCAT"]:
+            if data_tables := options.get("data_tables"):
+                if len(data_tables) != 2:
+                    raise ERROR_INVALID_PARAMETER(
+                        key="options.data_tables",
+                        reason="It should have 2 data tables.",
+                    )
+
+                for data_table_id in data_tables:
+                    public_dt_vo = self.pub_data_table_mgr.get_public_data_table(
+                        data_table_id,
+                        domain_id,
+                        workspace_id,
+                        user_projects,
+                    )
+                    if public_dt_vo.widget_id != widget_id:
+                        raise ERROR_INVALID_PARAMETER(
+                            key="options.data_tables",
+                            reason="It should have same widget_id.",
+                        )
+                    data_table_vos.append(public_dt_vo)
+
+            else:
+                raise ERROR_REQUIRED_PARAMETER(key=f"options.{operator}.data_tables")
+        else:
+            if data_table_id := options.get("data_table_id"):
+                public_dt_vo = self.pub_data_table_mgr.get_public_data_table(
+                    data_table_id,
+                    domain_id,
+                    workspace_id,
+                    user_projects,
+                )
+                if public_dt_vo.widget_id != widget_id:
+                    raise ERROR_INVALID_PARAMETER(
+                        key="options.data_table_id",
+                        reason="It should have same widget_id.",
+                    )
+                data_table_vos.append(public_dt_vo)
+            else:
+                raise ERROR_REQUIRED_PARAMETER(key="options.data_table_id")
+
+        return data_table_vos

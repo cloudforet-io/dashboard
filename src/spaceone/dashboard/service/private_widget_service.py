@@ -193,10 +193,11 @@ class PrivateWidgetService(BaseService):
         )
 
         if pri_data_table_vo.data_type == "ADDED":
-            ds_mgr = DataSourceManager()
-            return ds_mgr.load_data_table_from_widget(
+            ds_mgr = DataSourceManager(
                 pri_data_table_vo.source_type,
                 pri_data_table_vo.options,
+            )
+            return ds_mgr.load_data_table_from_widget(
                 params.query,
                 params.vars,
             )

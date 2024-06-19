@@ -15,10 +15,22 @@ GRANULARITY = Literal["DAILY", "MONTHLY", "YEARLY"]
 
 
 class DataSourceManager(DataTableManager):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, source_type: str, options: dict, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        if source_type not in ["COST", "ASSET"]:
+            raise ERROR_NOT_SUPPORTED_SOURCE_TYPE(source_type=source_type)
+
         self.cost_analysis_mgr = CostAnalysisManager()
         self.inventory_mgr = InventoryManager()
+        self.source_type = source_type
+        self.options = options
+        self.data_name = options.get("data_name")
+        self.date_format = options.get("date_format", "SINGLE")
+        self.timediff = options.get("timediff")
+        self.group_by = options.get("group_by")
+        self.filter = options.get("filter")
+        self.filter_or = options.get("filter_or")
 
     @staticmethod
     def get_data_and_labels_info(options: dict) -> Tuple[dict, dict]:
@@ -73,26 +85,45 @@ class DataSourceManager(DataTableManager):
 
         return data_info, labels_info
 
-    def load_data_table_from_widget(
-        self, source_type: str, options: dict, query: dict, vars: dict = None
-    ) -> dict:
+    def load_data_table_from_widget(self, query: dict, vars: dict = None) -> dict:
         self._check_query(query)
         granularity = query["granularity"]
         start = query["start"]
         end = query["end"]
-        fields = query.get("fields")
         group_by = query.get("group_by")
         filter = query.get("filter")
+        fields = query.get("fields")
+        field_group = query.get("field_group")
         sort = query.get("sort")
         page = query.get("page")
 
-        self.load_data_source(source_type, options, granularity, start, end, vars=vars)
+        self.load_data_source(
+            granularity,
+            start,
+            end,
+            vars=vars,
+        )
 
         if filter:
             self.apply_filter(filter)
 
-        if fields:
-            self.group_by(fields, group_by)
+        self.apply_group_by(fields, group_by)
+
+        if field_group:
+            self.apply_field_group(field_group, fields)
+
+            if sort:
+                changed_sort = []
+                for condition in sort:
+                    key = condition.get("key")
+                    desc = condition.get("desc", False)
+
+                    if key in fields:
+                        changed_sort.append({"key": f"_total_{key}", "desc": desc})
+                    else:
+                        changed_sort.append(condition)
+
+                sort = changed_sort
 
         return self.response(sort, page)
 
@@ -113,39 +144,30 @@ class DataSourceManager(DataTableManager):
         if "select" in query:
             raise ERROR_NOT_SUPPORTED_QUERY_OPTION(key="query.select")
 
-        if "field_group" in query:
-            raise ERROR_NOT_SUPPORTED_QUERY_OPTION(key="query.field_group")
-
         if "filter_or" in query:
             raise ERROR_NOT_SUPPORTED_QUERY_OPTION(key="query.filter_or")
 
     def load_data_source(
         self,
-        source_type: str,
-        options: dict,
-        granularity: GRANULARITY,
+        granularity: GRANULARITY = "DAILY",
         start: str = None,
         end: str = None,
-        sort: list = None,
-        page: dict = None,
         vars: dict = None,
-    ) -> dict:
+    ) -> pd.DataFrame:
         start, end = self._get_time_from_granularity(granularity, start, end)
 
-        if timediff := options.get("timediff"):
-            start, end = self._change_time(start, end, timediff)
+        if self.timediff:
+            start, end = self._change_time(start, end)
 
-        if source_type == "COST":
-            self._analyze_cost(options, granularity, start, end, vars)
-        elif source_type == "ASSET":
-            self._analyze_asset(options, granularity, start, end, vars)
-        else:
-            raise ERROR_NOT_SUPPORTED_SOURCE_TYPE(source_type=source_type)
+        if self.source_type == "COST":
+            self._analyze_cost(granularity, start, end, vars)
+        elif self.source_type == "ASSET":
+            self._analyze_asset(granularity, start, end, vars)
 
-        if additional_labels := options.get("additional_labels"):
+        if additional_labels := self.options.get("additional_labels"):
             self._add_labels(additional_labels)
 
-        return self.response(sort, page)
+        return self.df
 
     def _add_labels(self, labels: dict) -> None:
         for key, value in labels.items():
@@ -153,30 +175,23 @@ class DataSourceManager(DataTableManager):
 
     def _analyze_asset(
         self,
-        options: dict,
         granularity: GRANULARITY,
         start: str,
         end: str,
         vars: dict = None,
     ) -> None:
-        asset_info = options.get("ASSET", {})
+        asset_info = self.options.get("ASSET", {})
         metric_id = asset_info.get("metric_id")
         data_key = "value"
-        data_name = options.get("data_name")
-        date_format = options.get("date_format", "SINGLE")
 
         if metric_id is None:
             raise ERROR_REQUIRED_PARAMETER(parameter="options.ASSET.metric_id")
 
         query = self._make_query(
             data_key,
-            data_name,
             granularity,
             start,
             end,
-            options.get("group_by"),
-            options.get("filter"),
-            options.get("filter_or"),
             vars=vars,
         )
 
@@ -185,23 +200,20 @@ class DataSourceManager(DataTableManager):
         response = self.inventory_mgr.analyze_metric_data(params)
         results = response.get("results", [])
 
-        results = self._change_datetime_format(results, date_format)
+        results = self._change_datetime_format(results)
 
         self.df = pd.DataFrame(results)
 
     def _analyze_cost(
         self,
-        options: dict,
         granularity: GRANULARITY,
         start: str,
         end: str,
         vars: dict = None,
     ) -> None:
-        cost_info = options.get("COST", {})
+        cost_info = self.options.get("COST", {})
         data_source_id = cost_info.get("data_source_id")
         data_key = cost_info.get("data_key")
-        data_name = options.get("data_name")
-        date_format = options.get("date_format", "SINGLE")
 
         if data_source_id is None:
             raise ERROR_REQUIRED_PARAMETER(parameter="options.COST.data_source_id")
@@ -211,13 +223,9 @@ class DataSourceManager(DataTableManager):
 
         query = self._make_query(
             data_key,
-            data_name,
             granularity,
             start,
             end,
-            options.get("group_by"),
-            options.get("filter"),
-            options.get("filter_or"),
             vars=vars,
         )
 
@@ -226,16 +234,15 @@ class DataSourceManager(DataTableManager):
         response = self.cost_analysis_mgr.analyze_cost(params)
         results = response.get("results", [])
 
-        results = self._change_datetime_format(results, date_format)
+        results = self._change_datetime_format(results)
 
         self.df = pd.DataFrame(results)
 
-    @staticmethod
-    def _change_datetime_format(results: list, date_format: str) -> list:
+    def _change_datetime_format(self, results: list) -> list:
         changed_results = []
         for result in results:
             if date := result.get("date"):
-                if date_format == "SINGLE":
+                if self.date_format == "SINGLE":
                     result["Date"] = date
                 else:
                     if len(date) == 4:
@@ -254,15 +261,15 @@ class DataSourceManager(DataTableManager):
             changed_results.append(result)
         return changed_results
 
-    def _change_time(self, start: str, end: str, timediff: dict) -> Tuple[str, str]:
+    def _change_time(self, start: str, end: str) -> Tuple[str, str]:
         start_len = len(start)
         end_len = len(end)
         start_time = self._get_datetime_from_str(start)
         end_time = self._get_datetime_from_str(end)
 
-        years = timediff.get("years", 0)
-        months = timediff.get("months", 0)
-        days = timediff.get("days", 0)
+        years = self.timediff.get("years", 0)
+        months = self.timediff.get("months", 0)
+        days = self.timediff.get("days", 0)
 
         if years:
             start_time = start_time + relativedelta(years=years)
@@ -330,33 +337,33 @@ class DataSourceManager(DataTableManager):
                 start_time = end_time - relativedelta(days=29)
                 return start_time.strftime("%Y-%m-%d"), end_time.strftime("%Y-%m-%d")
 
-    @staticmethod
     def _make_query(
+        self,
         data_key: str,
-        data_name: str,
         granularity: GRANULARITY,
         start: str,
         end: str,
-        group_by: list = None,
-        filter: list = None,
-        filter_or: list = None,
         vars: dict = None,
     ):
         if vars:
-            filter = filter or []
+            self.filter = self.filter or []
             for key, value in vars.items():
                 if key in ["workspace_id", "project_id", "service_account_id"]:
                     if isinstance(value, list):
-                        filter.append({"key": key, "value": value, "operator": "in"})
+                        self.filter.append(
+                            {"key": key, "value": value, "operator": "in"}
+                        )
                     else:
-                        filter.append({"key": key, "value": value, "operator": "eq"})
+                        self.filter.append(
+                            {"key": key, "value": value, "operator": "eq"}
+                        )
 
         return {
             "granularity": granularity,
             "start": start,
             "end": end,
-            "group_by": group_by,
-            "filter": filter,
-            "filter_or": filter_or,
-            "fields": {data_name: {"key": data_key, "operator": "sum"}},
+            "group_by": self.group_by,
+            "filter": self.filter,
+            "filter_or": self.filter_or,
+            "fields": {self.data_name: {"key": data_key, "operator": "sum"}},
         }
