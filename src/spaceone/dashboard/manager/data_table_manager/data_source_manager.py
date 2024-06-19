@@ -90,9 +90,10 @@ class DataSourceManager(DataTableManager):
         granularity = query["granularity"]
         start = query["start"]
         end = query["end"]
-        fields = query.get("fields")
         group_by = query.get("group_by")
         filter = query.get("filter")
+        fields = query.get("fields")
+        field_group = query.get("field_group")
         sort = query.get("sort")
         page = query.get("page")
 
@@ -106,8 +107,23 @@ class DataSourceManager(DataTableManager):
         if filter:
             self.apply_filter(filter)
 
-        if fields:
-            self.apply_group_by(fields, group_by)
+        self.apply_group_by(fields, group_by)
+
+        if field_group:
+            self.apply_field_group(field_group, fields)
+
+            if sort:
+                changed_sort = []
+                for condition in sort:
+                    key = condition.get("key")
+                    desc = condition.get("desc", False)
+
+                    if key in fields:
+                        changed_sort.append({"key": f"_total_{key}", "desc": desc})
+                    else:
+                        changed_sort.append(condition)
+
+                sort = changed_sort
 
         return self.response(sort, page)
 
@@ -127,9 +143,6 @@ class DataSourceManager(DataTableManager):
 
         if "select" in query:
             raise ERROR_NOT_SUPPORTED_QUERY_OPTION(key="query.select")
-
-        if "field_group" in query:
-            raise ERROR_NOT_SUPPORTED_QUERY_OPTION(key="query.field_group")
 
         if "filter_or" in query:
             raise ERROR_NOT_SUPPORTED_QUERY_OPTION(key="query.filter_or")

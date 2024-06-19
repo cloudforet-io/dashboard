@@ -116,6 +116,47 @@ class DataTableManager(BaseManager):
             else:
                 self.df = self.df.agg(agg_options).to_frame().T
 
+    def apply_field_group(self, field_group: list, fields: dict) -> None:
+        if len(self.df) > 0:
+            data_fields = list(fields.keys())
+            agg_fields = set(data_fields + field_group)
+            group_by = list(set(self.df.columns) - agg_fields)
+            agg_options = {}
+            for field in agg_fields:
+                agg_options[field] = lambda x: list(x)
+
+            self.df = self.df.groupby(group_by).agg(agg_options).reset_index()
+            changed_data = []
+            for row in self.df.to_dict(orient="records"):
+                changed_row = {}
+                for data_field in data_fields:
+                    changed_row[data_field] = []
+
+                for key, value in row.items():
+                    if key in group_by:
+                        changed_row[key] = value
+                    elif key in fields:
+                        operator = fields[key].get("operator", "sum")
+                        if operator == "sum":
+                            changed_row[f"_total_{key}"] = sum(value)
+                        elif operator == "average":
+                            changed_row[f"_total_{key}"] = sum(value) / len(value)
+                        elif operator == "max":
+                            changed_row[f"_total_{key}"] = max(value)
+                        elif operator == "min":
+                            changed_row[f"_total_{key}"] = min(value)
+
+                        for idx, v in enumerate(value):
+                            data = {"value": v}
+                            for fg in field_group:
+                                data[fg] = row[fg][idx]
+
+                            changed_row[key].append(data)
+
+                changed_data.append(changed_row)
+
+            self.df = pd.DataFrame(changed_data)
+
     def apply_sort(self, sort: list) -> None:
         if len(self.df) > 0:
             keys = []

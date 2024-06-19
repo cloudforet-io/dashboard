@@ -11,3 +11,7 @@ class ERROR_QUERY_OPTION(ERROR_INVALID_ARGUMENT):
 
 class ERROR_NOT_SUPPORTED_QUERY_OPTION(ERROR_INVALID_ARGUMENT):
     _message = "Query option is not supported. (key = {key})"
+
+
+class ERROR_NOT_SUPPORTED_OPERATOR(ERROR_INVALID_ARGUMENT):
+    _message = "Data table does not support operator. (operator = {operator})"
