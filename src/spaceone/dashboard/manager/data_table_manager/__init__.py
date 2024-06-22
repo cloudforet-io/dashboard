@@ -1,20 +1,98 @@
 import logging
-from typing import Union
+from typing import Union, Literal, Tuple
 import pandas as pd
 
 from spaceone.core.manager import BaseManager
+from spaceone.dashboard.error.data_table import (
+    ERROR_REQUIRED_PARAMETER,
+)
 from spaceone.dashboard.error.data_table import (
     ERROR_QUERY_OPTION,
     ERROR_NOT_SUPPORTED_QUERY_OPTION,
 )
 
 _LOGGER = logging.getLogger(__name__)
+GRANULARITY = Literal["DAILY", "MONTHLY", "YEARLY"]
 
 
 class DataTableManager(BaseManager):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.df: Union[pd.DataFrame, None] = None
+
+    def get_data_and_labels_info(self) -> Tuple[dict, dict]:
+        raise NotImplementedError()
+
+    def load(
+        self,
+        granularity: GRANULARITY = "DAILY",
+        start: str = None,
+        end: str = None,
+        vars: dict = None,
+    ) -> pd.DataFrame:
+        raise NotImplementedError()
+
+    def load_from_widget(self, query: dict, vars: dict = None) -> dict:
+        self._check_query(query)
+        granularity = query["granularity"]
+        start = query["start"]
+        end = query["end"]
+        group_by = query.get("group_by")
+        filter = query.get("filter")
+        fields = query.get("fields")
+        field_group = query.get("field_group")
+        sort = query.get("sort")
+        page = query.get("page")
+
+        self.load(
+            granularity,
+            start,
+            end,
+            vars=vars,
+        )
+
+        if filter:
+            self.apply_filter(filter)
+
+        self.apply_group_by(fields, group_by)
+
+        if field_group:
+            self.apply_field_group(field_group, fields)
+
+            if sort:
+                changed_sort = []
+                for condition in sort:
+                    key = condition.get("key")
+                    desc = condition.get("desc", False)
+
+                    if key in fields:
+                        changed_sort.append({"key": f"_total_{key}", "desc": desc})
+                    else:
+                        changed_sort.append(condition)
+
+                sort = changed_sort
+
+        return self.response(sort, page)
+
+    @staticmethod
+    def _check_query(query: dict) -> None:
+        if "granularity" not in query:
+            raise ERROR_REQUIRED_PARAMETER(key="query.granularity")
+
+        if "start" not in query:
+            raise ERROR_REQUIRED_PARAMETER(key="query.start")
+
+        if "end" not in query:
+            raise ERROR_REQUIRED_PARAMETER(key="query.end")
+
+        if "fields" not in query:
+            raise ERROR_REQUIRED_PARAMETER(key="query.fields")
+
+        if "select" in query:
+            raise ERROR_NOT_SUPPORTED_QUERY_OPTION(key="query.select")
+
+        if "filter_or" in query:
+            raise ERROR_NOT_SUPPORTED_QUERY_OPTION(key="query.filter_or")
 
     def response(self, sort: list = None, page: dict = None) -> dict:
         total_count = len(self.df)

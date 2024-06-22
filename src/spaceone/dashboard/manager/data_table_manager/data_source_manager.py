@@ -1,57 +1,64 @@
 import logging
 import copy
-from typing import Literal, Tuple
+from typing import Tuple
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import pandas as pd
 
-from spaceone.dashboard.manager.data_table_manager import DataTableManager
+from spaceone.dashboard.manager.data_table_manager import DataTableManager, GRANULARITY
 from spaceone.dashboard.manager.cost_analysis_manager import CostAnalysisManager
 from spaceone.dashboard.manager.inventory_manager import InventoryManager
 from spaceone.dashboard.error.data_table import *
 
 _LOGGER = logging.getLogger(__name__)
-GRANULARITY = Literal["DAILY", "MONTHLY", "YEARLY"]
 
 
 class DataSourceManager(DataTableManager):
-    def __init__(self, source_type: str, options: dict, *args, **kwargs):
+    def __init__(
+        self,
+        data_table_type: str,
+        source_type: str,
+        options: dict,
+        widget_id: str,
+        domain_id: str,
+        *args,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
 
         if source_type not in ["COST", "ASSET"]:
             raise ERROR_NOT_SUPPORTED_SOURCE_TYPE(source_type=source_type)
 
+        self.data_table_type = data_table_type
         self.cost_analysis_mgr = CostAnalysisManager()
         self.inventory_mgr = InventoryManager()
         self.source_type = source_type
         self.options = options
+        self.widget_id = widget_id
+        self.domain_id = domain_id
+
         self.data_name = options.get("data_name")
+        self.data_unit = options.get("data_unit")
         self.date_format = options.get("date_format", "SINGLE")
         self.timediff = options.get("timediff")
         self.group_by = options.get("group_by")
         self.filter = options.get("filter")
         self.filter_or = options.get("filter_or")
+        self.additional_labels = options.get("additional_labels")
 
-    @staticmethod
-    def get_data_and_labels_info(options: dict) -> Tuple[dict, dict]:
-        data_name = options.get("data_name")
-        data_unit = options.get("data_unit")
-        group_by = options.get("group_by")
-        date_format = options.get("date_format", "SINGLE")
-        additional_labels = options.get("additional_labels")
-
-        if data_name is None:
+    def get_data_and_labels_info(self) -> Tuple[dict, dict]:
+        if self.data_name is None:
             raise ERROR_REQUIRED_PARAMETER(key="options.data_name")
 
-        data_info = {data_name: {}}
+        data_info = {self.data_name: {}}
 
-        if data_unit:
-            data_info[data_name]["unit"] = data_unit
+        if self.data_unit:
+            data_info[self.data_name]["unit"] = self.data_unit
 
         labels_info = {}
 
-        if group_by:
-            for group_option in copy.deepcopy(group_by):
+        if self.group_by:
+            for group_option in copy.deepcopy(self.group_by):
                 if isinstance(group_option, dict):
                     group_name = group_option.get("name")
                     group_key = group_option.get("key")
@@ -72,11 +79,11 @@ class DataSourceManager(DataTableManager):
                 else:
                     labels_info[group_option] = {}
 
-        if additional_labels:
-            for key in additional_labels.keys():
+        if self.additional_labels:
+            for key in self.additional_labels.keys():
                 labels_info[key] = {}
 
-        if date_format == "SINGLE":
+        if self.date_format == "SINGLE":
             labels_info["Date"] = {}
         else:
             labels_info["Year"] = {}
@@ -85,69 +92,7 @@ class DataSourceManager(DataTableManager):
 
         return data_info, labels_info
 
-    def load_data_table_from_widget(self, query: dict, vars: dict = None) -> dict:
-        self._check_query(query)
-        granularity = query["granularity"]
-        start = query["start"]
-        end = query["end"]
-        group_by = query.get("group_by")
-        filter = query.get("filter")
-        fields = query.get("fields")
-        field_group = query.get("field_group")
-        sort = query.get("sort")
-        page = query.get("page")
-
-        self.load_data_source(
-            granularity,
-            start,
-            end,
-            vars=vars,
-        )
-
-        if filter:
-            self.apply_filter(filter)
-
-        self.apply_group_by(fields, group_by)
-
-        if field_group:
-            self.apply_field_group(field_group, fields)
-
-            if sort:
-                changed_sort = []
-                for condition in sort:
-                    key = condition.get("key")
-                    desc = condition.get("desc", False)
-
-                    if key in fields:
-                        changed_sort.append({"key": f"_total_{key}", "desc": desc})
-                    else:
-                        changed_sort.append(condition)
-
-                sort = changed_sort
-
-        return self.response(sort, page)
-
-    @staticmethod
-    def _check_query(query: dict) -> None:
-        if "granularity" not in query:
-            raise ERROR_REQUIRED_PARAMETER(key="query.granularity")
-
-        if "start" not in query:
-            raise ERROR_REQUIRED_PARAMETER(key="query.start")
-
-        if "end" not in query:
-            raise ERROR_REQUIRED_PARAMETER(key="query.end")
-
-        if "fields" not in query:
-            raise ERROR_REQUIRED_PARAMETER(key="query.fields")
-
-        if "select" in query:
-            raise ERROR_NOT_SUPPORTED_QUERY_OPTION(key="query.select")
-
-        if "filter_or" in query:
-            raise ERROR_NOT_SUPPORTED_QUERY_OPTION(key="query.filter_or")
-
-    def load_data_source(
+    def load(
         self,
         granularity: GRANULARITY = "DAILY",
         start: str = None,
