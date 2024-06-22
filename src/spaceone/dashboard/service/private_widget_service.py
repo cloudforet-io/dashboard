@@ -10,6 +10,9 @@ from spaceone.dashboard.manager.private_data_table_manager import (
 from spaceone.dashboard.manager.data_table_manager.data_source_manager import (
     DataSourceManager,
 )
+from spaceone.dashboard.manager.data_table_manager.data_transformation_manager import (
+    DataTransformationManager,
+)
 from spaceone.dashboard.model.private_widget.request import *
 from spaceone.dashboard.model.private_widget.response import *
 from spaceone.dashboard.error.dashboard import (
@@ -200,15 +203,25 @@ class PrivateWidgetService(BaseService):
                 pri_data_table_vo.widget_id,
                 pri_data_table_vo.domain_id,
             )
-            return ds_mgr.load_data_table_from_widget(
+            return ds_mgr.load_from_widget(
                 params.query,
                 params.vars,
             )
         else:
-            return {
-                "results": [],
-                "total_count": 0,
-            }
+            operator = pri_data_table_vo.operator
+            options = pri_data_table_vo.options.get(operator, {})
+
+            dt_mgr = DataTransformationManager(
+                "PRIVATE",
+                pri_data_table_vo.operator,
+                options,
+                pri_data_table_vo.widget_id,
+                pri_data_table_vo.domain_id,
+            )
+            return dt_mgr.load_from_widget(
+                params.query,
+                params.vars,
+            )
 
     @transaction(
         permission="dashboard:PrivateWidget.read",

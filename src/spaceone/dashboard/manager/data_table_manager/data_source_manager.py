@@ -1,17 +1,16 @@
 import logging
 import copy
-from typing import Literal, Tuple
+from typing import Tuple
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import pandas as pd
 
-from spaceone.dashboard.manager.data_table_manager import DataTableManager
+from spaceone.dashboard.manager.data_table_manager import DataTableManager, GRANULARITY
 from spaceone.dashboard.manager.cost_analysis_manager import CostAnalysisManager
 from spaceone.dashboard.manager.inventory_manager import InventoryManager
 from spaceone.dashboard.error.data_table import *
 
 _LOGGER = logging.getLogger(__name__)
-GRANULARITY = Literal["DAILY", "MONTHLY", "YEARLY"]
 
 
 class DataSourceManager(DataTableManager):
@@ -93,69 +92,7 @@ class DataSourceManager(DataTableManager):
 
         return data_info, labels_info
 
-    def load_data_table_from_widget(self, query: dict, vars: dict = None) -> dict:
-        self._check_query(query)
-        granularity = query["granularity"]
-        start = query["start"]
-        end = query["end"]
-        group_by = query.get("group_by")
-        filter = query.get("filter")
-        fields = query.get("fields")
-        field_group = query.get("field_group")
-        sort = query.get("sort")
-        page = query.get("page")
-
-        self.load_data_source(
-            granularity,
-            start,
-            end,
-            vars=vars,
-        )
-
-        if filter:
-            self.apply_filter(filter)
-
-        self.apply_group_by(fields, group_by)
-
-        if field_group:
-            self.apply_field_group(field_group, fields)
-
-            if sort:
-                changed_sort = []
-                for condition in sort:
-                    key = condition.get("key")
-                    desc = condition.get("desc", False)
-
-                    if key in fields:
-                        changed_sort.append({"key": f"_total_{key}", "desc": desc})
-                    else:
-                        changed_sort.append(condition)
-
-                sort = changed_sort
-
-        return self.response(sort, page)
-
-    @staticmethod
-    def _check_query(query: dict) -> None:
-        if "granularity" not in query:
-            raise ERROR_REQUIRED_PARAMETER(key="query.granularity")
-
-        if "start" not in query:
-            raise ERROR_REQUIRED_PARAMETER(key="query.start")
-
-        if "end" not in query:
-            raise ERROR_REQUIRED_PARAMETER(key="query.end")
-
-        if "fields" not in query:
-            raise ERROR_REQUIRED_PARAMETER(key="query.fields")
-
-        if "select" in query:
-            raise ERROR_NOT_SUPPORTED_QUERY_OPTION(key="query.select")
-
-        if "filter_or" in query:
-            raise ERROR_NOT_SUPPORTED_QUERY_OPTION(key="query.filter_or")
-
-    def load_data_source(
+    def load(
         self,
         granularity: GRANULARITY = "DAILY",
         start: str = None,

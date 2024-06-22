@@ -72,7 +72,7 @@ class PrivateDataTableService(BaseService):
         )
 
         # Load data source to verify options
-        ds_mgr.load_data_source()
+        ds_mgr.load()
 
         # Get data and labels info from options
         data_info, labels_info = ds_mgr.get_data_and_labels_info()
@@ -127,7 +127,7 @@ class PrivateDataTableService(BaseService):
         )
 
         # Load data table to verify options
-        dt_mgr.load_data_table()
+        dt_mgr.load()
 
         # Get data and labels info from options
         data_info, labels_info = dt_mgr.get_data_and_labels_info()
@@ -186,7 +186,7 @@ class PrivateDataTableService(BaseService):
                 )
 
                 # Load data source to verify options
-                ds_mgr.load_data_source()
+                ds_mgr.load()
 
                 # Get data and labels info from options
                 data_info, labels_info = ds_mgr.get_data_and_labels_info()
@@ -215,7 +215,7 @@ class PrivateDataTableService(BaseService):
                 )
 
                 # Load data table to verify options
-                dt_mgr.load_data_table()
+                dt_mgr.load()
 
                 # Get data and labels info from options
                 data_info, labels_info = dt_mgr.get_data_and_labels_info()
@@ -224,6 +224,9 @@ class PrivateDataTableService(BaseService):
                 params_dict["data_type"] = "TRANSFORMED"
                 params_dict["data_info"] = data_info
                 params_dict["labels_info"] = labels_info
+                params_dict["options"] = {
+                    operator: operator_options,
+                }
 
         pri_data_table_vo = self.pri_data_table_mgr.update_private_data_table_by_vo(
             params_dict, pri_data_table_vo
@@ -300,7 +303,7 @@ class PrivateDataTableService(BaseService):
                 pri_data_table_vo.widget_id,
                 pri_data_table_vo.domain_id,
             )
-            ds_mgr.load_data_source(
+            ds_mgr.load(
                 params.granularity,
                 params.start,
                 params.end,
@@ -320,7 +323,7 @@ class PrivateDataTableService(BaseService):
                 widget_id,
                 domain_id,
             )
-            dt_mgr.load_data_table(params.granularity, params.start, params.end)
+            dt_mgr.load(params.granularity, params.start, params.end)
             return dt_mgr.response(params.sort, params.page)
 
     @transaction(

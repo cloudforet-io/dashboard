@@ -8,6 +8,9 @@ from spaceone.dashboard.manager.public_data_table_manager import PublicDataTable
 from spaceone.dashboard.manager.data_table_manager.data_source_manager import (
     DataSourceManager,
 )
+from spaceone.dashboard.manager.data_table_manager.data_transformation_manager import (
+    DataTransformationManager,
+)
 from spaceone.dashboard.model.public_widget.request import *
 from spaceone.dashboard.model.public_widget.response import *
 from spaceone.dashboard.model.public_widget.database import PublicWidget
@@ -209,15 +212,25 @@ class PublicWidgetService(BaseService):
                 pub_data_table_vo.widget_id,
                 pub_data_table_vo.domain_id,
             )
-            return ds_mgr.load_data_table_from_widget(
+            return ds_mgr.load_from_widget(
                 params.query,
                 params.vars,
             )
         else:
-            return {
-                "results": [],
-                "total_count": 0,
-            }
+            operator = pub_data_table_vo.operator
+            options = pub_data_table_vo.options.get(operator, {})
+
+            dt_mgr = DataTransformationManager(
+                "PUBLIC",
+                pub_data_table_vo.operator,
+                options,
+                pub_data_table_vo.widget_id,
+                pub_data_table_vo.domain_id,
+            )
+            return dt_mgr.load_from_widget(
+                params.query,
+                params.vars,
+            )
 
     @transaction(
         permission="dashboard:PublicWidget.read",
