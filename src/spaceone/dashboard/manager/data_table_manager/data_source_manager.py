@@ -15,43 +15,51 @@ GRANULARITY = Literal["DAILY", "MONTHLY", "YEARLY"]
 
 
 class DataSourceManager(DataTableManager):
-    def __init__(self, source_type: str, options: dict, *args, **kwargs):
+    def __init__(
+        self,
+        data_table_type: str,
+        source_type: str,
+        options: dict,
+        widget_id: str,
+        domain_id: str,
+        *args,
+        **kwargs,
+    ):
         super().__init__(*args, **kwargs)
 
         if source_type not in ["COST", "ASSET"]:
             raise ERROR_NOT_SUPPORTED_SOURCE_TYPE(source_type=source_type)
 
+        self.data_table_type = data_table_type
         self.cost_analysis_mgr = CostAnalysisManager()
         self.inventory_mgr = InventoryManager()
         self.source_type = source_type
         self.options = options
+        self.widget_id = widget_id
+        self.domain_id = domain_id
+
         self.data_name = options.get("data_name")
+        self.data_unit = options.get("data_unit")
         self.date_format = options.get("date_format", "SINGLE")
         self.timediff = options.get("timediff")
         self.group_by = options.get("group_by")
         self.filter = options.get("filter")
         self.filter_or = options.get("filter_or")
+        self.additional_labels = options.get("additional_labels")
 
-    @staticmethod
-    def get_data_and_labels_info(options: dict) -> Tuple[dict, dict]:
-        data_name = options.get("data_name")
-        data_unit = options.get("data_unit")
-        group_by = options.get("group_by")
-        date_format = options.get("date_format", "SINGLE")
-        additional_labels = options.get("additional_labels")
-
-        if data_name is None:
+    def get_data_and_labels_info(self) -> Tuple[dict, dict]:
+        if self.data_name is None:
             raise ERROR_REQUIRED_PARAMETER(key="options.data_name")
 
-        data_info = {data_name: {}}
+        data_info = {self.data_name: {}}
 
-        if data_unit:
-            data_info[data_name]["unit"] = data_unit
+        if self.data_unit:
+            data_info[self.data_name]["unit"] = self.data_unit
 
         labels_info = {}
 
-        if group_by:
-            for group_option in copy.deepcopy(group_by):
+        if self.group_by:
+            for group_option in copy.deepcopy(self.group_by):
                 if isinstance(group_option, dict):
                     group_name = group_option.get("name")
                     group_key = group_option.get("key")
@@ -72,11 +80,11 @@ class DataSourceManager(DataTableManager):
                 else:
                     labels_info[group_option] = {}
 
-        if additional_labels:
-            for key in additional_labels.keys():
+        if self.additional_labels:
+            for key in self.additional_labels.keys():
                 labels_info[key] = {}
 
-        if date_format == "SINGLE":
+        if self.date_format == "SINGLE":
             labels_info["Date"] = {}
         else:
             labels_info["Year"] = {}

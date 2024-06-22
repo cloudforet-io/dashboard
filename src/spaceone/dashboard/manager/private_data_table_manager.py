@@ -48,13 +48,15 @@ class PrivateDataTableManager(BaseManager):
         self,
         data_table_id: str,
         domain_id: str,
-        user_id: str,
+        user_id: str = None,
     ) -> PrivateDataTable:
         conditions = {
             "data_table_id": data_table_id,
             "domain_id": domain_id,
-            "user_id": user_id,
         }
+
+        if user_id:
+            conditions.update({"user_id": user_id})
 
         return self.data_table_model.get(**conditions)
 

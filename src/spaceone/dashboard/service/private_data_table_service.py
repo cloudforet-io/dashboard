@@ -64,15 +64,18 @@ class PrivateDataTableService(BaseService):
         )
 
         ds_mgr = DataSourceManager(
+            "PRIVATE",
             params.source_type,
             params.options,
+            params.widget_id,
+            params.domain_id,
         )
 
         # Load data source to verify options
         ds_mgr.load_data_source()
 
         # Get data and labels info from options
-        data_info, labels_info = ds_mgr.get_data_and_labels_info(params.options)
+        data_info, labels_info = ds_mgr.get_data_and_labels_info()
 
         params_dict = params.dict()
         params_dict["data_type"] = "ADDED"
@@ -117,8 +120,22 @@ class PrivateDataTableService(BaseService):
             params.user_id,
         )
 
+        operator = params.operator
+        options = params.options.get(operator, {})
+        dt_mgr = DataTransformationManager(
+            "PRIVATE", operator, options, params.widget_id, params.domain_id
+        )
+
+        # Load data table to verify options
+        dt_mgr.load_data_table()
+
+        # Get data and labels info from options
+        data_info, labels_info = dt_mgr.get_data_and_labels_info()
+
         params_dict = params.dict()
         params_dict["data_type"] = "TRANSFORMED"
+        params_dict["data_info"] = data_info
+        params_dict["labels_info"] = labels_info
 
         pri_data_table_vo = self.pri_data_table_mgr.create_private_data_table(
             params_dict
@@ -161,12 +178,20 @@ class PrivateDataTableService(BaseService):
         if options := params_dict.get("options"):
             if pri_data_table_vo.data_type == "ADDED":
                 ds_mgr = DataSourceManager(
+                    "PRIVATE",
                     pri_data_table_vo.source_type,
-                    pri_data_table_vo.options,
+                    options,
+                    pri_data_table_vo.widget_id,
+                    pri_data_table_vo.domain_id,
                 )
 
                 # Load data source to verify options
                 ds_mgr.load_data_source()
+
+                # Get data and labels info from options
+                data_info, labels_info = ds_mgr.get_data_and_labels_info()
+                params_dict["data_info"] = data_info
+                params_dict["labels_info"] = labels_info
 
                 # change timediff format
                 if timediff := options.get("timediff"):
@@ -178,13 +203,27 @@ class PrivateDataTableService(BaseService):
                         options["timediff"] = {"days": days}
 
                     params_dict["options"] = options
+            else:
+                operator = pri_data_table_vo.operator
+                operator_options = options.get(operator, {})
+                dt_mgr = DataTransformationManager(
+                    "PRIVATE",
+                    operator,
+                    operator_options,
+                    pri_data_table_vo.widget_id,
+                    pri_data_table_vo.domain_id,
+                )
+
+                # Load data table to verify options
+                dt_mgr.load_data_table()
 
                 # Get data and labels info from options
-                data_info, labels_info = ds_mgr.get_data_and_labels_info(options)
+                data_info, labels_info = dt_mgr.get_data_and_labels_info()
+
+                params_dict = params.dict()
+                params_dict["data_type"] = "TRANSFORMED"
                 params_dict["data_info"] = data_info
                 params_dict["labels_info"] = labels_info
-            else:
-                pass
 
         pri_data_table_vo = self.pri_data_table_mgr.update_private_data_table_by_vo(
             params_dict, pri_data_table_vo
@@ -255,8 +294,11 @@ class PrivateDataTableService(BaseService):
 
         if pri_data_table_vo.data_type == "ADDED":
             ds_mgr = DataSourceManager(
+                "PRIVATE",
                 pri_data_table_vo.source_type,
                 pri_data_table_vo.options,
+                pri_data_table_vo.widget_id,
+                pri_data_table_vo.domain_id,
             )
             ds_mgr.load_data_source(
                 params.granularity,
@@ -266,10 +308,20 @@ class PrivateDataTableService(BaseService):
             return ds_mgr.response(params.sort, params.page)
 
         else:
-            return {
-                "results": [],
-                "total_count": 0,
-            }
+            operator = pri_data_table_vo.operator
+            options = pri_data_table_vo.options.get(operator, {})
+            widget_id = pri_data_table_vo.widget_id
+            domain_id = pri_data_table_vo.domain_id
+
+            dt_mgr = DataTransformationManager(
+                "PUBLIC",
+                operator,
+                options,
+                widget_id,
+                domain_id,
+            )
+            dt_mgr.load_data_table(params.granularity, params.start, params.end)
+            return dt_mgr.response(params.sort, params.page)
 
     @transaction(
         permission="dashboard:PrivateDataTable.read",
