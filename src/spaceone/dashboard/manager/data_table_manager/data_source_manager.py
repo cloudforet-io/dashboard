@@ -38,6 +38,9 @@ class DataSourceManager(DataTableManager):
         self.domain_id = domain_id
 
         self.data_name = options.get("data_name")
+        if self.data_name is None:
+            raise ERROR_REQUIRED_PARAMETER(key="options.data_name")
+
         self.data_unit = options.get("data_unit")
         self.date_format = options.get("date_format", "SINGLE")
         self.timediff = options.get("timediff")
@@ -47,9 +50,6 @@ class DataSourceManager(DataTableManager):
         self.additional_labels = options.get("additional_labels")
 
     def get_data_and_labels_info(self) -> Tuple[dict, dict]:
-        if self.data_name is None:
-            raise ERROR_REQUIRED_PARAMETER(key="options.data_name")
-
         data_info = {self.data_name: {}}
 
         if self.data_unit:

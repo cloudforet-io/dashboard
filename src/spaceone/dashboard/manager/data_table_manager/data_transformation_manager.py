@@ -129,6 +129,19 @@ class DataTransformationManager(DataTableManager):
         origin_df = self._get_data_table(origin_vo, granularity, start, end, vars)
         other_df = self._get_data_table(other_vo, granularity, start, end, vars)
 
+        if len(other_df) == 0:
+            if how in ["left", "outer"]:
+                self.df = origin_df
+            else:
+                self.df = other_df
+            return
+        elif len(origin_df) == 0:
+            if how in ["right", "outer"]:
+                self.df = other_df
+            else:
+                self.df = origin_df
+            return
+
         merged_df = origin_df.merge(other_df, left_on=on, right_on=on, how=how)
         merged_df = merged_df.fillna(value=fill_na)
         self.df = merged_df
