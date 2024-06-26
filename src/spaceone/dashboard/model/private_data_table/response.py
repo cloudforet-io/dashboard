@@ -19,7 +19,6 @@ class PrivateDataTableResponse(BaseModel):
     dashboard_id: Union[str, None] = None
     widget_id: Union[str, None] = None
     user_id: Union[str, None] = None
-    workspace_id: Union[str, None] = None
     domain_id: Union[str, None] = None
     created_at: Union[datetime, None] = None
     updated_at: Union[datetime, None] = None
