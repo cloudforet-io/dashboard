@@ -94,7 +94,7 @@ class DataSourceManager(DataTableManager):
 
     def load(
         self,
-        granularity: GRANULARITY = "DAILY",
+        granularity: GRANULARITY = "MONTHLY",
         start: str = None,
         end: str = None,
         vars: dict = None,
