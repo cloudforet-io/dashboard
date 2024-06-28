@@ -4,7 +4,7 @@ from spaceone.core.model.mongo_model import MongoModel
 
 
 class PrivateDataTable(MongoModel):
-    data_table_id = StringField(max_length=40, generate_id="public-dt", unique=True)
+    data_table_id = StringField(max_length=40, generate_id="private-dt", unique=True)
     name = StringField(max_length=100, default=None, null=True)
     data_type = StringField(max_length=40, choices=("ADDED", "TRANSFORMED"))
     source_type = StringField(max_length=40, default=None, null=True)
