@@ -56,19 +56,30 @@ class PrivateDataTableService(BaseService):
             PrivateDataTableResponse:
         """
 
+        pri_data_table_info = self.add_data_table(params.dict())
+        return PrivateDataTableResponse(**pri_data_table_info)
+
+    @check_required(["widget_id", "source_type", "options", "domain_id", "user_id"])
+    def add_data_table(self, params_dict: dict) -> dict:
+        source_type = params_dict.get("source_type")
+        options = params_dict.get("options")
+        widget_id = params_dict.get("widget_id")
+        domain_id = params_dict.get("domain_id")
+        user_id = params_dict.get("user_id")
+
         pri_widget_mgr = PrivateWidgetManager()
-        pri_widget_mgr.get_private_widget(
-            params.widget_id,
-            params.domain_id,
-            params.user_id,
+        pri_widget_vo = pri_widget_mgr.get_private_widget(
+            widget_id,
+            domain_id,
+            user_id,
         )
 
         ds_mgr = DataSourceManager(
             "PRIVATE",
-            params.source_type,
-            params.options,
-            params.widget_id,
-            params.domain_id,
+            source_type,
+            options,
+            widget_id,
+            domain_id,
         )
 
         # Load data source to verify options
@@ -77,7 +88,6 @@ class PrivateDataTableService(BaseService):
         # Get data and labels info from options
         data_info, labels_info = ds_mgr.get_data_and_labels_info()
 
-        params_dict = params.dict()
         params_dict["data_type"] = "ADDED"
         params_dict["data_info"] = data_info
         params_dict["labels_info"] = labels_info
@@ -86,7 +96,7 @@ class PrivateDataTableService(BaseService):
             params_dict
         )
 
-        return PrivateDataTableResponse(**pri_data_table_vo.to_dict())
+        return pri_data_table_vo.to_dict()
 
     @transaction(
         permission="dashboard:PrivateDataTable.write",
@@ -113,17 +123,27 @@ class PrivateDataTableService(BaseService):
             PrivateDataTableResponse:
         """
 
+        pri_data_table_info = self.transform_data_table(params.dict())
+        return PrivateDataTableResponse(**pri_data_table_info)
+
+    @check_required(["widget_id", "operator", "options", "domain_id", "user_id"])
+    def transform_data_table(self, params_dict: dict) -> dict:
+        operator = params_dict.get("operator")
+        options = params_dict.get("options")
+        operator_options = options.get(operator, {})
+        widget_id = params_dict.get("widget_id")
+        domain_id = params_dict.get("domain_id")
+        user_id = params_dict.get("user_id")
+
         pri_widget_mgr = PrivateWidgetManager()
         pri_widget_mgr.get_private_widget(
-            params.widget_id,
-            params.domain_id,
-            params.user_id,
+            widget_id,
+            domain_id,
+            user_id,
         )
 
-        operator = params.operator
-        options = params.options.get(operator, {})
         dt_mgr = DataTransformationManager(
-            "PRIVATE", operator, options, params.widget_id, params.domain_id
+            "PRIVATE", operator, operator_options, widget_id, domain_id
         )
 
         # Load data table to verify options
@@ -132,7 +152,6 @@ class PrivateDataTableService(BaseService):
         # Get data and labels info from options
         data_info, labels_info = dt_mgr.get_data_and_labels_info()
 
-        params_dict = params.dict()
         params_dict["data_type"] = "TRANSFORMED"
         params_dict["data_info"] = data_info
         params_dict["labels_info"] = labels_info
@@ -141,7 +160,7 @@ class PrivateDataTableService(BaseService):
             params_dict
         )
 
-        return PrivateDataTableResponse(**pri_data_table_vo.to_dict())
+        return pri_data_table_vo.to_dict()
 
     @transaction(
         permission="dashboard:PrivateDataTable.write",

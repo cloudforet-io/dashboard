@@ -4,6 +4,8 @@ from mongoengine import QuerySet
 
 from spaceone.core.manager import BaseManager
 from spaceone.dashboard.model.public_dashboard.database import PublicDashboard
+from spaceone.dashboard.manager.public_data_table_manager import PublicDataTableManager
+from spaceone.dashboard.manager.public_widget_manager import PublicWidgetManager
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -42,6 +44,28 @@ class PublicDashboardManager(BaseManager):
 
     @staticmethod
     def delete_public_dashboard_by_vo(dashboard_vo: PublicDashboard) -> None:
+        # Delete child widgets
+        pub_widget_mgr = PublicWidgetManager()
+        pub_widget_vos = pub_widget_mgr.filter_public_widgets(
+            dashboard_id=dashboard_vo.dashboard_id,
+            domain_id=dashboard_vo.domain_id,
+        )
+        _LOGGER.debug(
+            f"[delete_public_dashboard_by_vo] delete widget count: {pub_widget_vos.count()}"
+        )
+        pub_widget_vos.delete()
+
+        # Delete child data tables
+        pub_data_table_mgr = PublicDataTableManager()
+        pub_data_table_vos = pub_data_table_mgr.filter_public_data_tables(
+            dashboard_id=dashboard_vo.dashboard_id,
+            domain_id=dashboard_vo.domain_id,
+        )
+        _LOGGER.debug(
+            f"[delete_public_dashboard_by_vo] delete data table count: {pub_data_table_vos.count()}"
+        )
+        pub_data_table_vos.delete()
+
         dashboard_vo.delete()
 
     def get_public_dashboard(

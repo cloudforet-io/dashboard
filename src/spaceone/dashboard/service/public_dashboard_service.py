@@ -9,6 +9,7 @@ from spaceone.dashboard.manager.identity_manager import IdentityManager
 from spaceone.dashboard.model.public_dashboard.request import *
 from spaceone.dashboard.model.public_dashboard.response import *
 from spaceone.dashboard.model.public_dashboard.database import PublicDashboard
+from spaceone.dashboard.service.public_widget_service import PublicWidgetService
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -57,34 +58,77 @@ class PublicDashboardService(BaseService):
             PublicDashboardResponse:
         """
 
-        if params.resource_group == "PROJECT":
-            if not params.project_id:
+        pub_dashboard_info = self.create_dashboard(params.dict())
+        return PublicDashboardResponse(**pub_dashboard_info)
+
+    @check_required(["name", "resource_group", "domain_id"])
+    def create_dashboard(self, params_dict: dict) -> dict:
+        resource_group = params_dict["resource_group"]
+        domain_id = params_dict["domain_id"]
+        workspace_id = params_dict.get("workspace_id")
+        user_projects = params_dict.get("user_projects")
+
+        layouts = params_dict.get("layouts")
+        if layouts:
+            del params_dict["layouts"]
+
+        if resource_group == "PROJECT":
+            if project_id := params_dict.get("project_id"):
+                project_info = self.identity_mgr.get_project(project_id)
+                params_dict["workspace_id"] = project_info["workspace_id"]
+            else:
                 raise ERROR_REQUIRED_PARAMETER(key="project_id")
 
-            project_info = self.identity_mgr.get_project(params.project_id)
-            params.workspace_id = project_info["workspace_id"]
-        elif params.resource_group == "WORKSPACE":
-            if not params.workspace_id:
+        elif resource_group == "WORKSPACE":
+            if workspace_id := params_dict.get("workspace_id"):
+                self.identity_mgr.check_workspace(workspace_id, domain_id)
+                params_dict["project_id"] = "*"
+            else:
                 raise ERROR_REQUIRED_PARAMETER(key="workspace_id")
-
-            self.identity_mgr.check_workspace(params.workspace_id, params.domain_id)
-            params.project_id = "*"
         else:
-            params.workspace_id = "*"
-            params.project_id = "*"
+            params_dict["workspace_id"] = "*"
+            params_dict["project_id"] = "*"
 
-        if params.folder_id:
+        if folder_id := params_dict.get("folder_id"):
             pub_folder_mgr = PublicFolderManager()
             pub_folder_mgr.get_public_folder(
-                params.folder_id,
-                params.domain_id,
-                params.workspace_id,
-                params.user_projects,
-                params.resource_group,
+                folder_id,
+                domain_id,
+                workspace_id,
+                user_projects,
+                resource_group,
             )
 
-        pub_dashboard_vo = self.pub_dashboard_mgr.create_public_dashboard(params.dict())
-        return PublicDashboardResponse(**pub_dashboard_vo.to_dict())
+        pub_dashboard_vo = self.pub_dashboard_mgr.create_public_dashboard(params_dict)
+
+        if layouts:
+            pub_widget_svc = PublicWidgetService()
+            created_layouts = []
+            for layout in layouts:
+                widgets = layout.get("widgets", [])
+                created_layout = {"name": layout.get("name", ""), "widgets": []}
+                for widget in widgets:
+                    widget["dashboard_id"] = pub_dashboard_vo.dashboard_id
+                    widget["domain_id"] = domain_id
+                    widget["workspace_id"] = workspace_id
+                    widget["user_projects"] = user_projects
+                    widget["is_bulk"] = True
+
+                    widget_info = pub_widget_svc.create_widget(widget)
+                    created_widget_id = widget_info["widget_id"]
+
+                    _LOGGER.debug(
+                        f"[create_dashboard] create widget: {created_widget_id}"
+                    )
+                    created_layout["widgets"].append(created_widget_id)
+
+                created_layouts.append(created_layout)
+
+            self.pub_dashboard_mgr.update_public_dashboard_by_vo(
+                {"layouts": created_layouts}, pub_dashboard_vo
+            )
+
+        return pub_dashboard_vo.to_dict()
 
     @transaction(
         permission="dashboard:PublicDashboard.write",

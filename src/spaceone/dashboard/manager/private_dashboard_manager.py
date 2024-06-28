@@ -4,6 +4,10 @@ from mongoengine import QuerySet
 
 from spaceone.core.manager import BaseManager
 from spaceone.dashboard.model.private_dashboard.database import PrivateDashboard
+from spaceone.dashboard.manager.private_data_table_manager import (
+    PrivateDataTableManager,
+)
+from spaceone.dashboard.manager.private_widget_manager import PrivateWidgetManager
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -42,6 +46,22 @@ class PrivateDashboardManager(BaseManager):
 
     @staticmethod
     def delete_private_dashboard_by_vo(dashboard_vo: PrivateDashboard) -> None:
+        # Delete child widgets
+        pri_widget_mgr = PrivateWidgetManager()
+        pri_widget_vos = pri_widget_mgr.filter_private_widgets(
+            dashboard_id=dashboard_vo.dashboard_id,
+            domain_id=dashboard_vo.domain_id,
+        )
+        pri_widget_vos.delete()
+
+        # Delete child data tables
+        pri_data_table_mgr = PrivateDataTableManager()
+        pri_data_table_vos = pri_data_table_mgr.filter_private_data_tables(
+            dashboard_id=dashboard_vo.dashboard_id,
+            domain_id=dashboard_vo.domain_id,
+        )
+        pri_data_table_vos.delete()
+
         dashboard_vo.delete()
 
     def get_private_dashboard(
@@ -51,9 +71,7 @@ class PrivateDashboardManager(BaseManager):
         user_id: str,
     ) -> PrivateDashboard:
         return self.dashboard_model.get(
-            dashboard_id=dashboard_id,
-            domain_id=domain_id,
-            user_id=user_id
+            dashboard_id=dashboard_id, domain_id=domain_id, user_id=user_id
         )
 
     def filter_private_dashboards(self, **conditions) -> QuerySet:
