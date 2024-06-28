@@ -4,6 +4,9 @@ from mongoengine import QuerySet
 
 from spaceone.core.manager import BaseManager
 from spaceone.dashboard.model.private_widget.database import PrivateWidget
+from spaceone.dashboard.manager.private_data_table_manager import (
+    PrivateDataTableManager,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -42,6 +45,14 @@ class PrivateWidgetManager(BaseManager):
 
     @staticmethod
     def delete_private_widget_by_vo(widget_vo: PrivateWidget) -> None:
+        # Delete child data tables
+        pri_data_table_mgr = PrivateDataTableManager()
+        pri_data_table_vos = pri_data_table_mgr.filter_private_data_tables(
+            widget_id=widget_vo.widget_id,
+            domain_id=widget_vo.domain_id,
+        )
+        pri_data_table_vos.delete()
+
         widget_vo.delete()
 
     def get_private_widget(
