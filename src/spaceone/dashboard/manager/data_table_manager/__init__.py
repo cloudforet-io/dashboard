@@ -172,8 +172,16 @@ class DataTableManager(BaseManager):
     def apply_group_by(self, fields: dict, group_by: list = None) -> None:
         if len(self.df) > 0:
             columns = list(fields.keys())
+            for key in columns:
+                if key not in self.df.columns:
+                    raise ERROR_QUERY_OPTION(key=f"fields.{key}")
+
             if group_by:
                 group_by = list(set(group_by))
+                for key in group_by:
+                    if key not in self.df.columns:
+                        raise ERROR_QUERY_OPTION(key=f"group_by[].{key}")
+
                 columns.extend(group_by)
 
             self.df = self.df[columns]
@@ -198,6 +206,10 @@ class DataTableManager(BaseManager):
 
     def apply_field_group(self, field_group: list, fields: dict) -> None:
         if len(self.df) > 0:
+            for key in field_group:
+                if key not in self.df.columns:
+                    raise ERROR_QUERY_OPTION(key=f"field_group[].{key}")
+
             data_fields = list(fields.keys())
             agg_fields = set(data_fields + field_group)
             group_by = list(set(self.df.columns) - agg_fields)
