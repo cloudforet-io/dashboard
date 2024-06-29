@@ -54,7 +54,8 @@ class DataTableManager(BaseManager):
         if filter:
             self.apply_filter(filter)
 
-        self.apply_group_by(fields, group_by)
+        if fields:
+            self.apply_group_by(fields, group_by)
 
         if field_group:
             self.apply_field_group(field_group, fields)
