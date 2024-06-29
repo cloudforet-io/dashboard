@@ -173,6 +173,7 @@ class DataTableManager(BaseManager):
         if len(self.df) > 0:
             columns = list(fields.keys())
             if group_by:
+                group_by = list(set(group_by))
                 columns.extend(group_by)
 
             self.df = self.df[columns]
@@ -204,9 +205,23 @@ class DataTableManager(BaseManager):
             for field in agg_fields:
                 agg_options[field] = lambda x: list(x)
 
-            self.df = self.df.groupby(group_by).agg(agg_options).reset_index()
+            if group_by:
+                self.df = self.df.groupby(group_by).agg(agg_options).reset_index()
+                rows = self.df.to_dict(orient="records")
+            else:
+                aggr_row = {}
+                for key in agg_options.keys():
+                    aggr_row[key] = []
+
+                for row in self.df.to_dict(orient="records"):
+                    for key in agg_options.keys():
+                        if key in row:
+                            aggr_row[key].append(row[key])
+
+                rows = [aggr_row]
+
             changed_data = []
-            for row in self.df.to_dict(orient="records"):
+            for row in rows:
                 changed_row = {}
                 for data_field in data_fields:
                     changed_row[data_field] = []
