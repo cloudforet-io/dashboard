@@ -336,6 +336,8 @@ class PublicWidgetService(BaseService):
         permission="dashboard:PublicWidget.write",
         role_types=["DOMAIN_ADMIN", "WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
     )
+    @change_value_by_rule("APPEND", "workspace_id", "*")
+    @change_value_by_rule("APPEND", "user_projects", "*")
     @convert_model
     def load(self, params: PublicWidgetLoadRequest) -> dict:
         """Load public widget
@@ -406,6 +408,8 @@ class PublicWidgetService(BaseService):
         permission="dashboard:PublicWidget.read",
         role_types=["DOMAIN_ADMIN", "WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
     )
+    @change_value_by_rule("APPEND", "workspace_id", "*")
+    @change_value_by_rule("APPEND", "user_projects", "*")
     @convert_model
     def get(self, params: PublicWidgetGetRequest) -> Union[PublicWidgetResponse, dict]:
         """Get public widget
@@ -435,6 +439,8 @@ class PublicWidgetService(BaseService):
         permission="dashboard:PublicWidget.read",
         role_types=["DOMAIN_ADMIN", "WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
     )
+    @change_value_by_rule("APPEND", "workspace_id", "*")
+    @change_value_by_rule("APPEND", "user_projects", "*")
     @append_query_filter(
         [
             "dashboard_id",

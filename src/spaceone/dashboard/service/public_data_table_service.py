@@ -309,7 +309,7 @@ class PublicDataTableService(BaseService):
         role_types=["DOMAIN_ADMIN", "WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
     )
     @change_value_by_rule("APPEND", "workspace_id", "*")
-    @change_value_by_rule("APPEND", "project_id", "*")
+    @change_value_by_rule("APPEND", "user_projects", "*")
     @convert_model
     def load(self, params: PublicDataTableLoadRequest) -> dict:
         """Load public data table
@@ -376,7 +376,7 @@ class PublicDataTableService(BaseService):
         role_types=["DOMAIN_ADMIN", "WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
     )
     @change_value_by_rule("APPEND", "workspace_id", "*")
-    @change_value_by_rule("APPEND", "project_id", "*")
+    @change_value_by_rule("APPEND", "user_projects", "*")
     @convert_model
     def get(
         self, params: PublicDataTableGetRequest
@@ -410,6 +410,8 @@ class PublicDataTableService(BaseService):
         permission="dashboard:PublicDataTable.read",
         role_types=["DOMAIN_ADMIN", "WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
     )
+    @change_value_by_rule("APPEND", "workspace_id", "*")
+    @change_value_by_rule("APPEND", "user_projects", "*")
     @append_query_filter(
         [
             "widget_id",
@@ -425,8 +427,6 @@ class PublicDataTableService(BaseService):
         ]
     )
     @append_keyword_filter(["data_table_id", "name"])
-    @change_value_by_rule("APPEND", "workspace_id", "*")
-    @change_value_by_rule("APPEND", "project_id", "*")
     @convert_model
     def list(
         self, params: PublicDataTableSearchQueryRequest

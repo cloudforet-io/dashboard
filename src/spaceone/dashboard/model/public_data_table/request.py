@@ -60,14 +60,14 @@ class PublicDataTableLoadRequest(BaseModel):
     end: Union[str, None] = None
     sort: Union[list, None] = None
     page: Union[dict, None] = None
-    workspace_id: Union[str, None] = None
+    workspace_id: Union[str, list, None] = None
     domain_id: str
     user_projects: Union[list, None] = None
 
 
 class PublicDataTableGetRequest(BaseModel):
     data_table_id: str
-    workspace_id: Union[str, None] = None
+    workspace_id: Union[str, list, None] = None
     domain_id: str
     user_projects: Union[list, None] = None
 
@@ -81,13 +81,13 @@ class PublicDataTableSearchQueryRequest(BaseModel):
     source_type: Union[str, None] = None
     operator: Union[str, None] = None
     project_id: Union[str, None] = None
-    workspace_id: Union[str, None] = None
+    workspace_id: Union[str, list, None] = None
     domain_id: str
     user_projects: Union[list, None] = None
 
 
 class PublicDataTableStatQueryRequest(BaseModel):
     query: dict
-    workspace_id: Union[str, None] = None
+    workspace_id: Union[str, list, None] = None
     domain_id: str
     user_projects: Union[list, None] = None

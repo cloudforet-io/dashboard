@@ -323,7 +323,7 @@ class PublicDashboardService(BaseService):
         role_types=["DOMAIN_ADMIN", "WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
     )
     @change_value_by_rule("APPEND", "workspace_id", "*")
-    @change_value_by_rule("APPEND", "project_id", "*")
+    @change_value_by_rule("APPEND", "user_projects", "*")
     @convert_model
     def get(
         self, params: PublicDashboardGetRequest
@@ -355,6 +355,8 @@ class PublicDashboardService(BaseService):
         permission="dashboard:PublicDashboard.read",
         role_types=["DOMAIN_ADMIN", "WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
     )
+    @change_value_by_rule("APPEND", "workspace_id", "*")
+    @change_value_by_rule("APPEND", "user_projects", "*")
     @append_query_filter(
         [
             "dashboard_id",
@@ -367,8 +369,6 @@ class PublicDashboardService(BaseService):
         ]
     )
     @append_keyword_filter(["dashboard_id", "name"])
-    @change_value_by_rule("APPEND", "workspace_id", "*")
-    @change_value_by_rule("APPEND", "project_id", "*")
     @convert_model
     def list(
         self, params: PublicDashboardSearchQueryRequest
@@ -406,10 +406,10 @@ class PublicDashboardService(BaseService):
         permission="dashboard:PublicDashboard.read",
         role_types=["DOMAIN_ADMIN", "WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
     )
+    @change_value_by_rule("APPEND", "workspace_id", "*")
+    @change_value_by_rule("APPEND", "user_projects", "*")
     @append_query_filter(["domain_id", "workspace_id", "user_projects"])
     @append_keyword_filter(["dashboard_id", "name"])
-    @change_value_by_rule("APPEND", "workspace_id", "*")
-    @change_value_by_rule("APPEND", "project_id", "*")
     @convert_model
     def stat(self, params: PublicDashboardStatQueryRequest) -> dict:
         """

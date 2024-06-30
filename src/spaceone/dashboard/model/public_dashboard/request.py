@@ -68,7 +68,7 @@ class PublicDashboardDeleteRequest(BaseModel):
 
 class PublicDashboardGetRequest(BaseModel):
     dashboard_id: str
-    workspace_id: Union[str, None] = None
+    workspace_id: Union[str, list, None] = None
     domain_id: str
     user_projects: Union[list, None] = None
 
@@ -79,13 +79,13 @@ class PublicDashboardSearchQueryRequest(BaseModel):
     name: Union[str, None] = None
     folder_id: Union[str, None] = None
     project_id: Union[str, None] = None
-    workspace_id: Union[str, None] = None
+    workspace_id: Union[str, list, None] = None
     domain_id: str
     user_projects: Union[list, None] = None
 
 
 class PublicDashboardStatQueryRequest(BaseModel):
     query: dict
-    workspace_id: Union[str, None] = None
+    workspace_id: Union[str, list, None] = None
     domain_id: str
     user_projects: Union[list, None] = None

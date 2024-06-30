@@ -52,7 +52,7 @@ class PublicFolderDeleteRequest(BaseModel):
 
 class PublicFolderGetRequest(BaseModel):
     folder_id: str
-    workspace_id: Union[str, None] = None
+    workspace_id: Union[str, list, None] = None
     domain_id: str
     user_projects: Union[list, None] = None
 
@@ -62,13 +62,13 @@ class PublicFolderSearchQueryRequest(BaseModel):
     folder_id: Union[str, None] = None
     name: Union[str, None] = None
     project_id: Union[str, None] = None
-    workspace_id: Union[str, None] = None
+    workspace_id: Union[str, list, None] = None
     domain_id: str
     user_projects: Union[list, None] = None
 
 
 class PublicFolderStatQueryRequest(BaseModel):
     query: dict
-    workspace_id: Union[str, None] = None
+    workspace_id: Union[str, list, None] = None
     domain_id: str
     user_projects: Union[list, None] = None
