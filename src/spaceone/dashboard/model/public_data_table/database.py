@@ -31,6 +31,8 @@ class PublicDataTable(MongoModel):
             "tags",
             "labels_info",
             "data_info",
+            "project_id",
+            "workspace_id",
         ],
         "minimal_fields": [
             "data_table_id",

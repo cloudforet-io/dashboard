@@ -29,7 +29,9 @@ class PublicFolderService(BaseService):
         role_types=["DOMAIN_ADMIN", "WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
     )
     @convert_model
-    def create(self, params: PublicFolderCreateRequest) -> Union[PublicFolderResponse, dict]:
+    def create(
+        self, params: PublicFolderCreateRequest
+    ) -> Union[PublicFolderResponse, dict]:
         """Create public folder
 
         Args:
@@ -58,10 +60,10 @@ class PublicFolderService(BaseService):
                 raise ERROR_REQUIRED_PARAMETER(key="workspace_id")
 
             self.identity_mgr.check_workspace(params.workspace_id, params.domain_id)
-            params.project_id = "*"
+            params.project_id = "-"
         else:
-            params.workspace_id = "*"
-            params.project_id = "*"
+            params.workspace_id = "-"
+            params.project_id = "-"
 
         pub_folder_vo = self.pub_folder_mgr.create_public_folder(params.dict())
 
@@ -76,7 +78,9 @@ class PublicFolderService(BaseService):
         role_types=["DOMAIN_ADMIN", "WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
     )
     @convert_model
-    def update(self, params: PublicFolderUpdateRequest) -> Union[PublicFolderResponse, dict]:
+    def update(
+        self, params: PublicFolderUpdateRequest
+    ) -> Union[PublicFolderResponse, dict]:
         """Update public folder
 
         Args:
@@ -94,11 +98,15 @@ class PublicFolderService(BaseService):
         """
 
         pub_folder_vo: PublicFolder = self.pub_folder_mgr.get_public_folder(
-            params.folder_id, params.domain_id, params.workspace_id, params.user_projects
+            params.folder_id,
+            params.domain_id,
+            params.workspace_id,
+            params.user_projects,
         )
 
         pub_folder_vo = self.pub_folder_mgr.update_public_folder_by_vo(
-            params.dict(exclude_unset=True), pub_folder_vo)
+            params.dict(exclude_unset=True), pub_folder_vo
+        )
 
         return PublicFolderResponse(**pub_folder_vo.to_dict())
 
@@ -123,7 +131,10 @@ class PublicFolderService(BaseService):
         """
 
         pub_folder_vo: PublicFolder = self.pub_folder_mgr.get_public_folder(
-            params.folder_id, params.domain_id, params.workspace_id, params.user_projects
+            params.folder_id,
+            params.domain_id,
+            params.workspace_id,
+            params.user_projects,
         )
 
         self.pub_folder_mgr.delete_public_folder_by_vo(pub_folder_vo)
@@ -149,7 +160,10 @@ class PublicFolderService(BaseService):
         """
 
         pub_folder_vo: PublicFolder = self.pub_folder_mgr.get_public_folder(
-            params.folder_id, params.domain_id, params.workspace_id, params.user_projects
+            params.folder_id,
+            params.domain_id,
+            params.workspace_id,
+            params.user_projects,
         )
 
         return PublicFolderResponse(**pub_folder_vo.to_dict())
@@ -159,11 +173,20 @@ class PublicFolderService(BaseService):
         role_types=["DOMAIN_ADMIN", "WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
     )
     @append_query_filter(
-        ["folder_id", "name", "domain_id", "workspace_id", "project_id", "user_projects"]
+        [
+            "folder_id",
+            "name",
+            "domain_id",
+            "workspace_id",
+            "project_id",
+            "user_projects",
+        ]
     )
     @append_keyword_filter(["folder_id", "name"])
     @convert_model
-    def list(self, params: PublicFolderSearchQueryRequest) -> Union[PublicFoldersResponse, dict]:
+    def list(
+        self, params: PublicFolderSearchQueryRequest
+    ) -> Union[PublicFoldersResponse, dict]:
         """List public folders
 
         Args:
@@ -183,8 +206,12 @@ class PublicFolderService(BaseService):
 
         query = params.query or {}
         pub_folder_vos, total_count = self.pub_folder_mgr.list_public_folders(query)
-        pub_dashboards_info = [pub_folder_vo.to_dict() for pub_folder_vo in pub_folder_vos]
-        return PublicFoldersResponse(results=pub_dashboards_info, total_count=total_count)
+        pub_dashboards_info = [
+            pub_folder_vo.to_dict() for pub_folder_vo in pub_folder_vos
+        ]
+        return PublicFoldersResponse(
+            results=pub_dashboards_info, total_count=total_count
+        )
 
     @transaction(
         permission="dashboard:PublicFolder.read",

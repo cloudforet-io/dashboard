@@ -31,6 +31,8 @@ class PublicWidget(MongoModel):
             "options",
             "tags",
             "data_table_id",
+            "project_id",
+            "workspace_id",
         ],
         "minimal_fields": [
             "widget_id",
