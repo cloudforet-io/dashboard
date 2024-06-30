@@ -206,13 +206,13 @@ class DataTransformationManager(DataTableManager):
         for key in group_by:
             if key not in df.columns:
                 raise ERROR_INVALID_PARAMETER(
-                    key="options.AGGREGATE.group_by", reason=f"Invalid column: {key}"
+                    key="options.AGGREGATE.group_by", reason=f"Invalid key: {key}"
                 )
 
         for key in function.keys():
             if key not in df.columns:
                 raise ERROR_INVALID_PARAMETER(
-                    key="options.AGGREGATE.function", reason=f"Invalid column: {key}"
+                    key="options.AGGREGATE.function", reason=f"Invalid key: {key}"
                 )
 
         if len(group_by) > 0:
