@@ -12,3 +12,6 @@ class InventoryManager(BaseManager):
 
     def analyze_metric_data(self, params: dict) -> dict:
         return self.inventory_conn.dispatch("MetricData.analyze", params)
+
+    def list_metrics(self, params: dict) -> dict:
+        return self.inventory_conn.dispatch("Metric.list", params)
