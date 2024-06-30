@@ -143,6 +143,8 @@ class PublicFolderService(BaseService):
         permission="dashboard:PublicFolder.read",
         role_types=["DOMAIN_ADMIN", "WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
     )
+    @change_value_by_rule("APPEND", "workspace_id", "*")
+    @change_value_by_rule("APPEND", "user_projects", "*")
     @convert_model
     def get(self, params: PublicFolderGetRequest) -> Union[PublicFolderResponse, dict]:
         """Get public folder
@@ -172,6 +174,8 @@ class PublicFolderService(BaseService):
         permission="dashboard:PublicFolder.read",
         role_types=["DOMAIN_ADMIN", "WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
     )
+    @change_value_by_rule("APPEND", "workspace_id", "*")
+    @change_value_by_rule("APPEND", "user_projects", "*")
     @append_query_filter(
         [
             "folder_id",
@@ -217,6 +221,8 @@ class PublicFolderService(BaseService):
         permission="dashboard:PublicFolder.read",
         role_types=["DOMAIN_ADMIN", "WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
     )
+    @change_value_by_rule("APPEND", "workspace_id", "*")
+    @change_value_by_rule("APPEND", "user_projects", "*")
     @append_query_filter(["domain_id", "workspace_id", "user_projects"])
     @append_keyword_filter(["folder_id", "name"])
     @convert_model

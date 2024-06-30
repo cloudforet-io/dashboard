@@ -47,7 +47,7 @@ class PublicWidgetDeleteRequest(BaseModel):
 
 class PublicWidgetGetRequest(BaseModel):
     widget_id: str
-    workspace_id: Union[str, None] = None
+    workspace_id: Union[str, list, None] = None
     domain_id: str
     user_projects: Union[list, None] = None
 
@@ -56,7 +56,7 @@ class PublicWidgetLoadRequest(BaseModel):
     widget_id: str
     query: dict
     vars: Union[dict, None] = None
-    workspace_id: Union[str, None] = None
+    workspace_id: Union[str, list, None] = None
     domain_id: str
     user_projects: Union[list, None] = None
 
@@ -67,13 +67,13 @@ class PublicWidgetSearchQueryRequest(BaseModel):
     widget_id: Union[str, None] = None
     name: Union[str, None] = None
     project_id: Union[str, None] = None
-    workspace_id: Union[str, None] = None
+    workspace_id: Union[str, list, None] = None
     domain_id: str
     user_projects: Union[list, None] = None
 
 
 class PublicWidgetStatQueryRequest(BaseModel):
     query: dict
-    workspace_id: Union[str, None] = None
+    workspace_id: Union[str, list, None] = None
     domain_id: str
     user_projects: Union[list, None] = None
