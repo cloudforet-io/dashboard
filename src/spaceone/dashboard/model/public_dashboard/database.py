@@ -3,11 +3,6 @@ from mongoengine import *
 from spaceone.core.model.mongo_model import MongoModel
 
 
-class PublicDashboardShared(EmbeddedDocument):
-    workspace = BooleanField(default=False)
-    project = BooleanField(default=False)
-
-
 class PublicDashboard(MongoModel):
     dashboard_id = StringField(max_length=40, generate_id="public-dash", unique=True)
     name = StringField(max_length=100)
@@ -20,7 +15,7 @@ class PublicDashboard(MongoModel):
     variables_schema = DictField(default=None)
     labels = ListField(StringField())
     tags = DictField(default=None)
-    shared = EmbeddedDocumentField(PublicDashboardShared, default=None)
+    shared = BooleanField(default=False)
     resource_group = StringField(
         max_length=40, choices=("DOMAIN", "WORKSPACE", "PROJECT")
     )

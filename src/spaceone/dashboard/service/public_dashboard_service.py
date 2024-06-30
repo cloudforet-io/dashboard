@@ -214,8 +214,6 @@ class PublicDashboardService(BaseService):
         Args:
             params (dict): {
                 'dashboard_id': 'str',          # required
-                'workspace': 'bool',
-                'project': 'bool',
                 'workspace_id': 'str',          # injected from auth
                 'domain_id': 'str'              # injected from auth (required)
                 'user_projects': 'list'         # injected from auth
@@ -225,8 +223,72 @@ class PublicDashboardService(BaseService):
             PublicDashboardResponse:
         """
 
-        workspace_share = params.workspace or False
-        project_share = params.project or False
+        pub_dashboard_vo: PublicDashboard = self.pub_dashboard_mgr.get_public_dashboard(
+            params.dashboard_id,
+            params.domain_id,
+            params.workspace_id,
+            params.user_projects,
+        )
+
+        updated_params = {
+            "shared": True,
+        }
+
+        if pub_dashboard_vo.resource_group == "DOMAIN":
+            updated_params["workspace_id"] = "*"
+        elif pub_dashboard_vo.resource_group == "WORKSPACE":
+            updated_params["project_id"] = "*"
+        elif pub_dashboard_vo.resource_group == "PROJECT":
+            raise ERROR_PERMISSION_DENIED()
+
+        pub_dashboard_vo = self.pub_dashboard_mgr.update_public_dashboard_by_vo(
+            updated_params, pub_dashboard_vo
+        )
+
+        if pub_dashboard_vo.resource_group in ["DOMAIN", "WORKSPACE"]:
+            # Cascade update for widgets
+            pub_widget_mgr = PublicWidgetManager()
+            pub_widget_vos = pub_widget_mgr.filter_public_widgets(
+                dashboard_id=pub_dashboard_vo.dashboard_id,
+                domain_id=pub_dashboard_vo.domain_id,
+            )
+            for pub_widget_vo in pub_widget_vos:
+                pub_widget_mgr.update_public_widget_by_vo(updated_params, pub_widget_vo)
+
+            # Cascade update for data tables
+            pub_data_table_mgr = PublicDataTableManager()
+            pub_data_table_vos = pub_data_table_mgr.filter_public_data_tables(
+                dashboard_id=pub_dashboard_vo.dashboard_id,
+                domain_id=pub_dashboard_vo.domain_id,
+            )
+            for pub_data_table_vo in pub_data_table_vos:
+                pub_data_table_mgr.update_public_data_table_by_vo(
+                    updated_params, pub_data_table_vo
+                )
+
+        return PublicDashboardResponse(**pub_dashboard_vo.to_dict())
+
+    @transaction(
+        permission="dashboard:PublicDashboard.write",
+        role_types=["DOMAIN_ADMIN", "WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
+    )
+    @convert_model
+    def unshare(
+        self, params: PublicDashboardShareRequest
+    ) -> Union[PublicDashboardResponse, dict]:
+        """Unshare public dashboard
+
+        Args:
+            params (dict): {
+                'dashboard_id': 'str',          # required
+                'workspace_id': 'str',          # injected from auth
+                'domain_id': 'str'              # injected from auth (required)
+                'user_projects': 'list'         # injected from auth
+            }
+
+        Returns:
+            PublicDashboardResponse:
+        """
 
         pub_dashboard_vo: PublicDashboard = self.pub_dashboard_mgr.get_public_dashboard(
             params.dashboard_id,
@@ -236,37 +298,21 @@ class PublicDashboardService(BaseService):
         )
 
         updated_params = {
-            "shared": {
-                "workspace": workspace_share,
-                "project": project_share,
-            }
+            "shared": False,
         }
 
         if pub_dashboard_vo.resource_group == "DOMAIN":
-            if workspace_share:
-                updated_params["workspace_id"] = "*"
-            else:
-                updated_params["workspace_id"] = "-"
-            if project_share:
-                updated_params["project_id"] = "*"
-            else:
-                updated_params["project_id"] = "-"
-        if pub_dashboard_vo.resource_group == "WORKSPACE":
-            if workspace_share:
-                raise ERROR_PERMISSION_DENIED()
-            if project_share:
-                updated_params["project_id"] = "*"
-            else:
-                updated_params["project_id"] = "-"
+            updated_params["workspace_id"] = "-"
+        elif pub_dashboard_vo.resource_group == "WORKSPACE":
+            updated_params["project_id"] = "-"
         elif pub_dashboard_vo.resource_group == "PROJECT":
-            if workspace_share or project_share:
-                raise ERROR_PERMISSION_DENIED()
+            raise ERROR_PERMISSION_DENIED()
 
         pub_dashboard_vo = self.pub_dashboard_mgr.update_public_dashboard_by_vo(
             updated_params, pub_dashboard_vo
         )
 
-        if workspace_share or project_share:
+        if pub_dashboard_vo.resource_group in ["DOMAIN", "WORKSPACE"]:
             # Cascade update for widgets
             pub_widget_mgr = PublicWidgetManager()
             pub_widget_vos = pub_widget_mgr.filter_public_widgets(

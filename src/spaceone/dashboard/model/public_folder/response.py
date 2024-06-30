@@ -12,7 +12,7 @@ class PublicFolderResponse(BaseModel):
     folder_id: Union[str, None] = None
     name: Union[str, None] = None
     tags: Union[dict, None] = None
-    shared: Union[dict, None] = None
+    shared: Union[bool, None] = None
     resource_group: Union[ResourceGroup, None] = None
     project_id: Union[str, None] = None
     workspace_id: Union[str, None] = None

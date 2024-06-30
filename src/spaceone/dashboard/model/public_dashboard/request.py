@@ -5,6 +5,7 @@ __all__ = [
     "PublicDashboardCreateRequest",
     "PublicDashboardUpdateRequest",
     "PublicDashboardShareRequest",
+    "PublicDashboardUnshareRequest",
     "PublicDashboardDeleteRequest",
     "PublicDashboardGetRequest",
     "PublicDashboardSearchQueryRequest",
@@ -52,8 +53,13 @@ class PublicDashboardUpdateRequest(BaseModel):
 
 class PublicDashboardShareRequest(BaseModel):
     dashboard_id: str
-    workspace: Union[bool, None] = None
-    project: Union[bool, None] = None
+    workspace_id: Union[str, None] = None
+    domain_id: str
+    user_projects: Union[list, None] = None
+
+
+class PublicDashboardUnshareRequest(BaseModel):
+    dashboard_id: str
     workspace_id: Union[str, None] = None
     domain_id: str
     user_projects: Union[list, None] = None
