@@ -20,6 +20,7 @@ class PublicDashboardResponse(BaseModel):
     variables_schema: Union[dict, None] = None
     labels: Union[List[str], None] = None
     tags: Union[dict, None] = None
+    shared: Union[dict, None] = None
     folder_id: Union[str, None] = None
     resource_group: Union[ResourceGroup, None] = None
     project_id: Union[str, None] = None

@@ -92,6 +92,7 @@ class PublicDataTableService(BaseService):
         params_dict["data_type"] = "ADDED"
         params_dict["data_info"] = data_info
         params_dict["labels_info"] = labels_info
+        params_dict["dashboard_id"] = pub_widget_vo.dashboard_id
         params_dict["resource_group"] = pub_widget_vo.resource_group
         params_dict["workspace_id"] = pub_widget_vo.workspace_id
         params_dict["project_id"] = pub_widget_vo.project_id
@@ -142,7 +143,7 @@ class PublicDataTableService(BaseService):
         user_projects = params_dict.get("user_projects")
 
         pub_widget_mgr = PublicWidgetManager()
-        pu_widget_vo = pub_widget_mgr.get_public_widget(
+        pub_widget_vo = pub_widget_mgr.get_public_widget(
             widget_id,
             domain_id,
             workspace_id,
@@ -166,9 +167,10 @@ class PublicDataTableService(BaseService):
         params_dict["data_type"] = "TRANSFORMED"
         params_dict["data_info"] = data_info
         params_dict["labels_info"] = labels_info
-        params_dict["resource_group"] = pu_widget_vo.resource_group
-        params_dict["workspace_id"] = pu_widget_vo.workspace_id
-        params_dict["project_id"] = pu_widget_vo.project_id
+        params_dict["dashboard_id"] = pub_widget_vo.dashboard_id
+        params_dict["resource_group"] = pub_widget_vo.resource_group
+        params_dict["workspace_id"] = pub_widget_vo.workspace_id
+        params_dict["project_id"] = pub_widget_vo.project_id
 
         pub_data_table_vo = self.pub_data_table_mgr.create_public_data_table(
             params_dict
@@ -303,9 +305,11 @@ class PublicDataTableService(BaseService):
         self.pub_data_table_mgr.delete_public_data_table_by_vo(pub_data_table_vo)
 
     @transaction(
-        permission="dashboard:PublicDataTable.write",
+        permission="dashboard:PublicDataTable.read",
         role_types=["DOMAIN_ADMIN", "WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
     )
+    @change_value_by_rule("APPEND", "workspace_id", "*")
+    @change_value_by_rule("APPEND", "project_id", "*")
     @convert_model
     def load(self, params: PublicDataTableLoadRequest) -> dict:
         """Load public data table
@@ -371,6 +375,8 @@ class PublicDataTableService(BaseService):
         permission="dashboard:PublicDataTable.read",
         role_types=["DOMAIN_ADMIN", "WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
     )
+    @change_value_by_rule("APPEND", "workspace_id", "*")
+    @change_value_by_rule("APPEND", "project_id", "*")
     @convert_model
     def get(
         self, params: PublicDataTableGetRequest
@@ -419,6 +425,8 @@ class PublicDataTableService(BaseService):
         ]
     )
     @append_keyword_filter(["data_table_id", "name"])
+    @change_value_by_rule("APPEND", "workspace_id", "*")
+    @change_value_by_rule("APPEND", "project_id", "*")
     @convert_model
     def list(
         self, params: PublicDataTableSearchQueryRequest

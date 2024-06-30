@@ -3,12 +3,16 @@ from mongoengine import *
 from spaceone.core.model.mongo_model import MongoModel
 
 
+class PublicFolderShared(EmbeddedDocument):
+    workspace = BooleanField(default=False)
+    project = BooleanField(default=False)
+
+
 class PublicFolder(MongoModel):
-    folder_id = StringField(
-        max_length=40, generate_id="public-folder", unique=True
-    )
+    folder_id = StringField(max_length=40, generate_id="public-folder", unique=True)
     name = StringField(max_length=100)
     tags = DictField(default=None)
+    shared = EmbeddedDocumentField(PublicFolderShared, default=None)
     resource_group = StringField(
         max_length=40, choices=("DOMAIN", "WORKSPACE", "PROJECT")
     )
@@ -22,6 +26,9 @@ class PublicFolder(MongoModel):
         "updatable_fields": [
             "name",
             "tags",
+            "shared",
+            "project_id",
+            "workspace_id",
         ],
         "minimal_fields": [
             "folder_id",

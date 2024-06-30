@@ -91,6 +91,7 @@ class PrivateDataTableService(BaseService):
         params_dict["data_type"] = "ADDED"
         params_dict["data_info"] = data_info
         params_dict["labels_info"] = labels_info
+        params_dict["dashboard_id"] = pri_widget_vo.dashboard_id
 
         pri_data_table_vo = self.pri_data_table_mgr.create_private_data_table(
             params_dict
@@ -136,7 +137,7 @@ class PrivateDataTableService(BaseService):
         user_id = params_dict.get("user_id")
 
         pri_widget_mgr = PrivateWidgetManager()
-        pri_widget_mgr.get_private_widget(
+        pri_widget_vo = pri_widget_mgr.get_private_widget(
             widget_id,
             domain_id,
             user_id,
@@ -155,6 +156,7 @@ class PrivateDataTableService(BaseService):
         params_dict["data_type"] = "TRANSFORMED"
         params_dict["data_info"] = data_info
         params_dict["labels_info"] = labels_info
+        params_dict["dashboard_id"] = pri_widget_vo.dashboard_id
 
         pri_data_table_vo = self.pri_data_table_mgr.create_private_data_table(
             params_dict
@@ -283,7 +285,7 @@ class PrivateDataTableService(BaseService):
         self.pri_data_table_mgr.delete_private_data_table_by_vo(pri_data_table_vo)
 
     @transaction(
-        permission="dashboard:PrivateDataTable.write",
+        permission="dashboard:PrivateDataTable.read",
         role_types=["USER"],
     )
     @convert_model

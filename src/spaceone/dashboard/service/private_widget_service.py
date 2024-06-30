@@ -333,9 +333,11 @@ class PrivateWidgetService(BaseService):
         self.pri_widget_mgr.delete_private_widget_by_vo(pri_widget_vo)
 
     @transaction(
-        permission="dashboard:PrivateWidget.write",
+        permission="dashboard:PrivateWidget.read",
         role_types=["USER"],
     )
+    @change_value_by_rule("APPEND", "workspace_id", "*")
+    @change_value_by_rule("APPEND", "project_id", "*")
     @convert_model
     def load(self, params: PrivateWidgetLoadRequest) -> dict:
         """Load private widget
@@ -403,6 +405,8 @@ class PrivateWidgetService(BaseService):
         permission="dashboard:PrivateWidget.read",
         role_types=["USER"],
     )
+    @change_value_by_rule("APPEND", "workspace_id", "*")
+    @change_value_by_rule("APPEND", "project_id", "*")
     @convert_model
     def get(
         self, params: PrivateWidgetGetRequest
@@ -442,6 +446,8 @@ class PrivateWidgetService(BaseService):
         ]
     )
     @append_keyword_filter(["widget_id", "name"])
+    @change_value_by_rule("APPEND", "workspace_id", "*")
+    @change_value_by_rule("APPEND", "project_id", "*")
     @convert_model
     def list(
         self, params: PrivateWidgetSearchQueryRequest

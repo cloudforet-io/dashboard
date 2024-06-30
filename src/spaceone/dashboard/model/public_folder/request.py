@@ -4,6 +4,7 @@ from pydantic import BaseModel
 __all__ = [
     "PublicFolderCreateRequest",
     "PublicFolderUpdateRequest",
+    "PublicFolderShareRequest",
     "PublicFolderDeleteRequest",
     "PublicFolderGetRequest",
     "PublicFolderSearchQueryRequest",
@@ -28,6 +29,15 @@ class PublicFolderUpdateRequest(BaseModel):
     folder_id: str
     name: Union[str, None] = None
     tags: Union[dict, None] = None
+    workspace_id: Union[str, None] = None
+    domain_id: str
+    user_projects: Union[list, None] = None
+
+
+class PublicFolderShareRequest(BaseModel):
+    folder_id: str
+    workspace: Union[bool, None] = None
+    project: Union[bool, None] = None
     workspace_id: Union[str, None] = None
     domain_id: str
     user_projects: Union[list, None] = None
