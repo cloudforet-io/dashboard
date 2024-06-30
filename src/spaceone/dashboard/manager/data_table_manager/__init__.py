@@ -9,6 +9,7 @@ from spaceone.dashboard.error.data_table import (
 from spaceone.dashboard.error.data_table import (
     ERROR_QUERY_OPTION,
     ERROR_NOT_SUPPORTED_QUERY_OPTION,
+    ERROR_INVALID_PARAMETER,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -174,13 +175,17 @@ class DataTableManager(BaseManager):
             columns = list(fields.keys())
             for key in columns:
                 if key not in self.df.columns:
-                    raise ERROR_QUERY_OPTION(key=f"fields.{key}")
+                    raise ERROR_INVALID_PARAMETER(
+                        key="query.fields", reason=f"Invalid key: {key}"
+                    )
 
             if group_by:
                 group_by = list(set(group_by))
                 for key in group_by:
                     if key not in self.df.columns:
-                        raise ERROR_QUERY_OPTION(key=f"group_by[].{key}")
+                        raise ERROR_INVALID_PARAMETER(
+                            key="query.group_by", reason=f"Invalid key: {key}"
+                        )
 
                 columns.extend(group_by)
 
@@ -208,7 +213,9 @@ class DataTableManager(BaseManager):
         if len(self.df) > 0:
             for key in field_group:
                 if key not in self.df.columns:
-                    raise ERROR_QUERY_OPTION(key=f"field_group[].{key}")
+                    raise ERROR_INVALID_PARAMETER(
+                        key="query.field_group", reason=f"Invalid key: {key}"
+                    )
 
             data_fields = list(fields.keys())
             agg_fields = set(data_fields + field_group)
