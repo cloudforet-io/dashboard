@@ -203,6 +203,18 @@ class DataTransformationManager(DataTableManager):
 
         df = self._get_data_table(origin_vo, granularity, start, end, vars)
 
+        for key in group_by:
+            if key not in df.columns:
+                raise ERROR_INVALID_PARAMETER(
+                    key="options.AGGREGATE.group_by", reason=f"Invalid column: {key}"
+                )
+
+        for key in function.keys():
+            if key not in df.columns:
+                raise ERROR_INVALID_PARAMETER(
+                    key="options.AGGREGATE.function", reason=f"Invalid column: {key}"
+                )
+
         if len(group_by) > 0:
             self.df = df.groupby(group_by).agg(function).reset_index()
         else:

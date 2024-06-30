@@ -174,13 +174,13 @@ class DataTableManager(BaseManager):
             columns = list(fields.keys())
             for key in columns:
                 if key not in self.df.columns:
-                    raise ERROR_QUERY_OPTION(key=f"fields.{key}")
+                    raise ERROR_QUERY_OPTION(key=f"fields.<{key}>")
 
             if group_by:
                 group_by = list(set(group_by))
                 for key in group_by:
                     if key not in self.df.columns:
-                        raise ERROR_QUERY_OPTION(key=f"group_by[].{key}")
+                        raise ERROR_QUERY_OPTION(key=f"group_by[].<{key}>")
 
                 columns.extend(group_by)
 
@@ -208,7 +208,7 @@ class DataTableManager(BaseManager):
         if len(self.df) > 0:
             for key in field_group:
                 if key not in self.df.columns:
-                    raise ERROR_QUERY_OPTION(key=f"field_group[].{key}")
+                    raise ERROR_QUERY_OPTION(key=f"field_group[].<{key}>")
 
             data_fields = list(fields.keys())
             agg_fields = set(data_fields + field_group)
