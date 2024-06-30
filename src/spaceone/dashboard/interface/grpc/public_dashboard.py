@@ -25,6 +25,12 @@ class PublicDashboard(BaseAPI, public_dashboard_pb2_grpc.PublicDashboardServicer
         response: dict = pub_dash_svc.share(params)
         return self.dict_to_message(response)
 
+    def unshare(self, request, context):
+        params, metadata = self.parse_request(request, context)
+        pub_dash_svc = PublicDashboardService(metadata)
+        response: dict = pub_dash_svc.unshare(params)
+        return self.dict_to_message(response)
+
     def delete(self, request, context):
         params, metadata = self.parse_request(request, context)
         pub_dash_svc = PublicDashboardService(metadata)
