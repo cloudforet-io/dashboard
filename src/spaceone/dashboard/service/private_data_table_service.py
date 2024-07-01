@@ -363,7 +363,7 @@ class PrivateDataTableService(BaseService):
             domain_id = pri_data_table_vo.domain_id
 
             dt_mgr = DataTransformationManager(
-                "PUBLIC",
+                "PRIVATE",
                 operator,
                 options,
                 widget_id,
