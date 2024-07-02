@@ -89,6 +89,7 @@ class PrivateWidgetService(BaseService):
         is_bulk = params_dict.get("is_bulk", False)
         data_table_idx = params_dict.get("data_table_id")
         data_tables = params_dict.get("data_tables")
+        self.data_table_id_map = {}
 
         pri_dashboard_mgr = PrivateDashboardManager()
         pri_dashboard_vo = pri_dashboard_mgr.get_private_dashboard(
