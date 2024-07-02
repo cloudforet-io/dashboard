@@ -77,6 +77,7 @@ class PublicWidgetService(BaseService):
         is_bulk = params_dict.get("is_bulk", False)
         data_table_idx = params_dict.get("data_table_id")
         data_tables = params_dict.get("data_tables")
+        self.data_table_id_map = {}
 
         pub_dashboard_mgr = PublicDashboardManager()
         pub_dashboard_vo = pub_dashboard_mgr.get_public_dashboard(
