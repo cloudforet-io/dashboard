@@ -14,6 +14,7 @@ __all__ = [
 class PrivateWidgetCreateRequest(BaseModel):
     dashboard_id: str
     name: Union[str, None] = None
+    state: Union[str, None] = None
     description: Union[str, None] = None
     widget_type: Union[str, None] = None
     size: Union[str, None] = None
@@ -26,6 +27,7 @@ class PrivateWidgetCreateRequest(BaseModel):
 class PrivateWidgetUpdateRequest(BaseModel):
     widget_id: str
     name: Union[str, None] = None
+    state: Union[str, None] = None
     description: Union[str, None] = None
     widget_type: Union[str, None] = None
     size: Union[str, None] = None

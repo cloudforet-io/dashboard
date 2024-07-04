@@ -6,6 +6,9 @@ from spaceone.core.model.mongo_model import MongoModel
 class PublicWidget(MongoModel):
     widget_id = StringField(max_length=40, generate_id="public-widget", unique=True)
     name = StringField(max_length=100)
+    state = StringField(
+        max_length=40, default="CREATING", choices=("CREATING", "ACTIVE", "INACTIVE")
+    )
     description = StringField(default=None)
     widget_type = StringField(max_length=40, default="NONE")
     size = StringField(default=None, null=True)
@@ -25,6 +28,7 @@ class PublicWidget(MongoModel):
     meta = {
         "updatable_fields": [
             "name",
+            "state",
             "description",
             "widget_type",
             "size",
@@ -37,6 +41,7 @@ class PublicWidget(MongoModel):
         "minimal_fields": [
             "widget_id",
             "name",
+            "state",
             "widget_type",
             "data_table_id",
             "dashboard_id",
@@ -49,6 +54,7 @@ class PublicWidget(MongoModel):
         "ordering": ["name"],
         "indexes": [
             "name",
+            "state",
             "widget_type",
             "data_table_id",
             "dashboard_id",
