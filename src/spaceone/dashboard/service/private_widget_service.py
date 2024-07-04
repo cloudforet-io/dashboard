@@ -54,6 +54,7 @@ class PrivateWidgetService(BaseService):
             params (dict): {
                 'dashboard_id': 'str',          # required
                 'name': 'str',
+                'state': 'str',
                 'description': 'str',
                 'widget_type': 'str',
                 'size': 'str',
@@ -266,6 +267,7 @@ class PrivateWidgetService(BaseService):
             params (dict): {
                 'widget_id': 'str',             # required
                 'name': 'str',
+                'state': 'str',
                 'description': 'str',
                 'widget_type': 'str',
                 'size': 'str',

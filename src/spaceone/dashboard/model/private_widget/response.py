@@ -9,6 +9,7 @@ __all__ = ["PrivateWidgetResponse", "PrivateWidgetsResponse"]
 class PrivateWidgetResponse(BaseModel):
     widget_id: Union[str, None] = None
     name: Union[str, None] = None
+    state: Union[str, None] = None
     description: Union[str, None] = None
     widget_type: Union[str, None] = None
     size: Union[str, None] = None

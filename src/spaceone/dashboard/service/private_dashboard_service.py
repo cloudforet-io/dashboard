@@ -86,6 +86,7 @@ class PrivateDashboardService(BaseService):
                 widgets = layout.get("widgets", [])
                 created_layout = {"name": layout.get("name", ""), "widgets": []}
                 for widget in widgets:
+                    widget["state"] = "ACTIVE"
                     widget["dashboard_id"] = pri_dashboard_vo.dashboard_id
                     widget["domain_id"] = domain_id
                     widget["user_id"] = user_id
