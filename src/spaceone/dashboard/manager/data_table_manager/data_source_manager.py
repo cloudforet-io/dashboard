@@ -101,8 +101,14 @@ class DataSourceManager(DataTableManager):
     ) -> pd.DataFrame:
         start, end = self._get_time_from_granularity(granularity, start, end)
 
+        print("=====")
+        print(start)
+        print(end)
         if self.timediff:
-            start, end = self._change_time(start, end)
+            start, end = self._change_time(granularity, start, end)
+            print(">>>>>>")
+            print(start)
+            print(end)
 
         if self.source_type == "COST":
             self._analyze_cost(granularity, start, end, vars)
@@ -206,7 +212,7 @@ class DataSourceManager(DataTableManager):
             changed_results.append(result)
         return changed_results
 
-    def _change_time(self, start: str, end: str) -> Tuple[str, str]:
+    def _change_time(self, granularity: str, start: str, end: str) -> Tuple[str, str]:
         start_len = len(start)
         end_len = len(end)
         start_time = self._get_datetime_from_str(start)
@@ -225,6 +231,20 @@ class DataSourceManager(DataTableManager):
         elif days:
             start_time = start_time + relativedelta(days=days)
             end_time = end_time + relativedelta(days=days)
+
+        if granularity == "YEARLY":
+            start_time = start_time.replace(month=1, day=1)
+            end_time = end_time.replace(month=1, day=1)
+            if start_time + relativedelta(years=3) <= end_time:
+                start_time = end_time - relativedelta(years=2)
+        elif granularity == "MONTHLY":
+            start_time = start_time.replace(day=1)
+            end_time = end_time.replace(day=1)
+            if start_time + relativedelta(months=12) <= end_time:
+                start_time = end_time - relativedelta(months=11)
+        else:
+            if start_time + relativedelta(months=1) <= end_time:
+                start_time = end_time - relativedelta(months=1) + relativedelta(days=1)
 
         return (
             self._change_str_from_datetime(start_time, start_len),
