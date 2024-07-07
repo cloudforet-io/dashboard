@@ -70,7 +70,7 @@ class DataTransformationManager(DataTableManager):
 
     def load(
         self,
-        granularity: GRANULARITY = "DAILY",
+        granularity: GRANULARITY = "MONTHLY",
         start: str = None,
         end: str = None,
         vars: dict = None,
@@ -262,11 +262,23 @@ class DataTransformationManager(DataTableManager):
         df = self._get_data_table(origin_vo, granularity, start, end, vars)
 
         for expression in expressions:
+            if "@" in expression:
+                raise ERROR_INVALID_PARAMETER(
+                    key="options.EVAL.expressions",
+                    reason="It should not have '@' symbol.",
+                )
+
             try:
-                key, value = expression.split("=")
+                key, value_expression = expression.split("=", 1)
+                key = key.replace("`", "").strip()
+                value_expression = value_expression.strip()
+                expression = f"`{key}` = {value_expression}"
+
                 self.data_keys = list(set(self.data_keys) | {key})
 
-                df = df.eval(expression)
+                df.eval(expression, inplace=True)
+                new_key = df.columns[-1:][0]
+                df.rename(columns={new_key: key}, inplace=True)
 
             except Exception as e:
                 _LOGGER.error(f"[evaluate_data_table] eval error: {e}")
