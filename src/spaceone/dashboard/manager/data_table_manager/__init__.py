@@ -175,17 +175,13 @@ class DataTableManager(BaseManager):
             columns = list(fields.keys())
             for key in columns:
                 if key not in self.df.columns:
-                    raise ERROR_INVALID_PARAMETER(
-                        key="query.fields", reason=f"Invalid key: {key}"
-                    )
+                    self.df[key] = 0
 
             if group_by:
                 group_by = list(set(group_by))
                 for key in group_by:
                     if key not in self.df.columns:
-                        raise ERROR_INVALID_PARAMETER(
-                            key="query.group_by", reason=f"Invalid key: {key}"
-                        )
+                        self.df[key] = ""
 
                 columns.extend(group_by)
 

@@ -6,6 +6,8 @@ from spaceone.dashboard.error.data_table import (
     ERROR_INVALID_PARAMETER,
     ERROR_NOT_SUPPORTED_OPERATOR,
     ERROR_REQUIRED_PARAMETER,
+    ERROR_DUPLICATED_DATA_FIELDS,
+    ERROR_NO_FIELDS_TO_JOIN,
 )
 from spaceone.dashboard.manager.data_table_manager import DataTableManager, GRANULARITY
 from spaceone.dashboard.manager.data_table_manager.data_source_manager import (
@@ -90,7 +92,7 @@ class DataTransformationManager(DataTableManager):
 
     def join_data_tables(
         self,
-        granularity: GRANULARITY = "DAILY",
+        granularity: GRANULARITY = "MONTHLY",
         start: str = None,
         end: str = None,
         vars: dict = None,
@@ -108,10 +110,7 @@ class DataTransformationManager(DataTableManager):
 
         duplicate_keys = list(origin_data_keys & other_data_keys)
         if len(duplicate_keys) > 0:
-            raise ERROR_INVALID_PARAMETER(
-                key="options.JOIN.data_tables",
-                reason=f"Duplicate data keys: {', '.join(duplicate_keys)}",
-            )
+            raise ERROR_DUPLICATED_DATA_FIELDS(field=", ".join(duplicate_keys))
 
         self.data_keys = list(origin_data_keys | other_data_keys)
         origin_label_keys = set(origin_vo.labels_info.keys())
@@ -119,6 +118,9 @@ class DataTransformationManager(DataTableManager):
         self.label_keys = list(origin_label_keys | other_label_keys)
 
         on = list(origin_label_keys & other_label_keys)
+        if len(on) == 0:
+            raise ERROR_NO_FIELDS_TO_JOIN()
+
         fill_na = {}
         for key in self.data_keys:
             fill_na[key] = 0
@@ -148,7 +150,7 @@ class DataTransformationManager(DataTableManager):
 
     def concat_data_tables(
         self,
-        granularity: GRANULARITY = "DAILY",
+        granularity: GRANULARITY = "MONTHLY",
         start: str = None,
         end: str = None,
         vars: dict = None,
@@ -179,7 +181,7 @@ class DataTransformationManager(DataTableManager):
 
     def aggregate_data_table(
         self,
-        granularity: GRANULARITY = "DAILY",
+        granularity: GRANULARITY = "MONTHLY",
         start: str = None,
         end: str = None,
         vars: dict = None,
@@ -222,7 +224,7 @@ class DataTransformationManager(DataTableManager):
 
     def query_data_table(
         self,
-        granularity: GRANULARITY = "DAILY",
+        granularity: GRANULARITY = "MONTHLY",
         start: str = None,
         end: str = None,
         vars: dict = None,
@@ -248,7 +250,7 @@ class DataTransformationManager(DataTableManager):
 
     def evaluate_data_table(
         self,
-        granularity: GRANULARITY = "DAILY",
+        granularity: GRANULARITY = "MONTHLY",
         start: str = None,
         end: str = None,
         vars: dict = None,

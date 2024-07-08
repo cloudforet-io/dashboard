@@ -101,14 +101,8 @@ class DataSourceManager(DataTableManager):
     ) -> pd.DataFrame:
         start, end = self._get_time_from_granularity(granularity, start, end)
 
-        print("=====")
-        print(start)
-        print(end)
         if self.timediff:
             start, end = self._change_time(granularity, start, end)
-            print(">>>>>>")
-            print(start)
-            print(end)
 
         if self.source_type == "COST":
             self._analyze_cost(granularity, start, end, vars)
@@ -151,7 +145,7 @@ class DataSourceManager(DataTableManager):
         response = self.inventory_mgr.analyze_metric_data(params)
         results = response.get("results", [])
 
-        results = self._change_datetime_format(results)
+        results = self._change_datetime_format(results, granularity)
 
         self.df = pd.DataFrame(results)
 
@@ -185,11 +179,11 @@ class DataSourceManager(DataTableManager):
         response = self.cost_analysis_mgr.analyze_cost(params)
         results = response.get("results", [])
 
-        results = self._change_datetime_format(results)
+        results = self._change_datetime_format(results, granularity)
 
         self.df = pd.DataFrame(results)
 
-    def _change_datetime_format(self, results: list) -> list:
+    def _change_datetime_format(self, results: list, granularity: str) -> list:
         changed_results = []
         for result in results:
             if date := result.get("date"):
@@ -207,6 +201,16 @@ class DataSourceManager(DataTableManager):
                         result["Year"] = year
                         result["Month"] = month
                         result["Day"] = day
+
+                    if granularity == "YEARLY":
+                        result["Month"] = None
+                        result["Day"] = None
+                    elif granularity == "MONTHLY":
+                        result["Year"] = None
+                        result["Day"] = None
+                    else:
+                        result["Year"] = None
+                        result["Month"] = None
 
                 del result["date"]
             changed_results.append(result)
