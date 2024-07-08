@@ -90,7 +90,7 @@ class DataTransformationManager(DataTableManager):
 
     def join_data_tables(
         self,
-        granularity: GRANULARITY = "DAILY",
+        granularity: GRANULARITY = "MONTHLY",
         start: str = None,
         end: str = None,
         vars: dict = None,
@@ -148,7 +148,7 @@ class DataTransformationManager(DataTableManager):
 
     def concat_data_tables(
         self,
-        granularity: GRANULARITY = "DAILY",
+        granularity: GRANULARITY = "MONTHLY",
         start: str = None,
         end: str = None,
         vars: dict = None,
@@ -179,7 +179,7 @@ class DataTransformationManager(DataTableManager):
 
     def aggregate_data_table(
         self,
-        granularity: GRANULARITY = "DAILY",
+        granularity: GRANULARITY = "MONTHLY",
         start: str = None,
         end: str = None,
         vars: dict = None,
@@ -222,7 +222,7 @@ class DataTransformationManager(DataTableManager):
 
     def query_data_table(
         self,
-        granularity: GRANULARITY = "DAILY",
+        granularity: GRANULARITY = "MONTHLY",
         start: str = None,
         end: str = None,
         vars: dict = None,
@@ -248,7 +248,7 @@ class DataTransformationManager(DataTableManager):
 
     def evaluate_data_table(
         self,
-        granularity: GRANULARITY = "DAILY",
+        granularity: GRANULARITY = "MONTHLY",
         start: str = None,
         end: str = None,
         vars: dict = None,
