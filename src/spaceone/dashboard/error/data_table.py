@@ -15,3 +15,11 @@ class ERROR_NOT_SUPPORTED_QUERY_OPTION(ERROR_INVALID_ARGUMENT):
 
 class ERROR_NOT_SUPPORTED_OPERATOR(ERROR_INVALID_ARGUMENT):
     _message = "Data table does not support operator. (operator = {operator})"
+
+
+class ERROR_DUPLICATED_DATA_FIELDS(ERROR_INVALID_ARGUMENT):
+    _message = "Data fields for join are duplicated. (fields = {fields})"
+
+
+class ERROR_NO_FIELDS_TO_JOIN(ERROR_INVALID_ARGUMENT):
+    _message = "There is no fields to join."
