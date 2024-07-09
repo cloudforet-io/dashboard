@@ -201,7 +201,10 @@ class DataTableManager(BaseManager):
                 agg_options[name] = operator
 
             if group_by:
-                self.df = self.df.groupby(group_by).agg(agg_options).reset_index()
+                df = self.df.groupby(group_by).agg(agg_options).reset_index()
+                if not df.empty:
+                    self.df = df
+
             else:
                 self.df = self.df.agg(agg_options).to_frame().T
 
