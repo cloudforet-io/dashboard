@@ -14,6 +14,7 @@ __all__ = [
 ]
 
 ResourceGroup = Literal["DOMAIN", "WORKSPACE", "PROJECT"]
+Scope = Literal["WORKSPACE", "PROJECT"]
 
 
 class PublicDashboardCreateRequest(BaseModel):
@@ -54,6 +55,7 @@ class PublicDashboardUpdateRequest(BaseModel):
 
 class PublicDashboardShareRequest(BaseModel):
     dashboard_id: str
+    scope: Union[Scope, None] = None
     workspace_id: Union[str, None] = None
     domain_id: str
     user_projects: Union[list, None] = None
@@ -84,6 +86,8 @@ class PublicDashboardSearchQueryRequest(BaseModel):
     query: Union[dict, None] = None
     dashboard_id: Union[str, None] = None
     name: Union[str, None] = None
+    shared: Union[bool, None] = None
+    scope: Union[Scope, None] = None
     folder_id: Union[str, None] = None
     project_id: Union[str, None] = None
     workspace_id: Union[str, list, None] = None

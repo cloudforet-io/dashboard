@@ -215,6 +215,7 @@ class PublicDashboardService(BaseService):
         Args:
             params (dict): {
                 'dashboard_id': 'str',          # required
+                'scope': 'str',
                 'workspace_id': 'str',          # injected from auth
                 'domain_id': 'str'              # injected from auth (required)
                 'user_projects': 'list'         # injected from auth
@@ -237,8 +238,14 @@ class PublicDashboardService(BaseService):
 
         if pub_dashboard_vo.resource_group == "DOMAIN":
             updated_params["workspace_id"] = "*"
+            if params.scope == "PROJECT":
+                updated_params["scope"] = "PROJECT"
+                updated_params["project_id"] = "*"
+            else:
+                updated_params["scope"] = "WORKSPACE"
         elif pub_dashboard_vo.resource_group == "WORKSPACE":
             updated_params["project_id"] = "*"
+            updated_params["scope"] = "PROJECT"
         elif pub_dashboard_vo.resource_group == "PROJECT":
             raise ERROR_PERMISSION_DENIED()
 
@@ -304,8 +311,11 @@ class PublicDashboardService(BaseService):
 
         if pub_dashboard_vo.resource_group == "DOMAIN":
             updated_params["workspace_id"] = "-"
+            updated_params["project_id"] = "-"
+            updated_params["scope"] = None
         elif pub_dashboard_vo.resource_group == "WORKSPACE":
             updated_params["project_id"] = "-"
+            updated_params["scope"] = None
         elif pub_dashboard_vo.resource_group == "PROJECT":
             raise ERROR_PERMISSION_DENIED()
 

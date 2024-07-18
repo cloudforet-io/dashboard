@@ -16,6 +16,7 @@ class PublicDashboard(MongoModel):
     labels = ListField(StringField())
     tags = DictField(default=None)
     shared = BooleanField(default=False)
+    scope = StringField(max_length=40, default=None, null=True)
     resource_group = StringField(
         max_length=40, choices=("DOMAIN", "WORKSPACE", "PROJECT")
     )
@@ -37,6 +38,7 @@ class PublicDashboard(MongoModel):
             "labels",
             "tags",
             "shared",
+            "scope",
             "project_id",
             "workspace_id",
         ],
@@ -44,6 +46,7 @@ class PublicDashboard(MongoModel):
             "dashboard_id",
             "name",
             "version",
+            "shared",
             "resource_group",
             "project_id",
             "workspace_id",
@@ -53,6 +56,8 @@ class PublicDashboard(MongoModel):
         "ordering": ["name"],
         "indexes": [
             "name",
+            "shared",
+            "scope",
             "resource_group",
             "project_id",
             "workspace_id",
