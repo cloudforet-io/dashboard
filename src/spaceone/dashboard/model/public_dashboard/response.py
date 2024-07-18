@@ -3,7 +3,7 @@ from typing import Union, List, Any
 from pydantic import BaseModel
 from spaceone.core import utils
 
-from spaceone.dashboard.model.public_dashboard.request import ResourceGroup
+from spaceone.dashboard.model.public_dashboard.request import ResourceGroup, Scope
 
 __all__ = ["PublicDashboardResponse", "PublicDashboardsResponse"]
 
@@ -21,6 +21,7 @@ class PublicDashboardResponse(BaseModel):
     labels: Union[List[str], None] = None
     tags: Union[dict, None] = None
     shared: Union[bool, None] = None
+    scope: Union[str, None] = None
     folder_id: Union[str, None] = None
     resource_group: Union[ResourceGroup, None] = None
     project_id: Union[str, None] = None
