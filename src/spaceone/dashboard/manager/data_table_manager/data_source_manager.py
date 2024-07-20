@@ -30,7 +30,7 @@ class DataSourceManager(DataTableManager):
             raise ERROR_NOT_SUPPORTED_SOURCE_TYPE(source_type=source_type)
 
         self.data_table_type = data_table_type
-        self.cost_analysis_mgr = CostAnalysisManager()
+        # self.cost_analysis_mgr = CostAnalysisManager()
         self.inventory_mgr = InventoryManager()
         self.source_type = source_type
         self.options = options
@@ -54,6 +54,7 @@ class DataSourceManager(DataTableManager):
 
         if self.data_unit:
             data_info[self.data_name]["unit"] = self.data_unit
+            data_info[self.data_name]["timediff"] = self.timediff
 
         labels_info = {}
 
@@ -102,7 +103,9 @@ class DataSourceManager(DataTableManager):
         start, end = self._get_time_from_granularity(granularity, start, end)
 
         if self.timediff:
-            start, end = self._change_time(granularity, start, end)
+            start, end = self._change_query_time(granularity, start, end)
+            print(start)
+            print(end)
 
         if self.source_type == "COST":
             self._analyze_cost(granularity, start, end, vars)
@@ -145,7 +148,7 @@ class DataSourceManager(DataTableManager):
         response = self.inventory_mgr.analyze_metric_data(params)
         results = response.get("results", [])
 
-        results = self._change_datetime_format(results, granularity)
+        results = self._change_datetime_format(results)
 
         self.df = pd.DataFrame(results)
 
@@ -179,14 +182,17 @@ class DataSourceManager(DataTableManager):
         response = self.cost_analysis_mgr.analyze_cost(params)
         results = response.get("results", [])
 
-        results = self._change_datetime_format(results, granularity)
+        results = self._change_datetime_format(results)
 
         self.df = pd.DataFrame(results)
 
-    def _change_datetime_format(self, results: list, granularity: str) -> list:
+    def _change_datetime_format(self, results: list) -> list:
         changed_results = []
         for result in results:
             if date := result.get("date"):
+                if self.timediff:
+                    date = self._change_date_by_timediff(date)
+
                 if self.date_format == "SINGLE":
                     result["Date"] = date
                 else:
@@ -202,25 +208,32 @@ class DataSourceManager(DataTableManager):
                         result["Month"] = month
                         result["Day"] = day
 
-                    if granularity == "YEARLY":
-                        result["Month"] = None
-                        result["Day"] = None
-                    elif granularity == "MONTHLY":
-                        result["Year"] = None
-                        result["Day"] = None
-                    else:
-                        result["Year"] = None
-                        result["Month"] = None
-
                 del result["date"]
             changed_results.append(result)
         return changed_results
 
-    def _change_time(self, granularity: str, start: str, end: str) -> Tuple[str, str]:
+    def _change_date_by_timediff(self, date: str) -> str:
+        dt = self._get_datetime_from_str(date)
+        years = self.timediff.get("years", 0)
+        months = self.timediff.get("months", 0)
+        days = self.timediff.get("days", 0)
+
+        if years:
+            dt = dt - relativedelta(years=years)
+        elif months:
+            dt = dt - relativedelta(months=months)
+        elif days:
+            dt = dt - relativedelta(days=days)
+
+        return self._change_str_from_datetime(dt, len(date))
+
+    def _change_query_time(
+        self, granularity: str, start: str, end: str
+    ) -> Tuple[str, str]:
         start_len = len(start)
         end_len = len(end)
         start_time = self._get_datetime_from_str(start)
-        end_time = self._get_datetime_from_str(end)
+        end_time = self._get_datetime_from_str(end, is_end=True)
 
         years = self.timediff.get("years", 0)
         months = self.timediff.get("months", 0)
@@ -236,19 +249,25 @@ class DataSourceManager(DataTableManager):
             start_time = start_time + relativedelta(days=days)
             end_time = end_time + relativedelta(days=days)
 
+            start = self._change_str_from_datetime(start_time, start_len)
+            end = self._change_str_from_datetime(end_time, end_len)
+            start_time = self._get_datetime_from_str(start)
+            end_time = self._get_datetime_from_str(end, is_end=True)
+
         if granularity == "YEARLY":
-            start_time = start_time.replace(month=1, day=1)
-            end_time = end_time.replace(month=1, day=1)
             if start_time + relativedelta(years=3) <= end_time:
                 start_time = end_time - relativedelta(years=2)
         elif granularity == "MONTHLY":
-            start_time = start_time.replace(day=1)
-            end_time = end_time.replace(day=1)
             if start_time + relativedelta(months=12) <= end_time:
                 start_time = end_time - relativedelta(months=11)
         else:
             if start_time + relativedelta(months=1) <= end_time:
-                start_time = end_time - relativedelta(months=1) + relativedelta(days=1)
+                if start_len == 10:
+                    start_time = (
+                        end_time - relativedelta(months=1) + relativedelta(days=1)
+                    )
+                elif start_len == 7:
+                    start_time = end_time
 
         return (
             self._change_str_from_datetime(start_time, start_len),
