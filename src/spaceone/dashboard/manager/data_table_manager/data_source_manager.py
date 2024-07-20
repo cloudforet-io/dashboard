@@ -30,7 +30,7 @@ class DataSourceManager(DataTableManager):
             raise ERROR_NOT_SUPPORTED_SOURCE_TYPE(source_type=source_type)
 
         self.data_table_type = data_table_type
-        # self.cost_analysis_mgr = CostAnalysisManager()
+        self.cost_analysis_mgr = CostAnalysisManager()
         self.inventory_mgr = InventoryManager()
         self.source_type = source_type
         self.options = options
