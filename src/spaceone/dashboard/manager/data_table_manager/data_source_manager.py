@@ -104,8 +104,6 @@ class DataSourceManager(DataTableManager):
 
         if self.timediff:
             start, end = self._change_query_time(granularity, start, end)
-            print(start)
-            print(end)
 
         if self.source_type == "COST":
             self._analyze_cost(granularity, start, end, vars)
@@ -255,19 +253,23 @@ class DataSourceManager(DataTableManager):
             end_time = self._get_datetime_from_str(end, is_end=True)
 
         if granularity == "YEARLY":
-            if start_time + relativedelta(years=3) <= end_time:
-                start_time = end_time - relativedelta(years=2)
+            if start_len == 4:
+                if start_time + relativedelta(years=3) <= end_time:
+                    start_time = end_time - relativedelta(years=2)
         elif granularity == "MONTHLY":
-            if start_time + relativedelta(months=12) <= end_time:
-                start_time = end_time - relativedelta(months=11)
+            if start_len == 4:
+                start_time = end_time
+            elif start_len == 7:
+                if start_time + relativedelta(months=12) <= end_time:
+                    start_time = end_time - relativedelta(months=11)
         else:
-            if start_time + relativedelta(months=1) <= end_time:
-                if start_len == 10:
+            if start_len == 7:
+                start_time = end_time
+            elif start_len == 10:
+                if start_time + relativedelta(months=1) <= end_time:
                     start_time = (
                         end_time - relativedelta(months=1) + relativedelta(days=1)
                     )
-                elif start_len == 7:
-                    start_time = end_time
 
         return (
             self._change_str_from_datetime(start_time, start_len),
