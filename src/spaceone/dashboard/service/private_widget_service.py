@@ -59,6 +59,8 @@ class PrivateWidgetService(BaseService):
                 'widget_type': 'str',
                 'size': 'str',
                 'options': 'dict',
+                'data_table_id': 'int',
+                'data_tables': 'list',
                 'tags': 'dict',
                 'user_id': 'str',               # injected from auth (required)
                 'domain_id': 'str',             # injected from auth (required)
@@ -68,19 +70,12 @@ class PrivateWidgetService(BaseService):
             PrivateWidgetResponse:
         """
 
-        pri_dashboard_mgr = PrivateDashboardManager()
-        pri_dashboard_vo = pri_dashboard_mgr.get_private_dashboard(
-            params.dashboard_id,
-            params.domain_id,
-            params.user_id,
-        )
+        params_dict = params.dict()
+        if "data_table_id" in params_dict and "data_tables" in params_dict:
+            params_dict["is_bulk"] = True
 
-        if pri_dashboard_vo.version == "1.0":
-            raise ERROR_NOT_SUPPORTED_VERSION(version=pri_dashboard_vo.version)
-
-        pri_widget_vo = self.pri_widget_mgr.create_private_widget(params.dict())
-
-        return PrivateWidgetResponse(**pri_widget_vo.to_dict())
+        pri_widget_info = self.create_widget(params_dict)
+        return PrivateWidgetResponse(**pri_widget_info)
 
     @check_required(["dashboard_id", "domain_id", "user_id"])
     def create_widget(self, params_dict: dict) -> dict:

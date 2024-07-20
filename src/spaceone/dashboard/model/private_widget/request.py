@@ -19,6 +19,8 @@ class PrivateWidgetCreateRequest(BaseModel):
     widget_type: Union[str, None] = None
     size: Union[str, None] = None
     options: Union[dict, None] = None
+    data_table_id: Union[int, None] = None
+    data_tables: Union[list, None] = None
     tags: Union[dict, None] = None
     user_id: str
     domain_id: str

@@ -56,6 +56,8 @@ class PublicWidgetService(BaseService):
                 'widget_type': 'str',
                 'size': 'str',
                 'options': 'dict',
+                'data_table_id': 'int',
+                'data_tables': 'list',
                 'tags': 'dict',
                 'workspace_id': 'str',          # injected from auth
                 'domain_id': 'str',             # injected from auth (required)
@@ -66,7 +68,11 @@ class PublicWidgetService(BaseService):
             PublicWidgetResponse:
         """
 
-        pub_widget_info = self.create_widget(params.dict())
+        params_dict = params.dict()
+        if "data_table_id" in params_dict and "data_tables" in params_dict:
+            params_dict["is_bulk"] = True
+
+        pub_widget_info = self.create_widget(params_dict)
         return PublicWidgetResponse(**pub_widget_info)
 
     @check_required(["dashboard_id", "domain_id"])
