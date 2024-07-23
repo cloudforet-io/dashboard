@@ -69,7 +69,7 @@ class PublicWidgetService(BaseService):
         """
 
         params_dict = params.dict()
-        if "data_table_id" in params_dict and "data_tables" in params_dict:
+        if "data_tables" in params_dict:
             params_dict["is_bulk"] = True
 
         pub_widget_info = self.create_widget(params_dict)
@@ -82,7 +82,7 @@ class PublicWidgetService(BaseService):
         workspace_id = params_dict.get("workspace_id")
         user_projects = params_dict.get("user_projects")
         is_bulk = params_dict.get("is_bulk", False)
-        data_table_idx = params_dict.get("data_table_id")
+        data_table_idx = params_dict.get("data_table_id") or 0
         data_tables = params_dict.get("data_tables")
         self.data_table_id_map = {}
 
@@ -112,11 +112,10 @@ class PublicWidgetService(BaseService):
                 user_projects,
             )
 
-            if data_table_idx is not None:
-                widget_data_table_id = self.data_table_id_map[data_table_idx]
-                self.pub_widget_mgr.update_public_widget_by_vo(
-                    {"data_table_id": widget_data_table_id}, pub_widget_vo
-                )
+            widget_data_table_id = self.data_table_id_map[data_table_idx]
+            self.pub_widget_mgr.update_public_widget_by_vo(
+                {"data_table_id": widget_data_table_id}, pub_widget_vo
+            )
 
         return pub_widget_vo.to_dict()
 

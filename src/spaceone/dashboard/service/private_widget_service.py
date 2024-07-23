@@ -71,7 +71,7 @@ class PrivateWidgetService(BaseService):
         """
 
         params_dict = params.dict()
-        if "data_table_id" in params_dict and "data_tables" in params_dict:
+        if "data_tables" in params_dict:
             params_dict["is_bulk"] = True
 
         pri_widget_info = self.create_widget(params_dict)
@@ -83,7 +83,7 @@ class PrivateWidgetService(BaseService):
         domain_id = params_dict["domain_id"]
         user_id = params_dict["user_id"]
         is_bulk = params_dict.get("is_bulk", False)
-        data_table_idx = params_dict.get("data_table_id")
+        data_table_idx = params_dict.get("data_table_id") or 0
         data_tables = params_dict.get("data_tables")
         self.data_table_id_map = {}
 
@@ -108,11 +108,10 @@ class PrivateWidgetService(BaseService):
                 user_id,
             )
 
-            if data_table_idx is not None:
-                widget_data_table_id = self.data_table_id_map[data_table_idx]
-                self.pri_widget_mgr.update_private_widget_by_vo(
-                    {"data_table_id": widget_data_table_id}, pri_widget_vo
-                )
+            widget_data_table_id = self.data_table_id_map[data_table_idx]
+            self.pri_widget_mgr.update_private_widget_by_vo(
+                {"data_table_id": widget_data_table_id}, pri_widget_vo
+            )
 
         return pri_widget_vo.to_dict()
 
