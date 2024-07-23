@@ -245,8 +245,6 @@ class PrivateDataTableService(BaseService):
                         options["timediff"] = {"years": years}
                     elif months := timediff.get("months"):
                         options["timediff"] = {"months": months}
-                    elif days := timediff.get("days"):
-                        options["timediff"] = {"days": days}
 
                     params_dict["options"] = options
             else:
