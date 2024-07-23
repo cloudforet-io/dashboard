@@ -105,7 +105,6 @@ class DataSourceManager(DataTableManager):
         if self.timediff:
             start, end = self._change_query_time(granularity, start, end)
 
-            print(start, end)
         if self.source_type == "COST":
             self._analyze_cost(granularity, start, end, vars)
         elif self.source_type == "ASSET":
