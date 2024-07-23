@@ -337,6 +337,33 @@ class DataSourceManager(DataTableManager):
                         self.filter.append(
                             {"key": key, "value": value, "operator": "eq"}
                         )
+                elif key == "region_code":
+                    if isinstance(value, list):
+                        if self.source_type == "COST":
+                            self.filter.append(
+                                {"key": "region_code", "value": value, "operator": "in"}
+                            )
+                        else:
+                            self.filter.append(
+                                {
+                                    "key": "labels.Region",
+                                    "value": value,
+                                    "operator": "in",
+                                }
+                            )
+                    else:
+                        if self.source_type == "COST":
+                            self.filter.append(
+                                {"key": "region_code", "value": value, "operator": "eq"}
+                            )
+                        else:
+                            self.filter.append(
+                                {
+                                    "key": "labels.Region",
+                                    "value": value,
+                                    "operator": "eq",
+                                }
+                            )
 
         return {
             "granularity": granularity,
