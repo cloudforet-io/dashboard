@@ -54,6 +54,8 @@ class DataSourceManager(DataTableManager):
 
         if self.data_unit:
             data_info[self.data_name]["unit"] = self.data_unit
+
+        if self.timediff:
             data_info[self.data_name]["timediff"] = self.timediff
 
         labels_info = {}
