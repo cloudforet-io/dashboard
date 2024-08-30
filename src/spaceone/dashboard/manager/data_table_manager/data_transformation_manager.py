@@ -1,5 +1,7 @@
 import logging
 from typing import List, Union, Tuple
+
+import numpy as np
 import pandas as pd
 
 from spaceone.dashboard.error.data_table import (
@@ -317,6 +319,7 @@ class DataTransformationManager(DataTableManager):
                     last_key = df.columns[-1:][0]
                     if last_key.startswith("BACKTICK_QUOTED_STRING"):
                         df.rename(columns={last_key: name}, inplace=True)
+                    df.replace([np.inf, -np.inf], 0, inplace=True)
 
                 except Exception as e:
                     _LOGGER.error(f"[evaluate_data_table] eval error: {e}")
@@ -343,6 +346,7 @@ class DataTransformationManager(DataTableManager):
                     last_key = df.columns[-1:][0]
                     if last_key.startswith("BACKTICK_QUOTED_STRING"):
                         df.rename(columns={last_key: name}, inplace=True)
+                    df.replace([np.inf, -np.inf], 0, inplace=True)
 
                 except Exception as e:
                     _LOGGER.error(f"[evaluate_data_table] eval error: {e}")
