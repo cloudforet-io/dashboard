@@ -1,5 +1,7 @@
 import logging
 from typing import List, Union, Tuple
+
+import numpy as np
 import pandas as pd
 
 from spaceone.dashboard.error.data_table import (
@@ -8,6 +10,7 @@ from spaceone.dashboard.error.data_table import (
     ERROR_REQUIRED_PARAMETER,
     ERROR_DUPLICATED_DATA_FIELDS,
     ERROR_NO_FIELDS_TO_JOIN,
+    ERROR_INVALID_PARAMETER_TYPE,
 )
 from spaceone.dashboard.manager.data_table_manager import DataTableManager, GRANULARITY
 from spaceone.dashboard.manager.data_table_manager.data_source_manager import (
@@ -264,28 +267,95 @@ class DataTransformationManager(DataTableManager):
         df = self._get_data_table(origin_vo, granularity, start, end, vars)
 
         for expression in expressions:
-            if "@" in expression:
-                raise ERROR_INVALID_PARAMETER(
-                    key="options.EVAL.expressions",
-                    reason="It should not have '@' symbol.",
-                )
+            if isinstance(expression, dict):
+                name = expression.get("name")
+                field_type = expression.get("field_type", "DATA")
+                value_expression = expression.get("expression")
 
-            try:
-                key, value_expression = expression.split("=", 1)
-                key = key.replace("`", "").strip()
-                value_expression = value_expression.strip()
-                expression = f"`{key}` = {value_expression}"
+                if name is None:
+                    raise ERROR_REQUIRED_PARAMETER(key="options.EVAL.expressions.name")
 
-                self.data_keys = list(set(self.data_keys) | {key})
+                if value_expression is None:
+                    raise ERROR_REQUIRED_PARAMETER(
+                        key="options.EVAL.expressions.expression"
+                    )
 
-                df.eval(expression, inplace=True)
-                new_key = df.columns[-1:][0]
-                df.rename(columns={new_key: key}, inplace=True)
+                template_vars = {}
+                for key in self.data_keys:
+                    template_vars[key] = f"`{key}`"
 
-            except Exception as e:
-                _LOGGER.error(f"[evaluate_data_table] eval error: {e}")
-                raise ERROR_INVALID_PARAMETER(
-                    key="options.EVAL.expressions", reason=expression
+                for key in self.label_keys:
+                    template_vars[key] = f"`{key}`"
+
+                try:
+                    value_expression = value_expression.format(**template_vars)
+                except Exception as e:
+                    raise ERROR_INVALID_PARAMETER(
+                        key="options.EVAL.expressions.expression",
+                        reason=f"Invalid expression: (template_var={e})",
+                    )
+
+                if field_type not in ["DATA", "LABEL"]:
+                    raise ERROR_INVALID_PARAMETER(
+                        key="options.EVAL.expressions.field_type",
+                        reason=f"Invalid field type: {field_type}",
+                    )
+
+                if "@" in value_expression:
+                    raise ERROR_INVALID_PARAMETER(
+                        key="options.EVAL.expressions",
+                        reason="It should not have '@' symbol.",
+                    )
+
+                try:
+                    merged_expr = f"`{name}` = {value_expression}"
+
+                    if field_type == "LABEL":
+                        self.label_keys = list(set(self.label_keys) | {name})
+                    else:
+                        self.data_keys = list(set(self.data_keys) | {name})
+
+                    df.eval(merged_expr, inplace=True)
+                    last_key = df.columns[-1:][0]
+                    if last_key.startswith("BACKTICK_QUOTED_STRING"):
+                        df.rename(columns={last_key: name}, inplace=True)
+                    df.replace([np.inf, -np.inf], 0, inplace=True)
+
+                except Exception as e:
+                    _LOGGER.error(f"[evaluate_data_table] eval error: {e}")
+                    raise ERROR_INVALID_PARAMETER(
+                        key="options.EVAL.expressions", reason=expression
+                    )
+
+            elif isinstance(expression, str):
+                if "@" in expression:
+                    raise ERROR_INVALID_PARAMETER(
+                        key="options.EVAL.expressions",
+                        reason="It should not have '@' symbol.",
+                    )
+
+                try:
+                    name, value_expression = expression.split("=", 1)
+                    name = name.replace("`", "").strip()
+                    value_expression = value_expression.strip()
+                    expression = f"`{name}` = {value_expression}"
+
+                    self.data_keys = list(set(self.data_keys) | {name})
+
+                    df.eval(expression, inplace=True)
+                    last_key = df.columns[-1:][0]
+                    if last_key.startswith("BACKTICK_QUOTED_STRING"):
+                        df.rename(columns={last_key: name}, inplace=True)
+                    df.replace([np.inf, -np.inf], 0, inplace=True)
+
+                except Exception as e:
+                    _LOGGER.error(f"[evaluate_data_table] eval error: {e}")
+                    raise ERROR_INVALID_PARAMETER(
+                        key="options.EVAL.expressions", reason=expression
+                    )
+            else:
+                raise ERROR_INVALID_PARAMETER_TYPE(
+                    key="options.EVAL.expressions", type=type(expression)
                 )
 
         self.df = df
