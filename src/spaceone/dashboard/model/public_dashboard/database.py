@@ -40,6 +40,7 @@ class PublicDashboard(MongoModel):
             "tags",
             "shared",
             "scope",
+            "folder_id",
             "project_id",
             "workspace_id",
         ],

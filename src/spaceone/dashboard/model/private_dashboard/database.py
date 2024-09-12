@@ -33,6 +33,7 @@ class PrivateDashboard(MongoModel):
             "variables_schema",
             "labels",
             "tags",
+            "folder_id",
         ],
         "minimal_fields": [
             "dashboard_id",
