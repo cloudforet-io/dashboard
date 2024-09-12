@@ -15,6 +15,7 @@ class PrivateDashboard(MongoModel):
     variables_schema = DictField(default=None)
     labels = ListField(StringField())
     tags = DictField(default=None)
+    folder_id = StringField(max_length=40, default=None, null=True)
     user_id = StringField(max_length=40)
     workspace_id = StringField(max_length=40, default=None, null=True)
     domain_id = StringField(max_length=40)

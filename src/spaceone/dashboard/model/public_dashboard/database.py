@@ -20,6 +20,7 @@ class PublicDashboard(MongoModel):
     resource_group = StringField(
         max_length=40, choices=("DOMAIN", "WORKSPACE", "PROJECT")
     )
+    folder_id = StringField(max_length=40, default=None, null=True)
     project_id = StringField(max_length=40)
     workspace_id = StringField(max_length=40)
     domain_id = StringField(max_length=40)
