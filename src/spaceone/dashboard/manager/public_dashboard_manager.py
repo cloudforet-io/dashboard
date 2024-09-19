@@ -1,5 +1,5 @@
 import logging
-from typing import Tuple
+from typing import Tuple, Union
 from mongoengine import QuerySet
 
 from spaceone.core.manager import BaseManager
@@ -73,7 +73,7 @@ class PublicDashboardManager(BaseManager):
         dashboard_id: str,
         domain_id: str,
         workspace_id: str = None,
-        user_projects=None,
+        user_projects: list = None,
     ) -> PublicDashboard:
         conditions = {
             "dashboard_id": dashboard_id,
