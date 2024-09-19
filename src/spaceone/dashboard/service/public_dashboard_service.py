@@ -207,6 +207,53 @@ class PublicDashboardService(BaseService):
         role_types=["DOMAIN_ADMIN", "WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
     )
     @convert_model
+    def change_folder(
+        self, params: PublicDashboardChangeFolderRequest
+    ) -> Union[PublicDashboardResponse, dict]:
+        """Change public dashboard folder
+
+        Args:
+            params (dict): {
+                'dashboard_id': 'str',          # required
+                'folder_id': 'str',             # required
+                'workspace_id': 'str',          # injected from auth
+                'domain_id': 'str'              # injected from auth (required)
+                'user_projects': 'list'         # injected from auth
+            }
+        Returns:
+            PublicDashboardResponse:
+        """
+
+        folder_id = params.folder_id
+
+        pub_dashboard_vo: PublicDashboard = self.pub_dashboard_mgr.get_public_dashboard(
+            params.dashboard_id,
+            params.domain_id,
+            params.workspace_id,
+            params.user_projects,
+        )
+
+        if folder_id:
+            pub_folder_mgr = PublicFolderManager()
+            pub_folder_mgr.get_public_folder(
+                params.folder_id,
+                pub_dashboard_vo.domain_id,
+                pub_dashboard_vo.workspace_id,
+                params.user_projects,
+                pub_dashboard_vo.resource_group,
+            )
+
+        pub_dashboard_vo = self.pub_dashboard_mgr.update_public_dashboard_by_vo(
+            params.dict(), pub_dashboard_vo
+        )
+
+        return PublicDashboardResponse(**pub_dashboard_vo.to_dict())
+
+    @transaction(
+        permission="dashboard:PublicDashboard.write",
+        role_types=["DOMAIN_ADMIN", "WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
+    )
+    @convert_model
     def share(
         self, params: PublicDashboardShareRequest
     ) -> Union[PublicDashboardResponse, dict]:

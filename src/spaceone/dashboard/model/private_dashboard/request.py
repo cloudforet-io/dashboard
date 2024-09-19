@@ -8,6 +8,7 @@ __all__ = [
     "PrivateDashboardGetRequest",
     "PrivateDashboardSearchQueryRequest",
     "PrivateDashboardStatQueryRequest",
+    "PrivateDashboardChangeFolderRequest",
 ]
 
 
@@ -39,6 +40,13 @@ class PrivateDashboardUpdateRequest(BaseModel):
     labels: Union[List[str], None] = None
     tags: Union[dict, None] = None
     folder_id: Union[str, None] = None
+    user_id: str
+    domain_id: str
+
+
+class PrivateDashboardChangeFolderRequest(BaseModel):
+    dashboard_id: str
+    folder_id: str = None
     user_id: str
     domain_id: str
 

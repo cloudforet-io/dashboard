@@ -19,6 +19,12 @@ class PrivateDashboard(BaseAPI, private_dashboard_pb2_grpc.PrivateDashboardServi
         response: dict = pri_dash_svc.update(params)
         return self.dict_to_message(response)
 
+    def change_folder(self, request, context):
+        params, metadata = self.parse_request(request, context)
+        pri_dash_svc = PrivateDashboardService(metadata)
+        response: dict = pri_dash_svc.change_folder(params)
+        return self.dict_to_message(response)
+
     def delete(self, request, context):
         params, metadata = self.parse_request(request, context)
         pri_dash_svc = PrivateDashboardService(metadata)

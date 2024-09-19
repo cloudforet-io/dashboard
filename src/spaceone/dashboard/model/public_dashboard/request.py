@@ -4,6 +4,7 @@ from pydantic import BaseModel
 __all__ = [
     "PublicDashboardCreateRequest",
     "PublicDashboardUpdateRequest",
+    "PublicDashboardChangeFolderRequest",
     "PublicDashboardShareRequest",
     "PublicDashboardUnshareRequest",
     "PublicDashboardDeleteRequest",
@@ -47,6 +48,14 @@ class PublicDashboardUpdateRequest(BaseModel):
     variables_schema: Union[dict, None] = None
     labels: Union[List[str], None] = None
     tags: Union[dict, None] = None
+    folder_id: Union[str, None] = None
+    workspace_id: Union[str, None] = None
+    domain_id: str
+    user_projects: Union[list, None] = None
+
+
+class PublicDashboardChangeFolderRequest(BaseModel):
+    dashboard_id: str
     folder_id: Union[str, None] = None
     workspace_id: Union[str, None] = None
     domain_id: str

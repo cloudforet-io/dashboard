@@ -157,6 +157,42 @@ class PrivateDashboardService(BaseService):
 
         return PrivateDashboardResponse(**pri_dashboard_vo.to_dict())
 
+    @transaction(permission="dashboard:PrivateDashboard.write", role_types=["USER"])
+    @convert_model
+    def change_folder(
+        self, params: PrivateDashboardChangeFolderRequest
+    ) -> Union[PrivateDashboardResponse, dict]:
+        """Change private dashboard's folder
+
+        Args:
+            params (dict): {
+                'dashboard_id': 'str',   # required
+                'folder_id': 'str',      # required
+                'user_id': 'str',        # injected from auth (required)
+                'domain_id': 'str'       # injected from auth (required)
+            }
+
+        Returns:
+            PrivateDashboardResponse:
+        """
+
+        folder_id = params.folder_id
+        pri_dashboard_vo = self.pri_dashboard_mgr.get_private_dashboard(
+            params.dashboard_id, params.domain_id, params.user_id
+        )
+
+        if folder_id:
+            pri_folder_mgr = PrivateFolderManager()
+            pri_folder_mgr.get_private_folder(
+                params.folder_id, params.domain_id, params.user_id
+            )
+
+        pri_dashboard_vo = self.pri_dashboard_mgr.update_private_dashboard_by_vo(
+            params.dict(), pri_dashboard_vo
+        )
+
+        return PrivateDashboardResponse(**pri_dashboard_vo.to_dict())
+
     @transaction(
         permission="dashboard:PrivateDashboard.write",
         role_types=["USER"],
