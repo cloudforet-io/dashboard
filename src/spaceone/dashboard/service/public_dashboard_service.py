@@ -2,7 +2,6 @@ import logging
 from typing import Union
 
 from spaceone.core.service import *
-from spaceone.core.error import *
 from spaceone.dashboard.manager.public_dashboard_manager import PublicDashboardManager
 from spaceone.dashboard.manager.public_folder_manager import PublicFolderManager
 from spaceone.dashboard.manager.public_widget_manager import PublicWidgetManager
@@ -12,6 +11,7 @@ from spaceone.dashboard.model.public_dashboard.request import *
 from spaceone.dashboard.model.public_dashboard.response import *
 from spaceone.dashboard.model.public_dashboard.database import PublicDashboard
 from spaceone.dashboard.service.public_widget_service import PublicWidgetService
+from spaceone.dashboard.error.dashboard import *
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -235,19 +235,51 @@ class PublicDashboardService(BaseService):
 
         if folder_id:
             pub_folder_mgr = PublicFolderManager()
-            pub_folder_mgr.get_public_folder(
+            pub_folder_vo = pub_folder_mgr.get_public_folder(
                 params.folder_id,
-                pub_dashboard_vo.domain_id,
-                pub_dashboard_vo.workspace_id,
+                params.domain_id,
+                params.workspace_id,
                 params.user_projects,
-                pub_dashboard_vo.resource_group,
             )
+
+            if pub_dashboard_vo.resource_group != pub_folder_vo.resource_group:
+                raise ERROR_INVALID_PARAMETER(
+                    key="folder_id",
+                    reason="Resource group of dashboard and folder are different.",
+                )
 
         pub_dashboard_vo = self.pub_dashboard_mgr.update_public_dashboard_by_vo(
             params.dict(), pub_dashboard_vo
         )
 
-        return PublicDashboardResponse(**pub_dashboard_vo.to_dict())
+        pub_dashboard_info = self.unshare_dashboard(
+            {
+                "dashboard_id": pub_dashboard_vo.dashboard_id,
+                "domain_id": pub_dashboard_vo.domain_id,
+                "cascade": True,
+            }
+        )
+
+        if folder_id:
+            pub_folder_mgr = PublicFolderManager()
+            pub_folder_vo = pub_folder_mgr.get_public_folder(
+                params.folder_id,
+                params.domain_id,
+                params.workspace_id,
+                params.user_projects,
+            )
+
+            if pub_folder_vo.shared:
+                pub_dashboard_info = self.share_dashboard(
+                    {
+                        "dashboard_id": pub_dashboard_vo.dashboard_id,
+                        "domain_id": pub_dashboard_vo.domain_id,
+                        "scope": pub_folder_vo.scope,
+                        "cascade": True,
+                    }
+                )
+
+        return PublicDashboardResponse(**pub_dashboard_info)
 
     @transaction(
         permission="dashboard:PublicDashboard.write",
@@ -272,12 +304,27 @@ class PublicDashboardService(BaseService):
             PublicDashboardResponse:
         """
 
+        pub_dashboard_info = self.share_dashboard(params.dict())
+        return PublicDashboardResponse(**pub_dashboard_info)
+
+    @check_required(["dashboard_id", "domain_id"])
+    def share_dashboard(self, params_dict: dict) -> dict:
+        dashboard_id = params_dict["dashboard_id"]
+        domain_id = params_dict["domain_id"]
+        workspace_id = params_dict.get("workspace_id")
+        user_projects = params_dict.get("user_projects")
+        scope = params_dict.get("scope")
+        cascade = params_dict.get("cascade", False)
+
         pub_dashboard_vo: PublicDashboard = self.pub_dashboard_mgr.get_public_dashboard(
-            params.dashboard_id,
-            params.domain_id,
-            params.workspace_id,
-            params.user_projects,
+            dashboard_id,
+            domain_id,
+            workspace_id,
+            user_projects,
         )
+
+        if pub_dashboard_vo.folder_id and not cascade:
+            raise ERROR_NOT_ALLOWED_SHARE(folder_id=pub_dashboard_vo.folder_id)
 
         updated_params = {
             "shared": True,
@@ -285,7 +332,7 @@ class PublicDashboardService(BaseService):
 
         if pub_dashboard_vo.resource_group == "DOMAIN":
             updated_params["workspace_id"] = "*"
-            if params.scope == "PROJECT":
+            if scope == "PROJECT":
                 updated_params["scope"] = "PROJECT"
                 updated_params["project_id"] = "*"
             else:
@@ -321,7 +368,7 @@ class PublicDashboardService(BaseService):
                     updated_params, pub_data_table_vo
                 )
 
-        return PublicDashboardResponse(**pub_dashboard_vo.to_dict())
+        return pub_dashboard_vo.to_dict()
 
     @transaction(
         permission="dashboard:PublicDashboard.write",
@@ -329,7 +376,7 @@ class PublicDashboardService(BaseService):
     )
     @convert_model
     def unshare(
-        self, params: PublicDashboardShareRequest
+        self, params: PublicDashboardUnshareRequest
     ) -> Union[PublicDashboardResponse, dict]:
         """Unshare public dashboard
 
@@ -345,12 +392,26 @@ class PublicDashboardService(BaseService):
             PublicDashboardResponse:
         """
 
+        pub_dashboard_info = self.unshare_dashboard(params.dict())
+        return PublicDashboardResponse(**pub_dashboard_info)
+
+    @check_required(["dashboard_id", "domain_id"])
+    def unshare_dashboard(self, params_dict: dict) -> dict:
+        dashboard_id = params_dict["dashboard_id"]
+        domain_id = params_dict["domain_id"]
+        workspace_id = params_dict.get("workspace_id")
+        user_projects = params_dict.get("user_projects")
+        cascade = params_dict.get("cascade", False)
+
         pub_dashboard_vo: PublicDashboard = self.pub_dashboard_mgr.get_public_dashboard(
-            params.dashboard_id,
-            params.domain_id,
-            params.workspace_id,
-            params.user_projects,
+            dashboard_id,
+            domain_id,
+            workspace_id,
+            user_projects,
         )
+
+        if pub_dashboard_vo.folder_id and not cascade:
+            raise ERROR_NOT_ALLOWED_UNSHARE(folder_id=pub_dashboard_vo.folder_id)
 
         updated_params = {
             "shared": False,
@@ -391,7 +452,7 @@ class PublicDashboardService(BaseService):
                     updated_params, pub_data_table_vo
                 )
 
-        return PublicDashboardResponse(**pub_dashboard_vo.to_dict())
+        return pub_dashboard_vo.to_dict()
 
     @transaction(
         permission="dashboard:PublicDashboard.write",

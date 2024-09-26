@@ -8,6 +8,7 @@ class PublicFolder(MongoModel):
     name = StringField(max_length=100)
     tags = DictField(default=None)
     shared = BooleanField(default=False)
+    scope = StringField(max_length=40, default=None, null=True)
     resource_group = StringField(
         max_length=40, choices=("DOMAIN", "WORKSPACE", "PROJECT")
     )
@@ -22,6 +23,7 @@ class PublicFolder(MongoModel):
             "name",
             "tags",
             "shared",
+            "scope",
             "project_id",
             "workspace_id",
         ],
@@ -37,6 +39,8 @@ class PublicFolder(MongoModel):
         "ordering": ["name"],
         "indexes": [
             "name",
+            "shared",
+            "scope",
             "resource_group",
             "project_id",
             "workspace_id",

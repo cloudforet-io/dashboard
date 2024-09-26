@@ -14,6 +14,7 @@ __all__ = [
 ]
 
 ResourceGroup = Literal["DOMAIN", "WORKSPACE", "PROJECT"]
+Scope = Literal["WORKSPACE", "PROJECT"]
 
 
 class PublicFolderCreateRequest(BaseModel):
@@ -37,6 +38,7 @@ class PublicFolderUpdateRequest(BaseModel):
 
 class PublicFolderShareRequest(BaseModel):
     folder_id: str
+    scope: Union[Scope, None] = None
     workspace_id: Union[str, None] = None
     domain_id: str
     user_projects: Union[list, None] = None
@@ -67,6 +69,8 @@ class PublicFolderSearchQueryRequest(BaseModel):
     query: Union[dict, None] = None
     folder_id: Union[str, None] = None
     name: Union[str, None] = None
+    shared: Union[bool, None] = None
+    scope: Union[Scope, None] = None
     project_id: Union[str, None] = None
     workspace_id: Union[str, list, None] = None
     domain_id: str
