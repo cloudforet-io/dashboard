@@ -13,6 +13,7 @@ class PublicFolderResponse(BaseModel):
     name: Union[str, None] = None
     tags: Union[dict, None] = None
     shared: Union[bool, None] = None
+    scope: Union[str, None] = None
     resource_group: Union[ResourceGroup, None] = None
     project_id: Union[str, None] = None
     workspace_id: Union[str, None] = None

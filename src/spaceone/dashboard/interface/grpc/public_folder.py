@@ -19,6 +19,18 @@ class PublicFolder(BaseAPI, public_folder_pb2_grpc.PublicFolderServicer):
         response: dict = pub_folder_svc.update(params)
         return self.dict_to_message(response)
 
+    def share(self, request, context):
+        params, metadata = self.parse_request(request, context)
+        pub_folder_svc = PublicFolderService(metadata)
+        response: dict = pub_folder_svc.share(params)
+        return self.dict_to_message(response)
+
+    def unshare(self, request, context):
+        params, metadata = self.parse_request(request, context)
+        pub_folder_svc = PublicFolderService(metadata)
+        response: dict = pub_folder_svc.unshare(params)
+        return self.dict_to_message(response)
+
     def delete(self, request, context):
         params, metadata = self.parse_request(request, context)
         pub_folder_svc = PublicFolderService(metadata)
