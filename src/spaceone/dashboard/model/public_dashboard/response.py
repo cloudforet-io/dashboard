@@ -15,6 +15,7 @@ class PublicDashboardResponse(BaseModel):
     version: Union[str, None] = None
     layouts: Union[List[Any], None] = None
     vars: Union[dict, None] = None
+    vars_schema: Union[dict, None] = None
     options: Union[dict, None] = None
     variables: Union[dict, None] = None
     variables_schema: Union[dict, None] = None

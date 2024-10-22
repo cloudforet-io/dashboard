@@ -10,6 +10,7 @@ class PrivateDashboard(MongoModel):
     version = StringField(max_length=40, default="2.0")
     layouts = ListField(default=None)
     vars = DictField(default=None)
+    vars_schema = DictField(default=None)
     options = DictField(default=None)
     variables = DictField(default=None)
     variables_schema = DictField(default=None)
@@ -28,6 +29,7 @@ class PrivateDashboard(MongoModel):
             "description",
             "layouts",
             "vars",
+            "vars_schema",
             "options",
             "variables",
             "variables_schema",
