@@ -30,6 +30,7 @@ setup(
         "spaceone-api",
         "pandas",
         "numpy",
+        "jinja2",
     ],
     zip_safe=False,
 )

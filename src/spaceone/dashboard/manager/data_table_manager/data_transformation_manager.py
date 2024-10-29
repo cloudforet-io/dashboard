@@ -241,6 +241,10 @@ class DataTransformationManager(DataTableManager):
         df = self._get_data_table(origin_vo, granularity, start, end, vars)
 
         for condition in conditions:
+            if self.is_jinja_expression(condition):
+                condition = self.change_global_variables(condition, vars)
+                condition = self.remove_jinja_braces(condition)
+
             try:
                 df = df.query(condition)
             except Exception as e:
@@ -328,6 +332,10 @@ class DataTransformationManager(DataTableManager):
                     )
 
             elif isinstance(expression, str):
+                if self.is_jinja_expression(expression):
+                    expression = self.change_global_variables(expression, vars)
+                    expression = self.remove_jinja_braces(expression)
+
                 if "@" in expression:
                     raise ERROR_INVALID_PARAMETER(
                         key="options.EVAL.expressions",
