@@ -1,5 +1,7 @@
 import logging
+import re
 from typing import Union, Literal, Tuple
+from jinja2 import Environment, meta
 import pandas as pd
 
 from spaceone.core.manager import BaseManager
@@ -10,6 +12,8 @@ from spaceone.dashboard.error.data_table import (
     ERROR_QUERY_OPTION,
     ERROR_NOT_SUPPORTED_QUERY_OPTION,
     ERROR_INVALID_PARAMETER,
+    ERROR_NO_FIELDS_TO_GLOBAL_VARIABLES,
+    ERROR_NOT_GLOBAL_VARIABLE,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -20,6 +24,7 @@ class DataTableManager(BaseManager):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.df: Union[pd.DataFrame, None] = None
+        self.jinja_variables = None
 
     def get_data_and_labels_info(self) -> Tuple[dict, dict]:
         raise NotImplementedError()
@@ -297,3 +302,41 @@ class DataTableManager(BaseManager):
                         start = 1
 
                     self.df = self.df.iloc[start - 1 : start + limit - 1]
+
+    def is_jinja_expression(self, expression: str) -> bool:
+        env = Environment()
+
+        parsed_content = env.parse(expression)
+        variables = meta.find_undeclared_variables(parsed_content)
+
+        if variables:
+            self.jinja_variables = variables
+
+        return bool(variables)
+
+    def change_global_variables(self, expression: str, vars: dict) -> str:
+        if "global" in self.jinja_variables:
+
+            if not vars:
+                raise ERROR_NO_FIELDS_TO_GLOBAL_VARIABLES(vars=vars)
+
+            exclude_keys = set(key for key in self.jinja_variables if key != "global")
+            expression = expression.replace("global.", "")
+
+            env = Environment()
+
+            parsed_content = env.parse(expression)
+            jinja_variables = meta.find_undeclared_variables(parsed_content)
+
+            global_variables = jinja_variables - exclude_keys
+            for global_variable in global_variables:
+                if global_variable not in vars:
+                    raise ERROR_NOT_GLOBAL_VARIABLE(global_variable=global_variable)
+
+        return expression
+
+    @staticmethod
+    def remove_jinja_braces(expression: str) -> str:
+        pattern = r"{{\s*(\w+)\s*}}"
+        new_expression = re.sub(pattern, r"\1", expression)
+        return new_expression

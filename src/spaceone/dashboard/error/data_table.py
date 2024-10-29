@@ -23,3 +23,13 @@ class ERROR_DUPLICATED_DATA_FIELDS(ERROR_INVALID_ARGUMENT):
 
 class ERROR_NO_FIELDS_TO_JOIN(ERROR_INVALID_ARGUMENT):
     _message = "There is no fields to join."
+
+
+class ERROR_NOT_GLOBAL_VARIABLE(ERROR_INVALID_ARGUMENT):
+    _message = (
+        "The variable is not a global variable. (global_variable = {global_variable})"
+    )
+
+
+class ERROR_NO_FIELDS_TO_GLOBAL_VARIABLES(ERROR_INVALID_ARGUMENT):
+    _message = "There is no fields in GLOBAL_VARIABLES. (vars = {vars})"
