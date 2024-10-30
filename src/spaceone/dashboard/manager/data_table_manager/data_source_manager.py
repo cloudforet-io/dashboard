@@ -325,6 +325,7 @@ class DataSourceManager(DataTableManager):
         end: str,
         vars: dict = None,
     ):
+
         if vars:
             self.filter = self.filter or []
             for key, value in vars.items():
