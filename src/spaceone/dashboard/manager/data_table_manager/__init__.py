@@ -314,7 +314,8 @@ class DataTableManager(BaseManager):
 
         return bool(variables)
 
-    def change_global_variables(self, expression: str, vars: dict) -> str:
+    def change_global_variables(self, expression: str, vars: dict):
+        gv_type_map = {}
         if "global" in self.jinja_variables:
 
             if not vars:
@@ -333,10 +334,21 @@ class DataTableManager(BaseManager):
                 if global_variable not in vars:
                     raise ERROR_NOT_GLOBAL_VARIABLE(global_variable=global_variable)
 
-        return expression
+                gv_type_map[vars[global_variable]] = type(vars[global_variable])
+                expression = expression.replace(global_variable, vars[global_variable])
+
+        return expression, gv_type_map
 
     @staticmethod
     def remove_jinja_braces(expression: str) -> str:
         pattern = r"{{\s*(\w+)\s*}}"
         new_expression = re.sub(pattern, r"\1", expression)
         return new_expression
+
+    @staticmethod
+    def change_expression_data_type(expression: str, gv_type_map: dict) -> str:
+        for gv_value, data_type in gv_type_map.items():
+            if isinstance(data_type(gv_value), str):
+                expression = expression.replace(gv_value, f'"{gv_value}"')
+
+        return expression

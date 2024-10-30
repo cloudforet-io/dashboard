@@ -242,8 +242,9 @@ class DataTransformationManager(DataTableManager):
 
         for condition in conditions:
             if self.is_jinja_expression(condition):
-                condition = self.change_global_variables(condition, vars)
+                condition, gv_type_map = self.change_global_variables(condition, vars)
                 condition = self.remove_jinja_braces(condition)
+                condition = self.change_expression_data_type(condition, gv_type_map)
 
             try:
                 df = df.query(condition)
