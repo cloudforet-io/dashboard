@@ -12,6 +12,7 @@ class PublicDashboard(MongoModel):
     vars = DictField(default=None)
     vars_schema = DictField(default=None)
     options = DictField(default=None)
+    domain_options = DictField(default=None)
     variables = DictField(default=None)
     variables_schema = DictField(default=None)
     labels = ListField(StringField())
@@ -36,6 +37,7 @@ class PublicDashboard(MongoModel):
             "vars",
             "vars_schema",
             "options",
+            "domain_options",
             "variables",
             "variables_schema",
             "labels",

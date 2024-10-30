@@ -19,6 +19,7 @@ class PublicDashboardResponse(BaseModel):
     options: Union[dict, None] = None
     variables: Union[dict, None] = None
     variables_schema: Union[dict, None] = None
+    domain_options: Union[dict, None] = None
     labels: Union[List[str], None] = None
     tags: Union[dict, None] = None
     shared: Union[bool, None] = None

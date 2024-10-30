@@ -25,6 +25,7 @@ class PublicDashboardCreateRequest(BaseModel):
     vars: Union[dict, None] = None
     vars_schema: Union[dict, None] = None
     options: Union[dict, None] = None
+    domain_options: Union[dict, None] = None
     variables: Union[dict, None] = None
     variables_schema: Union[dict, None] = None
     labels: Union[List[str], None] = None
@@ -45,6 +46,7 @@ class PublicDashboardUpdateRequest(BaseModel):
     vars: Union[dict, None] = None
     vars_schema: Union[dict, None] = None
     options: Union[dict, None] = None
+    domain_options: Union[dict, None] = None
     settings: Union[dict, None] = None
     variables: Union[dict, None] = None
     variables_schema: Union[dict, None] = None
