@@ -13,7 +13,7 @@ from spaceone.dashboard.error.data_table import (
     ERROR_NOT_SUPPORTED_QUERY_OPTION,
     ERROR_INVALID_PARAMETER,
     ERROR_NO_FIELDS_TO_GLOBAL_VARIABLES,
-    ERROR_NOT_GLOBAL_VARIABLE,
+    ERROR_NOT_GLOBAL_VARIABLE_KEY,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -330,12 +330,24 @@ class DataTableManager(BaseManager):
             jinja_variables = meta.find_undeclared_variables(parsed_content)
 
             global_variables = jinja_variables - exclude_keys
-            for global_variable in global_variables:
-                if global_variable not in vars:
-                    raise ERROR_NOT_GLOBAL_VARIABLE(global_variable=global_variable)
+            for global_variable_key in global_variables:
+                global_variable_value = vars[global_variable_key]
 
-                gv_type_map[vars[global_variable]] = type(vars[global_variable])
-                expression = expression.replace(global_variable, vars[global_variable])
+                if global_variable_key not in vars:
+                    raise ERROR_NOT_GLOBAL_VARIABLE_KEY(
+                        global_variable_key=global_variable_key
+                    )
+
+                gv_type_map[global_variable_value] = type(global_variable_value)
+
+                if isinstance(global_variable_value, int) or isinstance(
+                    global_variable_value, float
+                ):
+                    global_variable_value = str(global_variable_value)
+
+                expression = expression.replace(
+                    global_variable_key, global_variable_value
+                )
 
         return expression, gv_type_map
 

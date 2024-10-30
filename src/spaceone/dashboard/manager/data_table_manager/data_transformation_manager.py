@@ -263,6 +263,7 @@ class DataTransformationManager(DataTableManager):
         end: str = None,
         vars: dict = None,
     ) -> None:
+        vars = {"seolmin": 3000, "test": 1}
         expressions = self.options.get("expressions", [])
 
         origin_vo = self.data_table_vos[0]
@@ -275,6 +276,7 @@ class DataTransformationManager(DataTableManager):
             if isinstance(expression, dict):
                 name = expression.get("name")
                 field_type = expression.get("field_type", "DATA")
+                condition = expression.get("condition")
                 value_expression = expression.get("expression")
 
                 if name is None:
@@ -283,6 +285,22 @@ class DataTransformationManager(DataTableManager):
                 if value_expression is None:
                     raise ERROR_REQUIRED_PARAMETER(
                         key="options.EVAL.expressions.expression"
+                    )
+
+                if self.is_jinja_expression(condition):
+                    condition, gv_type_map = self.change_global_variables(
+                        condition, vars
+                    )
+                    condition = self.remove_jinja_braces(condition)
+                    condition = self.change_expression_data_type(condition, gv_type_map)
+
+                if self.is_jinja_expression(value_expression):
+                    value_expression, gv_type_map = self.change_global_variables(
+                        value_expression, vars
+                    )
+                    value_expression = self.remove_jinja_braces(value_expression)
+                    value_expression = self.change_expression_data_type(
+                        value_expression, gv_type_map
                     )
 
                 template_vars = {}
@@ -320,10 +338,17 @@ class DataTransformationManager(DataTableManager):
                     else:
                         self.data_keys = list(set(self.data_keys) | {name})
 
-                    df.eval(merged_expr, inplace=True)
-                    last_key = df.columns[-1:][0]
+                    last_key = df.eval(merged_expr).columns[-1:][0]
+                    if condition:
+                        df.loc[df.query(condition).index, last_key] = df.eval(
+                            merged_expr, inplace=True
+                        )
+                    else:
+                        df.eval(merged_expr, inplace=True)
+
                     if last_key.startswith("BACKTICK_QUOTED_STRING"):
                         df.rename(columns={last_key: name}, inplace=True)
+
                     df.replace([np.inf, -np.inf], 0, inplace=True)
 
                 except Exception as e:
@@ -333,9 +358,6 @@ class DataTransformationManager(DataTableManager):
                     )
 
             elif isinstance(expression, str):
-                if self.is_jinja_expression(expression):
-                    expression = self.change_global_variables(expression, vars)
-                    expression = self.remove_jinja_braces(expression)
 
                 if "@" in expression:
                     raise ERROR_INVALID_PARAMETER(

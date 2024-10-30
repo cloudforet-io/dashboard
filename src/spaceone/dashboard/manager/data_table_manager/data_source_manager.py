@@ -325,6 +325,7 @@ class DataSourceManager(DataTableManager):
         end: str,
         vars: dict = None,
     ):
+
         if vars:
             self.filter = self.filter or []
             for key, value in vars.items():
@@ -364,6 +365,16 @@ class DataSourceManager(DataTableManager):
                                     "operator": "eq",
                                 }
                             )
+
+        for filter_info in self.filter:
+            query_value = filter_info.get("v") or filter_info.get("value")
+
+            if isinstance(query_value, str) and self.is_jinja_expression(query_value):
+                query_value, gv_type_map = self.change_global_variables(
+                    query_value, vars
+                )
+                query_value = self.remove_jinja_braces(query_value)
+                filter_info["v"] = [query_value]
 
         return {
             "granularity": granularity,
