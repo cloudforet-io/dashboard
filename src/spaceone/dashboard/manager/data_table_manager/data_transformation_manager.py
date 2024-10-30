@@ -263,6 +263,7 @@ class DataTransformationManager(DataTableManager):
         end: str = None,
         vars: dict = None,
     ) -> None:
+        vars = {"seolmin": 12}
         expressions = self.options.get("expressions", [])
 
         origin_vo = self.data_table_vos[0]
@@ -283,6 +284,15 @@ class DataTransformationManager(DataTableManager):
                 if value_expression is None:
                     raise ERROR_REQUIRED_PARAMETER(
                         key="options.EVAL.expressions.expression"
+                    )
+
+                if self.is_jinja_expression(value_expression):
+                    value_expression, gv_type_map = self.change_global_variables(
+                        value_expression, vars
+                    )
+                    value_expression = self.remove_jinja_braces(value_expression)
+                    value_expression = self.change_expression_data_type(
+                        value_expression, gv_type_map
                     )
 
                 template_vars = {}
@@ -333,9 +343,6 @@ class DataTransformationManager(DataTableManager):
                     )
 
             elif isinstance(expression, str):
-                if self.is_jinja_expression(expression):
-                    expression = self.change_global_variables(expression, vars)
-                    expression = self.remove_jinja_braces(expression)
 
                 if "@" in expression:
                     raise ERROR_INVALID_PARAMETER(
