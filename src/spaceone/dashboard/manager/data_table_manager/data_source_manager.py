@@ -365,16 +365,18 @@ class DataSourceManager(DataTableManager):
                                     "operator": "eq",
                                 }
                             )
+        if self.filter:
+            for filter_info in self.filter:
+                query_value = filter_info.get("v") or filter_info.get("value")
 
-        for filter_info in self.filter:
-            query_value = filter_info.get("v") or filter_info.get("value")
-
-            if isinstance(query_value, str) and self.is_jinja_expression(query_value):
-                query_value, gv_type_map = self.change_global_variables(
-                    query_value, vars
-                )
-                query_value = self.remove_jinja_braces(query_value)
-                filter_info["v"] = [query_value]
+                if isinstance(query_value, str) and self.is_jinja_expression(
+                    query_value
+                ):
+                    query_value, gv_type_map = self.change_global_variables(
+                        query_value, vars
+                    )
+                    query_value = self.remove_jinja_braces(query_value)
+                    filter_info["v"] = [query_value]
 
         return {
             "granularity": granularity,
