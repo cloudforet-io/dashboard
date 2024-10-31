@@ -232,7 +232,6 @@ class DataTransformationManager(DataTableManager):
         end: str = None,
         vars: dict = None,
     ) -> None:
-        vars = {"aa": "bb", "seolmin": "AmazonEC2", "seolmin2": ["aa", "bb", "cc"]}
         conditions = self.options.get("conditions", [])
 
         origin_vo = self.data_table_vos[0]
@@ -264,7 +263,6 @@ class DataTransformationManager(DataTableManager):
         end: str = None,
         vars: dict = None,
     ) -> None:
-        vars = {"seolmin": 3000, "test": 1}
         expressions = self.options.get("expressions", [])
 
         origin_vo = self.data_table_vos[0]
