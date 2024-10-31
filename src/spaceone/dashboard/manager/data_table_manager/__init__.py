@@ -331,12 +331,13 @@ class DataTableManager(BaseManager):
 
             global_variables = jinja_variables - exclude_keys
             for global_variable_key in global_variables:
-                global_variable_value = vars[global_variable_key]
 
                 if global_variable_key not in vars:
                     raise ERROR_NOT_GLOBAL_VARIABLE_KEY(
                         global_variable_key=global_variable_key
                     )
+
+                global_variable_value = vars[global_variable_key]
 
                 gv_type_map[global_variable_value] = type(global_variable_value)
 
