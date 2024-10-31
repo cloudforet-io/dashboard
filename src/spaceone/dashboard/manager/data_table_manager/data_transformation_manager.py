@@ -263,7 +263,6 @@ class DataTransformationManager(DataTableManager):
         end: str = None,
         vars: dict = None,
     ) -> None:
-        vars = {"seolmin": 3000, "test": 1}
         expressions = self.options.get("expressions", [])
 
         origin_vo = self.data_table_vos[0]
