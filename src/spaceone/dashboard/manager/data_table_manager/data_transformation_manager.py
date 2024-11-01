@@ -348,18 +348,20 @@ class DataTransformationManager(DataTableManager):
                         self.data_keys = list(set(self.data_keys) | {name})
 
                     last_key = df.eval(merged_expr).columns[-1:][0]
-                    if condition:
-                        df.loc[df.query(condition).index, last_key] = df.eval(
-                            merged_expr
-                        )
-                        if else_condition:
-                            else_index = list(
-                                set(df.index) - set(df.query(condition).index)
-                            )
-                            df.loc[else_index, last_key] = df.eval(else_condition)
 
-                    else:
-                        df.eval(merged_expr, inplace=True)
+                    if not df.empty:
+                        if condition:
+                            df.loc[df.query(condition).index, last_key] = df.eval(
+                                merged_expr
+                            )
+                            if else_condition:
+                                else_index = list(
+                                    set(df.index) - set(df.query(condition).index)
+                                )
+                                df.loc[else_index, last_key] = df.eval(else_condition)
+
+                        else:
+                            df.eval(merged_expr, inplace=True)
 
                     if last_key.startswith("BACKTICK_QUOTED_STRING"):
                         df.rename(columns={last_key: name}, inplace=True)
