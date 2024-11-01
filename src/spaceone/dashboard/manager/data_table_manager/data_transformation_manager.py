@@ -340,7 +340,7 @@ class DataTransformationManager(DataTableManager):
                     last_key = df.eval(merged_expr).columns[-1:][0]
                     if condition:
                         df.loc[df.query(condition).index, last_key] = df.eval(
-                            merged_expr, inplace=True
+                            merged_expr
                         )
                     else:
                         df.eval(merged_expr, inplace=True)
