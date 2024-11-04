@@ -360,7 +360,7 @@ class DataTableManager(BaseManager):
         return expression, gv_type_map
 
     @staticmethod
-    def remove_jinja_braces(expression: str) -> str | float | list:
+    def remove_jinja_braces(expression: str) -> Union[str, float, list]:
         if re.match(r"{{\s*(\w+)\s*}}", expression):
             return re.sub(r"{{\s*(\w+)\s*}}", r"\1", expression)
         elif re.match(r"{{\s*(\d+(\.\d+)?)\s*}}", expression):
