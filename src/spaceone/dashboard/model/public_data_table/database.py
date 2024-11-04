@@ -6,6 +6,10 @@ from spaceone.core.model.mongo_model import MongoModel
 class PublicDataTable(MongoModel):
     data_table_id = StringField(max_length=40, generate_id="public-dt", unique=True)
     name = StringField(max_length=100, default=None, null=True)
+    state = StringField(
+        max_length=40, default="AVAILABLE", choices=("AVAILABLE", "UNAVAILABLE")
+    )
+    error_message = StringField(max_length=255, default=None, null=True)
     data_type = StringField(max_length=40, choices=("ADDED", "TRANSFORMED"))
     source_type = StringField(max_length=40, default=None, null=True)
     operator = StringField(max_length=40, default=None, null=True)
@@ -27,6 +31,8 @@ class PublicDataTable(MongoModel):
     meta = {
         "updatable_fields": [
             "name",
+            "state",
+            "error_message",
             "options",
             "tags",
             "labels_info",
@@ -37,6 +43,7 @@ class PublicDataTable(MongoModel):
         "minimal_fields": [
             "data_table_id",
             "name",
+            "state",
             "data_type",
             "source_type",
             "operator",
@@ -51,6 +58,7 @@ class PublicDataTable(MongoModel):
         "ordering": ["name"],
         "indexes": [
             "name",
+            "state",
             "data_type",
             "source_type",
             "operator",

@@ -80,16 +80,21 @@ class DataTransformationManager(DataTableManager):
         end: str = None,
         vars: dict = None,
     ) -> pd.DataFrame:
-        if self.operator == "JOIN":
-            self.join_data_tables(granularity, start, end, vars)
-        elif self.operator == "CONCAT":
-            self.concat_data_tables(granularity, start, end, vars)
-        elif self.operator == "AGGREGATE":
-            self.aggregate_data_table(granularity, start, end, vars)
-        elif self.operator == "QUERY":
-            self.query_data_table(granularity, start, end, vars)
-        elif self.operator == "EVAL":
-            self.evaluate_data_table(granularity, start, end, vars)
+        try:
+            if self.operator == "JOIN":
+                self.join_data_tables(granularity, start, end, vars)
+            elif self.operator == "CONCAT":
+                self.concat_data_tables(granularity, start, end, vars)
+            elif self.operator == "AGGREGATE":
+                self.aggregate_data_table(granularity, start, end, vars)
+            elif self.operator == "QUERY":
+                self.query_data_table(granularity, start, end, vars)
+            elif self.operator == "EVAL":
+                self.evaluate_data_table(granularity, start, end, vars)
+        except Exception as e:
+            self.error_message = e.message if hasattr(e, "message") else str(e)
+            self.state = "UNAVAILABLE"
+            _LOGGER.error(f"[load] {self.operator} operation error: {e}")
 
         return self.df
 

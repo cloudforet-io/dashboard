@@ -102,18 +102,23 @@ class DataSourceManager(DataTableManager):
         end: str = None,
         vars: dict = None,
     ) -> pd.DataFrame:
-        start, end = self._get_time_from_granularity(granularity, start, end)
+        try:
+            start, end = self._get_time_from_granularity(granularity, start, end)
 
-        if self.timediff:
-            start, end = self._change_query_time(granularity, start, end)
+            if self.timediff:
+                start, end = self._change_query_time(granularity, start, end)
 
-        if self.source_type == "COST":
-            self._analyze_cost(granularity, start, end, vars)
-        elif self.source_type == "ASSET":
-            self._analyze_asset(granularity, start, end, vars)
+            if self.source_type == "COST":
+                self._analyze_cost(granularity, start, end, vars)
+            elif self.source_type == "ASSET":
+                self._analyze_asset(granularity, start, end, vars)
 
-        if additional_labels := self.options.get("additional_labels"):
-            self._add_labels(additional_labels)
+            if additional_labels := self.options.get("additional_labels"):
+                self._add_labels(additional_labels)
+        except Exception as e:
+            self.error_message = e.message if hasattr(e, "message") else str(e)
+            self.state = "UNAVAILABLE"
+            _LOGGER.error(f"[load] add {self.source_type} source error: {e}")
 
         return self.df
 

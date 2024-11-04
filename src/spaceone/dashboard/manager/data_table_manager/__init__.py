@@ -26,6 +26,8 @@ class DataTableManager(BaseManager):
         super().__init__(*args, **kwargs)
         self.df: Union[pd.DataFrame, None] = None
         self.jinja_variables = None
+        self.state = None
+        self.error_message = None
 
     def get_data_and_labels_info(self) -> Tuple[dict, dict]:
         raise NotImplementedError()

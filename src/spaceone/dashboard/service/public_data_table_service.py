@@ -106,6 +106,8 @@ class PublicDataTableService(BaseService):
         params_dict["resource_group"] = pub_widget_vo.resource_group
         params_dict["workspace_id"] = pub_widget_vo.workspace_id
         params_dict["project_id"] = pub_widget_vo.project_id
+        params_dict["state"] = ds_mgr.state
+        params_dict["error_message"] = ds_mgr.error_message
 
         pub_data_table_vo = self.pub_data_table_mgr.create_public_data_table(
             params_dict
@@ -258,6 +260,10 @@ class PublicDataTableService(BaseService):
                 # Load data source to verify options
                 ds_mgr.load(vars=vars)
 
+                # Get ds_mgr state and error_message
+                params_dict["state"] = ds_mgr.state
+                params_dict["error_message"] = ds_mgr.error_message
+
                 # Get data and labels info from options
                 data_info, labels_info = ds_mgr.get_data_and_labels_info()
                 params_dict["data_info"] = data_info
@@ -284,6 +290,10 @@ class PublicDataTableService(BaseService):
 
                 # Load data table to verify options
                 dt_mgr.load(vars=vars)
+
+                # Get dt_mgr state and error_message
+                params_dict["state"] = dt_mgr.state
+                params_dict["error_message"] = dt_mgr.error_message
 
                 # Get data and labels info from options
                 data_info, labels_info = dt_mgr.get_data_and_labels_info()
@@ -453,6 +463,7 @@ class PublicDataTableService(BaseService):
             "widget_id",
             "data_table_id",
             "name",
+            "state",
             "data_type",
             "source_type",
             "operator",

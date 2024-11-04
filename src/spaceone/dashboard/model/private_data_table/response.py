@@ -9,6 +9,7 @@ __all__ = ["PrivateDataTableResponse", "PrivateDataTablesResponse"]
 class PrivateDataTableResponse(BaseModel):
     data_table_id: Union[str, None] = None
     name: Union[str, None] = None
+    state: Union[str, None] = None
     data_type: Union[str, None] = None
     source_type: Union[str, None] = None
     operator: Union[str, None] = None
@@ -16,6 +17,7 @@ class PrivateDataTableResponse(BaseModel):
     tags: Union[dict, None] = None
     labels_info: Union[dict, None] = None
     data_info: Union[dict, None] = None
+    error_message: Union[str, None] = None
     dashboard_id: Union[str, None] = None
     widget_id: Union[str, None] = None
     user_id: Union[str, None] = None
