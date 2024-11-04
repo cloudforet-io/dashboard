@@ -46,6 +46,7 @@ class PublicDataTableService(BaseService):
                 'name': 'str',
                 'source_type': 'str',           # required
                 'options': 'dict',              # required
+                'vars': 'dict',
                 'tags': 'dict',
                 'workspace_id': 'str',          # injected from auth
                 'domain_id': 'str',             # injected from auth (required)
@@ -63,6 +64,7 @@ class PublicDataTableService(BaseService):
     def add_data_table(self, params_dict: dict) -> dict:
         source_type = params_dict.get("source_type")
         options = params_dict.get("options")
+        vars = params_dict.get("vars")
         widget_id = params_dict.get("widget_id")
         domain_id = params_dict.get("domain_id")
         workspace_id = params_dict.get("workspace_id")
@@ -92,7 +94,7 @@ class PublicDataTableService(BaseService):
         )
 
         # Load data source to verify options
-        ds_mgr.load()
+        ds_mgr.load(vars=vars)
 
         # Get data and labels info from options
         data_info, labels_info = ds_mgr.get_data_and_labels_info()
@@ -144,6 +146,7 @@ class PublicDataTableService(BaseService):
                 'name': 'str',
                 'operator': 'str',              # required
                 'options': 'dict',              # required
+                'vars': 'dict',
                 'tags': 'dict',
                 'workspace_id': 'str',          # injected from auth
                 'domain_id': 'str',             # injected from auth (required)
@@ -162,6 +165,7 @@ class PublicDataTableService(BaseService):
         operator = params_dict.get("operator")
         options = params_dict.get("options")
         operator_options = options.get(operator, {})
+        vars = params_dict.get("vars")
         widget_id = params_dict.get("widget_id")
         domain_id = params_dict.get("domain_id")
         workspace_id = params_dict.get("workspace_id")
@@ -184,7 +188,7 @@ class PublicDataTableService(BaseService):
         )
 
         # Load data table to verify options
-        dt_mgr.load()
+        dt_mgr.load(vars=vars)
 
         # Get data and labels info from options
         data_info, labels_info = dt_mgr.get_data_and_labels_info()
@@ -218,6 +222,7 @@ class PublicDataTableService(BaseService):
                 'data_table_id': 'str',         # required
                 'name': 'str',
                 'options': 'dict',
+                'vars': 'dict',
                 'tags': 'dict',
                 'workspace_id': 'str',          # injected from auth
                 'domain_id': 'str'              # injected from auth (required)
@@ -238,6 +243,7 @@ class PublicDataTableService(BaseService):
         )
 
         params_dict = params.dict(exclude_unset=True)
+        vars = params_dict.get("vars")
 
         if options := params_dict.get("options"):
             if pub_data_table_vo.data_type == "ADDED":
@@ -250,7 +256,7 @@ class PublicDataTableService(BaseService):
                 )
 
                 # Load data source to verify options
-                ds_mgr.load()
+                ds_mgr.load(vars=vars)
 
                 # Get data and labels info from options
                 data_info, labels_info = ds_mgr.get_data_and_labels_info()
@@ -277,7 +283,7 @@ class PublicDataTableService(BaseService):
                 )
 
                 # Load data table to verify options
-                dt_mgr.load()
+                dt_mgr.load(vars=vars)
 
                 # Get data and labels info from options
                 data_info, labels_info = dt_mgr.get_data_and_labels_info()
@@ -345,6 +351,7 @@ class PublicDataTableService(BaseService):
                 'end': 'str',
                 'sort': 'list',
                 'page': 'dict',
+                'vars': 'dict',
                 'workspace_id': 'str',          # injected from auth
                 'domain_id': 'str'              # injected from auth (required)
                 'user_projects': 'list'         # injected from auth
@@ -375,6 +382,7 @@ class PublicDataTableService(BaseService):
                 params.granularity,
                 params.start,
                 params.end,
+                params.vars,
             )
             return ds_mgr.response(params.sort, params.page)
 
@@ -391,7 +399,12 @@ class PublicDataTableService(BaseService):
                 widget_id,
                 domain_id,
             )
-            dt_mgr.load(params.granularity, params.start, params.end)
+            dt_mgr.load(
+                params.granularity,
+                params.start,
+                params.end,
+                params.vars,
+            )
             return dt_mgr.response(params.sort, params.page)
 
     @transaction(
