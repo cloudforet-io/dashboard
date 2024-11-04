@@ -102,18 +102,23 @@ class DataSourceManager(DataTableManager):
         end: str = None,
         vars: dict = None,
     ) -> pd.DataFrame:
-        start, end = self._get_time_from_granularity(granularity, start, end)
+        try:
+            start, end = self._get_time_from_granularity(granularity, start, end)
 
-        if self.timediff:
-            start, end = self._change_query_time(granularity, start, end)
+            if self.timediff:
+                start, end = self._change_query_time(granularity, start, end)
 
-        if self.source_type == "COST":
-            self._analyze_cost(granularity, start, end, vars)
-        elif self.source_type == "ASSET":
-            self._analyze_asset(granularity, start, end, vars)
+            if self.source_type == "COST":
+                self._analyze_cost(granularity, start, end, vars)
+            elif self.source_type == "ASSET":
+                self._analyze_asset(granularity, start, end, vars)
 
-        if additional_labels := self.options.get("additional_labels"):
-            self._add_labels(additional_labels)
+            if additional_labels := self.options.get("additional_labels"):
+                self._add_labels(additional_labels)
+        except Exception as e:
+            self.error_message = e.message if hasattr(e, "message") else str(e)
+            self.state = "UNAVAILABLE"
+            _LOGGER.error(f"[load] add {self.source_type} source error: {e}")
 
         return self.df
 
@@ -368,15 +373,19 @@ class DataSourceManager(DataTableManager):
         if self.filter:
             for filter_info in self.filter:
                 query_value = filter_info.get("v") or filter_info.get("value")
-
-                if isinstance(query_value, str) and self.is_jinja_expression(
-                    query_value
-                ):
+                if self.is_jinja_expression(query_value):
                     query_value, gv_type_map = self.change_global_variables(
                         query_value, vars
                     )
                     query_value = self.remove_jinja_braces(query_value)
-                    filter_info["v"] = [query_value]
+                    if (
+                        isinstance(query_value, str)
+                        or isinstance(query_value, int)
+                        or isinstance(query_value, float)
+                    ):
+                        filter_info["v"] = [query_value]
+                    elif isinstance(query_value, list):
+                        filter_info["v"] = query_value
 
         return {
             "granularity": granularity,

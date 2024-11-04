@@ -19,6 +19,7 @@ class PublicDataTableAddRequest(BaseModel):
     name: Union[str, None] = None
     source_type: str
     options: dict
+    vars: Union[dict, None] = None
     tags: Union[dict, None] = None
     workspace_id: Union[str, None] = None
     domain_id: str
@@ -30,6 +31,7 @@ class PublicDataTableTransformRequest(BaseModel):
     name: Union[str, None] = None
     operator: str
     options: dict
+    vars: Union[dict, None] = None
     tags: Union[dict, None] = None
     workspace_id: Union[str, None] = None
     domain_id: str
@@ -40,6 +42,7 @@ class PublicDataTableUpdateRequest(BaseModel):
     data_table_id: str
     name: Union[str, None] = None
     options: Union[dict, None] = None
+    vars: Union[dict, None] = None
     tags: Union[dict, None] = None
     workspace_id: Union[str, None] = None
     domain_id: str
@@ -60,6 +63,7 @@ class PublicDataTableLoadRequest(BaseModel):
     end: Union[str, None] = None
     sort: Union[list, None] = None
     page: Union[dict, None] = None
+    vars: Union[dict, None] = None
     workspace_id: Union[str, list, None] = None
     domain_id: str
     user_projects: Union[list, None] = None

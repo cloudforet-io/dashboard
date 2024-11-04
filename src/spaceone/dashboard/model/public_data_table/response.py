@@ -11,6 +11,7 @@ ResourceGroup = Literal["DOMAIN", "WORKSPACE", "PROJECT"]
 class PublicDataTableResponse(BaseModel):
     data_table_id: Union[str, None] = None
     name: Union[str, None] = None
+    state: Union[str, None] = None
     data_type: Union[str, None] = None
     source_type: Union[str, None] = None
     operator: Union[str, None] = None
@@ -18,6 +19,7 @@ class PublicDataTableResponse(BaseModel):
     tags: Union[dict, None] = None
     labels_info: Union[dict, None] = None
     data_info: Union[dict, None] = None
+    error_message: Union[str, None] = None
     dashboard_id: Union[str, None] = None
     widget_id: Union[str, None] = None
     resource_group: Union[ResourceGroup, None] = None
