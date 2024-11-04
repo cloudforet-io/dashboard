@@ -1,4 +1,5 @@
 import logging
+import ast
 import re
 from typing import Union, Literal, Tuple
 from jinja2 import Environment, meta
@@ -338,13 +339,17 @@ class DataTableManager(BaseManager):
                     )
 
                 global_variable_value = vars[global_variable_key]
-
-                gv_type_map[global_variable_value] = type(global_variable_value)
+                gv_type = type(global_variable_value)
 
                 if isinstance(global_variable_value, int) or isinstance(
                     global_variable_value, float
                 ):
                     global_variable_value = str(global_variable_value)
+
+                if isinstance(global_variable_value, list):
+                    global_variable_value = str(global_variable_value)
+
+                gv_type_map[global_variable_value] = gv_type
 
                 expression = expression.replace(
                     global_variable_key, global_variable_value
@@ -353,10 +358,15 @@ class DataTableManager(BaseManager):
         return expression, gv_type_map
 
     @staticmethod
-    def remove_jinja_braces(expression: str) -> str:
-        pattern = r"{{\s*(\w+)\s*}}"
-        new_expression = re.sub(pattern, r"\1", expression)
-        return new_expression
+    def remove_jinja_braces(expression: str) -> str | float | list:
+        if re.match(r"{{\s*(\w+)\s*}}", expression):
+            return re.sub(r"{{\s*(\w+)\s*}}", r"\1", expression)
+        elif re.match(r"{{\s*(\d+(\.\d+)?)\s*}}", expression):
+            result = re.sub(r"{{\s*(\d+(\.\d+)?)\s*}}", r"\1", expression)
+            return float(result)
+        else:
+            expression = expression.replace("{{", "").replace("}}", "").strip()
+            return ast.literal_eval(expression)
 
     @staticmethod
     def change_expression_data_type(expression: str, gv_type_map: dict) -> str:
