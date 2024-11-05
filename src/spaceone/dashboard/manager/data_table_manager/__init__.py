@@ -365,9 +365,21 @@ class DataTableManager(BaseManager):
             return re.sub(r"{{\s*(\w+)\s*}}", r"\1", expression)
         elif re.match(r"{{\s*(\d+(\.\d+)?)\s*}}", expression):
             result = re.sub(r"{{\s*(\d+(\.\d+)?)\s*}}", r"\1", expression)
-            return float(result)
+            try:
+                return float(result)
+            except ValueError:
+                return eval(result)
         else:
             expression = expression.replace("{{", "").replace("}}", "").strip()
+
+            pattern = r"\[\d+\]$"
+            if re.search(pattern, expression):
+                dict_expression, _ = re.subn(pattern, "", expression)
+                index_str = expression.replace(dict_expression, "").strip()
+                index_str = index_str.replace("[", "").replace("]", "")
+                index = int(index_str)
+                return ast.literal_eval(dict_expression)[index]
+
             return ast.literal_eval(expression)
 
     @staticmethod
