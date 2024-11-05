@@ -202,6 +202,8 @@ class PublicDataTableService(BaseService):
         params_dict["resource_group"] = pub_widget_vo.resource_group
         params_dict["workspace_id"] = pub_widget_vo.workspace_id
         params_dict["project_id"] = pub_widget_vo.project_id
+        params_dict["state"] = dt_mgr.state
+        params_dict["error_message"] = dt_mgr.error_message
 
         pub_data_table_vo = self.pub_data_table_mgr.create_public_data_table(
             params_dict
