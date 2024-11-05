@@ -91,9 +91,13 @@ class DataTransformationManager(DataTableManager):
                 self.query_data_table(granularity, start, end, vars)
             elif self.operator == "EVAL":
                 self.evaluate_data_table(granularity, start, end, vars)
+
+            self.state = "AVAILABLE"
+            self.error_message = None
+
         except Exception as e:
-            self.error_message = e.message if hasattr(e, "message") else str(e)
             self.state = "UNAVAILABLE"
+            self.error_message = e.message if hasattr(e, "message") else str(e)
             _LOGGER.error(f"[load] {self.operator} operation error: {e}")
 
         return self.df
