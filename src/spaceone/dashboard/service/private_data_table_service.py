@@ -283,10 +283,6 @@ class PrivateDataTableService(BaseService):
                 # Load data table to verify options
                 dt_mgr.load(vars=vars)
 
-                # Get dt_mgr state and error_message
-                params_dict["state"] = dt_mgr.state
-                params_dict["error_message"] = dt_mgr.error_message
-
                 # Get data and labels info from options
                 data_info, labels_info = dt_mgr.get_data_and_labels_info()
 
@@ -297,6 +293,10 @@ class PrivateDataTableService(BaseService):
                 params_dict["options"] = {
                     operator: operator_options,
                 }
+
+                # Get dt_mgr state and error_message
+                params_dict["state"] = dt_mgr.state
+                params_dict["error_message"] = dt_mgr.error_message
 
             if raw_filter:
                 params_dict["options"]["filter"] = raw_filter
