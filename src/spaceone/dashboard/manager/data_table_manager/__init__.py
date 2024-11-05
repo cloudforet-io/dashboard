@@ -361,26 +361,26 @@ class DataTableManager(BaseManager):
 
     @staticmethod
     def remove_jinja_braces(expression: str) -> Union[str, float, list]:
-        if re.match(r"{{\s*(\w+)\s*}}", expression):
-            return re.sub(r"{{\s*(\w+)\s*}}", r"\1", expression)
-        elif re.match(r"{{\s*(\d+(\.\d+)?)\s*}}", expression):
-            result = re.sub(r"{{\s*(\d+(\.\d+)?)\s*}}", r"\1", expression)
-            try:
-                return float(result)
-            except ValueError:
-                return eval(result)
-        else:
-            expression = expression.replace("{{", "").replace("}}", "").strip()
+        while "{{" in expression and "}}" in expression:
+            if re.match(r"{{\s*(\w+)\s*}}", expression):
+                expression = re.sub(r"{{\s*(\w+)\s*}}", r"\1", expression)
+            elif re.match(r"{{\s*(\d+(\.\d+)?)\s*}}", expression):
+                result = re.sub(r"{{\s*(\d+(\.\d+)?)\s*}}", r"\1", expression)
+                try:
+                    expression = float(result)
+                except ValueError:
+                    expression = eval(result)
+            else:
+                expression = expression.replace("{{", "").replace("}}", "").strip()
 
-            pattern = r"\[\d+\]$"
-            if re.search(pattern, expression):
-                dict_expression, _ = re.subn(pattern, "", expression)
-                index_str = expression.replace(dict_expression, "").strip()
-                index_str = index_str.replace("[", "").replace("]", "")
-                index = int(index_str)
-                return ast.literal_eval(dict_expression)[index]
-
-            return ast.literal_eval(expression)
+                pattern = r"\[\d+\]$"
+                if re.search(pattern, expression):
+                    dict_expression, _ = re.subn(pattern, "", expression)
+                    index_str = expression.replace(dict_expression, "").strip()
+                    index_str = index_str.replace("[", "").replace("]", "")
+                    index = int(index_str)
+                    expression = ast.literal_eval(dict_expression)[index]
+        return expression
 
     @staticmethod
     def change_expression_data_type(expression: str, gv_type_map: dict) -> str:
