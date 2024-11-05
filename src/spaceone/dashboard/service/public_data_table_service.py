@@ -79,6 +79,8 @@ class PublicDataTableService(BaseService):
             user_projects,
         )
 
+        raw_filter = copy.deepcopy(options.get("filter"))
+
         if source_type == "COST":
             if plugin_id := options.get("COST", {}).get("plugin_id"):
                 data_source_id = self._get_data_source_id_from_plugin_id(plugin_id)
@@ -109,6 +111,9 @@ class PublicDataTableService(BaseService):
         params_dict["project_id"] = pub_widget_vo.project_id
         params_dict["state"] = ds_mgr.state
         params_dict["error_message"] = ds_mgr.error_message
+
+        if raw_filter:
+            params_dict["options"]["filter"] = raw_filter
 
         pub_data_table_vo = self.pub_data_table_mgr.create_public_data_table(
             params_dict
