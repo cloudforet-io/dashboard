@@ -1,4 +1,5 @@
 import logging
+import copy
 from typing import Union
 
 from spaceone.core.service import *
@@ -250,6 +251,8 @@ class PublicDataTableService(BaseService):
         vars = params_dict.get("vars")
 
         if options := params_dict.get("options"):
+            raw_filter = copy.deepcopy(options.get("filter"))
+
             if pub_data_table_vo.data_type == "ADDED":
                 ds_mgr = DataSourceManager(
                     "PUBLIC",
@@ -307,6 +310,9 @@ class PublicDataTableService(BaseService):
                 params_dict["options"] = {
                     operator: operator_options,
                 }
+
+            if raw_filter:
+                params_dict["options"]["filter"] = raw_filter
 
         pub_data_table_vo = self.pub_data_table_mgr.update_public_data_table_by_vo(
             params_dict, pub_data_table_vo

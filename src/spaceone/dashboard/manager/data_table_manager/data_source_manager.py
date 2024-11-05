@@ -330,46 +330,6 @@ class DataSourceManager(DataTableManager):
         end: str,
         vars: dict = None,
     ):
-
-        if vars:
-            self.filter = self.filter or []
-            for key, value in vars.items():
-                if key in ["workspace_id", "project_id", "service_account_id"]:
-                    if isinstance(value, list):
-                        self.filter.append(
-                            {"key": key, "value": value, "operator": "in"}
-                        )
-                    else:
-                        self.filter.append(
-                            {"key": key, "value": value, "operator": "eq"}
-                        )
-                elif key == "region_code":
-                    if isinstance(value, list):
-                        if self.source_type == "COST":
-                            self.filter.append(
-                                {"key": "region_code", "value": value, "operator": "in"}
-                            )
-                        else:
-                            self.filter.append(
-                                {
-                                    "key": "labels.Region",
-                                    "value": value,
-                                    "operator": "in",
-                                }
-                            )
-                    else:
-                        if self.source_type == "COST":
-                            self.filter.append(
-                                {"key": "region_code", "value": value, "operator": "eq"}
-                            )
-                        else:
-                            self.filter.append(
-                                {
-                                    "key": "labels.Region",
-                                    "value": value,
-                                    "operator": "eq",
-                                }
-                            )
         if self.filter:
             for filter_info in self.filter:
                 query_value = filter_info.get("v") or filter_info.get("value")
