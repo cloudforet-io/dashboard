@@ -324,25 +324,26 @@ class DataTransformationManager(DataTableManager):
                 for key in self.label_keys:
                     template_vars[key] = f"`{key}`"
 
-                try:
-                    value_expression = value_expression.format(**template_vars)
-                except Exception as e:
-                    raise ERROR_INVALID_PARAMETER(
-                        key="options.EVAL.expressions.expression",
-                        reason=f"Invalid expression: (template_var={e})",
-                    )
-
                 if field_type not in ["DATA", "LABEL"]:
                     raise ERROR_INVALID_PARAMETER(
                         key="options.EVAL.expressions.field_type",
                         reason=f"Invalid field type: {field_type}",
                     )
 
-                if "@" in value_expression:
-                    raise ERROR_INVALID_PARAMETER(
-                        key="options.EVAL.expressions",
-                        reason="It should not have '@' symbol.",
-                    )
+                if isinstance(value_expression, str):
+                    try:
+                        value_expression = value_expression.format(**template_vars)
+                    except Exception as e:
+                        raise ERROR_INVALID_PARAMETER(
+                            key="options.EVAL.expressions.expression",
+                            reason=f"Invalid expression: (template_var={e})",
+                        )
+
+                    if "@" in value_expression:
+                        raise ERROR_INVALID_PARAMETER(
+                            key="options.EVAL.expressions",
+                            reason="It should not have '@' symbol.",
+                        )
 
                 try:
                     merged_expr = f"`{name}` = {value_expression}"
