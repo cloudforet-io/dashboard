@@ -1,4 +1,5 @@
 import logging
+import copy
 from typing import Union
 
 from spaceone.core.service import *
@@ -232,6 +233,8 @@ class PrivateDataTableService(BaseService):
         vars = params_dict.get("vars")
 
         if options := params_dict.get("options"):
+            raw_filter = copy.deepcopy(options.get("filter"))
+
             if pri_data_table_vo.data_type == "ADDED":
                 ds_mgr = DataSourceManager(
                     "PRIVATE",
@@ -289,6 +292,9 @@ class PrivateDataTableService(BaseService):
                 params_dict["options"] = {
                     operator: operator_options,
                 }
+
+            if raw_filter:
+                params_dict["options"]["filter"] = raw_filter
 
         pri_data_table_vo = self.pri_data_table_mgr.update_private_data_table_by_vo(
             params_dict, pri_data_table_vo
