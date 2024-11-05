@@ -380,6 +380,11 @@ class DataTableManager(BaseManager):
                     index_str = index_str.replace("[", "").replace("]", "")
                     index = int(index_str)
                     expression = ast.literal_eval(dict_expression)[index]
+                try:
+                    expression = ast.literal_eval(expression)
+                except Exception as e:
+                    _LOGGER.error(f"Error: {e}")
+                    expression = expression
         return expression
 
     @staticmethod
