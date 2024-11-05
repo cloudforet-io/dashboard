@@ -78,6 +78,8 @@ class PrivateDataTableService(BaseService):
             user_id,
         )
 
+        raw_filter = copy.deepcopy(options.get("filter"))
+
         if source_type == "COST":
             if plugin_id := options.get("COST", {}).get("plugin_id"):
                 data_source_id = self._get_data_source_id_from_plugin_id(plugin_id)
@@ -105,6 +107,9 @@ class PrivateDataTableService(BaseService):
         params_dict["dashboard_id"] = pri_widget_vo.dashboard_id
         params_dict["state"] = ds_mgr.state
         params_dict["error_message"] = ds_mgr.error_message
+
+        if raw_filter:
+            params_dict["options"]["filter"] = raw_filter
 
         pri_data_table_vo = self.pri_data_table_mgr.create_private_data_table(
             params_dict
