@@ -115,9 +115,13 @@ class DataSourceManager(DataTableManager):
 
             if additional_labels := self.options.get("additional_labels"):
                 self._add_labels(additional_labels)
+
+            self.state = "AVAILABLE"
+            self.error_message = None
+
         except Exception as e:
-            self.error_message = e.message if hasattr(e, "message") else str(e)
             self.state = "UNAVAILABLE"
+            self.error_message = e.message if hasattr(e, "message") else str(e)
             _LOGGER.error(f"[load] add {self.source_type} source error: {e}")
 
         return self.df
