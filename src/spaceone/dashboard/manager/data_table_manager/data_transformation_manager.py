@@ -39,7 +39,7 @@ class DataTransformationManager(DataTableManager):
     ):
         super().__init__(*args, **kwargs)
 
-        if operator not in ["JOIN", "CONCAT", "AGGREGATE", "QUERY", "EVAL"]:
+        if operator not in ["JOIN", "CONCAT", "AGGREGATE", "QUERY", "EVAL", "PIVOT"]:
             raise ERROR_NOT_SUPPORTED_OPERATOR(operator=operator)
 
         self.data_table_type = data_table_type
@@ -91,6 +91,8 @@ class DataTransformationManager(DataTableManager):
                 self.query_data_table(granularity, start, end, vars)
             elif self.operator == "EVAL":
                 self.evaluate_data_table(granularity, start, end, vars)
+            elif self.operator == "PIVOT":
+                self.pivot_data_table(granularity, start, end, vars)
 
             self.state = "AVAILABLE"
             self.error_message = None
@@ -337,6 +339,12 @@ class DataTransformationManager(DataTableManager):
                 if isinstance(value_expression, str):
                     try:
                         value_expression = value_expression.format(**template_vars)
+                    except KeyError as e:
+
+                        value_expression = value_expression.replace("{", "{{").replace(
+                            "}", "}}"
+                        )
+                        value_expression = value_expression.format(**template_vars)
                     except Exception as e:
                         raise ERROR_INVALID_PARAMETER(
                             key="options.EVAL.expressions.expression",
@@ -417,6 +425,44 @@ class DataTransformationManager(DataTableManager):
                 )
 
         self.df = df
+
+    def pivot_data_table(
+        self,
+        granularity: GRANULARITY = "MONTHLY",
+        start: str = None,
+        end: str = None,
+        vars: dict = None,
+    ) -> None:
+        origin_vo = self.data_table_vos[0]
+        self.data_keys = list(origin_vo.data_info.keys())
+        self.label_keys = list(origin_vo.labels_info.keys())
+
+        index = self.options["index"]
+        columns = self.options["columns"]
+        values = self.options["values"]
+        aggregation = self.options.get("aggregation", "sum")
+
+        raw_df = self._get_data_table(origin_vo, granularity, start, end, vars)
+
+        self._check_columns(raw_df, index, columns, values)
+        fill_value = self._set_fill_value_from_df(raw_df, values)
+
+        try:
+            pivot_table = pd.pivot_table(
+                raw_df,
+                values=values,
+                index=index,
+                columns=columns,
+                aggfunc=aggregation,
+                fill_value=fill_value,
+            )
+        except Exception as e:
+            _LOGGER.error(f"[pivot_data_table] pivot error: {e}")
+            raise ERROR_INVALID_PARAMETER(key="options.PIVOT")
+
+        pivot_table.reset_index(inplace=True)
+        pivot_table = self.set_new_column_names(pivot_table)
+        self.df = pivot_table
 
     def _get_data_table(
         self,
@@ -511,3 +557,51 @@ class DataTransformationManager(DataTableManager):
                 raise ERROR_REQUIRED_PARAMETER(key="options.data_table_id")
 
         return parent_dt_vos
+
+    @staticmethod
+    def _check_columns(
+        df: pd.DataFrame, indexes: list, columns: list, values: list
+    ) -> None:
+        df_columns = list(df.columns)
+        for index in indexes:
+            if index not in df_columns:
+                raise ERROR_INVALID_PARAMETER(
+                    key="options.PIVOT.index",
+                    reason=f"Invalid key: {index}, columns={df_columns}",
+                )
+
+        for column in columns:
+            if column not in df_columns:
+                raise ERROR_INVALID_PARAMETER(
+                    key="options.PIVOT.columns",
+                    reason=f"Invalid key: {column}, columns={df_columns}",
+                )
+
+        for value in values:
+            if value not in df_columns:
+                raise ERROR_INVALID_PARAMETER(
+                    key="options.PIVOT.values",
+                    reason=f"Invalid key: {value}, columns={df_columns}",
+                )
+
+    @staticmethod
+    def _set_fill_value_from_df(df: pd.DataFrame, values: list) -> int:
+        fill_value = 0
+        for value in values:
+            if df[value].dtype == "object":
+                fill_value = ""
+                break
+        return fill_value
+
+    @staticmethod
+    def set_new_column_names(pivot_table: pd.DataFrame) -> pd.DataFrame:
+        new_columns = []
+        for multi_index in pivot_table.columns:
+            upper_col, lower_col = multi_index[0], multi_index[1]
+            if not lower_col:
+                new_columns.append(upper_col)
+            else:
+                new_columns.append(lower_col)
+
+        pivot_table.columns = new_columns
+        return pivot_table
