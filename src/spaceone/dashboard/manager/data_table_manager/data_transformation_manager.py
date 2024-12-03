@@ -434,16 +434,14 @@ class DataTransformationManager(DataTableManager):
         vars: dict = None,
     ) -> None:
         origin_vo = self.data_table_vos[0]
-        self.data_keys = list(origin_vo.data_info.keys())
-        self.label_keys = list(origin_vo.labels_info.keys())
-
-        index = self.options["index"]
-        columns = self.options["columns"]
-        values = self.options["values"]
+        index, columns, values = (
+            self.options["index"],
+            self.options["columns"],
+            self.options["values"],
+        )
         aggregation = self.options.get("aggregation", "sum")
 
         raw_df = self._get_data_table(origin_vo, granularity, start, end, vars)
-
         self._check_columns(raw_df, index, columns, values)
         fill_value = self._set_fill_value_from_df(raw_df, values)
 
@@ -458,11 +456,11 @@ class DataTransformationManager(DataTableManager):
             )
         except Exception as e:
             _LOGGER.error(f"[pivot_data_table] pivot error: {e}")
-            raise ERROR_INVALID_PARAMETER(key="options.PIVOT")
+            raise ERROR_INVALID_PARAMETER(key="options.PIVOT", reason=str(e))
 
         pivot_table.reset_index(inplace=True)
-        pivot_table = self.set_new_column_names(pivot_table)
-        self.df = pivot_table
+        self._set_keys(list(pivot_table.columns))
+        self.df = self._set_new_column_names(pivot_table)
 
     def _get_data_table(
         self,
@@ -562,46 +560,37 @@ class DataTransformationManager(DataTableManager):
     def _check_columns(
         df: pd.DataFrame, indexes: list, columns: list, values: list
     ) -> None:
-        df_columns = list(df.columns)
-        for index in indexes:
-            if index not in df_columns:
-                raise ERROR_INVALID_PARAMETER(
-                    key="options.PIVOT.index",
-                    reason=f"Invalid key: {index}, columns={df_columns}",
-                )
-
-        for column in columns:
-            if column not in df_columns:
-                raise ERROR_INVALID_PARAMETER(
-                    key="options.PIVOT.columns",
-                    reason=f"Invalid key: {column}, columns={df_columns}",
-                )
-
-        for value in values:
-            if value not in df_columns:
-                raise ERROR_INVALID_PARAMETER(
-                    key="options.PIVOT.values",
-                    reason=f"Invalid key: {value}, columns={df_columns}",
-                )
+        df_columns = set(df.columns)
+        for col_type, col_list in [
+            ("index", indexes),
+            ("columns", columns),
+            ("values", values),
+        ]:
+            for col in col_list:
+                if col not in df_columns:
+                    raise ERROR_INVALID_PARAMETER(
+                        key=f"options.PIVOT.{col_type}",
+                        reason=f"Invalid key: {col}, columns={list(df_columns)}",
+                    )
 
     @staticmethod
-    def _set_fill_value_from_df(df: pd.DataFrame, values: list) -> int:
-        fill_value = 0
+    def _set_fill_value_from_df(df: pd.DataFrame, values: list) -> Union[int, str]:
         for value in values:
             if df[value].dtype == "object":
-                fill_value = ""
-                break
-        return fill_value
+                return ""
+        return 0
 
     @staticmethod
-    def set_new_column_names(pivot_table: pd.DataFrame) -> pd.DataFrame:
-        new_columns = []
-        for multi_index in pivot_table.columns:
-            upper_col, lower_col = multi_index[0], multi_index[1]
-            if not lower_col:
-                new_columns.append(upper_col)
-            else:
-                new_columns.append(lower_col)
-
+    def _set_new_column_names(pivot_table: pd.DataFrame) -> pd.DataFrame:
+        new_columns = [
+            lower_col if lower_col else upper_col
+            for upper_col, lower_col in pivot_table.columns
+        ]
         pivot_table.columns = new_columns
         return pivot_table
+
+    def _set_keys(self, columns: list) -> None:
+        self.label_keys = [
+            upper_col for upper_col, lower_col in columns if not lower_col
+        ]
+        self.data_keys = [lower_col for upper_col, lower_col in columns if lower_col]
