@@ -117,8 +117,16 @@ class DataTransformationManager(DataTableManager):
                 key="options.JOIN.how", reason="Invalid join type"
             )
 
+        left_keys = self.options.get("left_keys")
+        right_keys = self.options.get("right_keys")
+        if not left_keys or not right_keys:
+            missing_key = "left_keys" if not left_keys else "right_keys"
+            raise ERROR_REQUIRED_PARAMETER(key=f"options.JOIN.{missing_key}")
+
         origin_vo = self.data_table_vos[0]
         other_vo = self.data_table_vos[1]
+        origin_vo_name = origin_vo.name
+        other_vo_name = other_vo.name
         origin_data_keys = set(origin_vo.data_info.keys())
         other_data_keys = set(other_vo.data_info.keys())
 
@@ -129,11 +137,54 @@ class DataTransformationManager(DataTableManager):
         self.data_keys = list(origin_data_keys | other_data_keys)
         origin_label_keys = set(origin_vo.labels_info.keys())
         other_label_keys = set(other_vo.labels_info.keys())
-        self.label_keys = list(origin_label_keys | other_label_keys)
 
-        on = list(origin_label_keys & other_label_keys)
-        if len(on) == 0:
-            raise ERROR_NO_FIELDS_TO_JOIN()
+        if len(left_keys) != len(right_keys):
+            raise ERROR_INVALID_PARAMETER(
+                key="options.JOIN",
+                reason=f"left_keys and right_keys should have same length. "
+                f"left_keys={list(origin_label_keys)}, right_keys={list(other_label_keys)}",
+            )
+
+        for key in left_keys:
+            if key not in origin_label_keys:
+                raise ERROR_INVALID_PARAMETER(
+                    key="options.JOIN.left_keys",
+                    reason=f"Invalid key: {key}, table keys={list(origin_label_keys)}",
+                )
+        for key in right_keys:
+            if key not in other_label_keys:
+                raise ERROR_INVALID_PARAMETER(
+                    key="options.JOIN.left_keys",
+                    reason=f"Invalid key: {key}, table keys={list(other_label_keys)}",
+                )
+        multi_keys = zip(left_keys, right_keys)
+
+        rename_columns = {}
+        if how in ["left", "inner", "outer"]:
+            for left_key, right_key in multi_keys:
+                rename_columns[right_key] = left_key
+        elif how == "right":
+            for left_key, right_key in multi_keys:
+                rename_columns[left_key] = right_key
+
+        origin_df = self._get_data_table(origin_vo, granularity, start, end, vars)
+        other_df = self._get_data_table(other_vo, granularity, start, end, vars)
+
+        if how in ["left", "inner", "outer"]:
+            other_df = other_df.rename(columns=rename_columns)
+        elif how == "right":
+            origin_df = origin_df.rename(columns=rename_columns)
+
+        origin_label_keys = set(origin_df.columns)
+        other_label_keys = set(other_df.columns)
+
+        all_keys = list(origin_label_keys | other_label_keys)
+        self.label_keys = list(set(all_keys) - set(self.data_keys))
+
+        if how in ["left", "right", "inner"]:
+            join_keys = left_keys
+        else:
+            join_keys = right_keys
 
         fill_na = {}
         for key in self.data_keys:
@@ -141,9 +192,6 @@ class DataTransformationManager(DataTableManager):
 
         for key in self.label_keys:
             fill_na[key] = ""
-
-        origin_df = self._get_data_table(origin_vo, granularity, start, end, vars)
-        other_df = self._get_data_table(other_vo, granularity, start, end, vars)
 
         if len(other_df) == 0:
             if how in ["left", "outer"]:
@@ -158,8 +206,21 @@ class DataTransformationManager(DataTableManager):
                 self.df = origin_df
             return
 
-        merged_df = origin_df.merge(other_df, left_on=on, right_on=on, how=how)
+        merged_df = origin_df.merge(
+            other_df, left_on=join_keys, right_on=join_keys, how=how
+        )
         merged_df = merged_df.fillna(value=fill_na)
+        merged_rename_columns = {}
+        for column in merged_df.columns:
+            if column.endswith("_x"):
+                column_name, _ = column.split("_")
+                merged_rename_columns[column] = f"{column_name}({origin_vo_name})"
+            elif column.endswith("_y"):
+                column_name, _ = column.split("_")
+                merged_rename_columns[column] = f"{column_name}({other_vo_name})"
+        merged_df = merged_df.rename(columns=merged_rename_columns)
+        self.label_keys = list(set(merged_df.columns) - set(self.data_keys))
+
         self.df = merged_df
 
     def concat_data_tables(
