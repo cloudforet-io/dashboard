@@ -112,115 +112,28 @@ class DataTransformationManager(DataTableManager):
         vars: dict = None,
     ) -> None:
         how = self.options.get("how", "left")
-        if how not in ["left", "right", "inner", "outer"]:
-            raise ERROR_INVALID_PARAMETER(
-                key="options.JOIN.how", reason="Invalid join type"
-            )
-
         left_keys = self.options.get("left_keys")
         right_keys = self.options.get("right_keys")
-        if not left_keys or not right_keys:
-            missing_key = "left_keys" if not left_keys else "right_keys"
-            raise ERROR_REQUIRED_PARAMETER(key=f"options.JOIN.{missing_key}")
+
+        self._validate_options(how, left_keys, right_keys)
 
         origin_vo = self.data_table_vos[0]
         other_vo = self.data_table_vos[1]
-        origin_vo_name = origin_vo.name
-        other_vo_name = other_vo.name
-        origin_data_keys = set(origin_vo.data_info.keys())
-        other_data_keys = set(other_vo.data_info.keys())
-
-        duplicate_keys = list(origin_data_keys & other_data_keys)
-        if len(duplicate_keys) > 0:
-            raise ERROR_DUPLICATED_DATA_FIELDS(field=", ".join(duplicate_keys))
-
-        self.data_keys = list(origin_data_keys | other_data_keys)
-        origin_label_keys = set(origin_vo.labels_info.keys())
-        other_label_keys = set(other_vo.labels_info.keys())
-
-        if len(left_keys) != len(right_keys):
-            raise ERROR_INVALID_PARAMETER(
-                key="options.JOIN",
-                reason=f"left_keys and right_keys should have same length. "
-                f"left_keys={list(origin_label_keys)}, right_keys={list(other_label_keys)}",
-            )
-
-        for key in left_keys:
-            if key not in origin_label_keys:
-                raise ERROR_INVALID_PARAMETER(
-                    key="options.JOIN.left_keys",
-                    reason=f"Invalid key: {key}, table keys={list(origin_label_keys)}",
-                )
-        for key in right_keys:
-            if key not in other_label_keys:
-                raise ERROR_INVALID_PARAMETER(
-                    key="options.JOIN.left_keys",
-                    reason=f"Invalid key: {key}, table keys={list(other_label_keys)}",
-                )
-        multi_keys = zip(left_keys, right_keys)
-
-        rename_columns = {}
-        if how in ["left", "inner", "outer"]:
-            for left_key, right_key in multi_keys:
-                rename_columns[right_key] = left_key
-        elif how == "right":
-            for left_key, right_key in multi_keys:
-                rename_columns[left_key] = right_key
-
         origin_df = self._get_data_table(origin_vo, granularity, start, end, vars)
         other_df = self._get_data_table(other_vo, granularity, start, end, vars)
 
-        if how in ["left", "inner", "outer"]:
-            other_df = other_df.rename(columns=rename_columns)
-        elif how == "right":
-            origin_df = origin_df.rename(columns=rename_columns)
+        self._validate_join_keys(left_keys, right_keys, origin_vo, other_vo)
 
-        origin_label_keys = set(origin_df.columns)
-        other_label_keys = set(other_df.columns)
+        self._set_data_keys(origin_vo, other_vo)
 
-        all_keys = list(origin_label_keys | other_label_keys)
-        self.label_keys = list(set(all_keys) - set(self.data_keys))
-
-        if how in ["left", "right", "inner"]:
-            join_keys = left_keys
-        else:
-            join_keys = right_keys
-
-        fill_na = {}
-        for key in self.data_keys:
-            fill_na[key] = 0
-
-        for key in self.label_keys:
-            fill_na[key] = ""
-
-        if len(other_df) == 0:
-            if how in ["left", "outer"]:
-                self.df = origin_df
-            else:
-                self.df = other_df
-            return
-        elif len(origin_df) == 0:
-            if how in ["right", "outer"]:
-                self.df = other_df
-            else:
-                self.df = origin_df
-            return
-
-        merged_df = origin_df.merge(
-            other_df, left_on=join_keys, right_on=join_keys, how=how
+        merged_df = self._merge_data_frames(
+            origin_df, other_df, how, left_keys, right_keys
         )
-        merged_df = merged_df.fillna(value=fill_na)
-        merged_rename_columns = {}
-        for column in merged_df.columns:
-            if column.endswith("_x"):
-                column_name, _ = column.split("_")
-                merged_rename_columns[column] = f"{column_name}({origin_vo_name})"
-            elif column.endswith("_y"):
-                column_name, _ = column.split("_")
-                merged_rename_columns[column] = f"{column_name}({other_vo_name})"
-        merged_df = merged_df.rename(columns=merged_rename_columns)
-        self.label_keys = list(set(merged_df.columns) - set(self.data_keys))
+        merged_df = self._rename_duplicated_columns(
+            merged_df, origin_vo.name, other_vo.name
+        )
 
+        self.label_keys = list(set(merged_df.columns) - set(self.data_keys))
         self.df = merged_df
 
     def concat_data_tables(
@@ -616,6 +529,117 @@ class DataTransformationManager(DataTableManager):
                 raise ERROR_REQUIRED_PARAMETER(key="options.data_table_id")
 
         return parent_dt_vos
+
+    def _set_data_keys(
+        self,
+        origin_vo: Union[PublicDataTable, PrivateDataTable],
+        other_vo: Union[PublicDataTable, PrivateDataTable],
+    ) -> None:
+        origin_data_keys = set(origin_vo.data_info.keys())
+        other_data_keys = set(other_vo.data_info.keys())
+
+        duplicate_keys = list(origin_data_keys & other_data_keys)
+        if duplicate_keys:
+            raise ERROR_DUPLICATED_DATA_FIELDS(field=", ".join(duplicate_keys))
+
+        self.data_keys = list(origin_data_keys | other_data_keys)
+
+    @staticmethod
+    def _validate_options(how: str, left_keys: list, right_keys: list) -> None:
+        if how not in ["left", "right", "inner", "outer"]:
+            raise ERROR_INVALID_PARAMETER(
+                key="options.JOIN.how", reason="Invalid join type"
+            )
+        if not left_keys or not right_keys:
+            missing_key = "left_keys" if not left_keys else "right_keys"
+            raise ERROR_REQUIRED_PARAMETER(key=f"options.JOIN.{missing_key}")
+
+    @staticmethod
+    def _validate_join_keys(
+        left_keys: list,
+        right_keys: list,
+        origin_vo: Union[PublicDataTable, PrivateDataTable],
+        other_vo: Union[PublicDataTable, PrivateDataTable],
+    ) -> None:
+        origin_label_keys = set(origin_vo.labels_info.keys())
+        other_label_keys = set(other_vo.labels_info.keys())
+
+        if len(left_keys) != len(right_keys):
+            raise ERROR_INVALID_PARAMETER(
+                key="options.JOIN",
+                reason=f"left_keys and right_keys should have the same length. "
+                f"left_keys={list(origin_label_keys)}, right_keys={list(other_label_keys)}",
+            )
+
+        for key in left_keys:
+            if key not in origin_label_keys:
+                raise ERROR_INVALID_PARAMETER(
+                    key="options.JOIN.left_keys",
+                    reason=f"Invalid key: {key}, table keys={list(origin_label_keys)}",
+                )
+        for key in right_keys:
+            if key not in other_label_keys:
+                raise ERROR_INVALID_PARAMETER(
+                    key="options.JOIN.right_keys",
+                    reason=f"Invalid key: {key}, table keys={list(other_label_keys)}",
+                )
+
+    @staticmethod
+    def _create_rename_columns_from_join_keys(left_keys, right_keys, how):
+        # 키 매핑
+        multi_keys = zip(left_keys, right_keys)
+        rename_columns = {}
+        if how in ["left", "inner", "outer"]:
+            for left_key, right_key in multi_keys:
+                rename_columns[right_key] = left_key
+        elif how == "right":
+            for left_key, right_key in multi_keys:
+                rename_columns[left_key] = right_key
+
+        return rename_columns
+
+    def _merge_data_frames(
+        self,
+        origin_df: pd.DataFrame,
+        other_df: pd.DataFrame,
+        how: str,
+        left_keys: list,
+        right_keys: list,
+    ) -> pd.DataFrame:
+        rename_columns = self._create_rename_columns_from_join_keys(
+            left_keys, right_keys, how
+        )
+        if how in ["left", "inner", "outer"]:
+            other_df = other_df.rename(columns=rename_columns)
+        elif how == "right":
+            origin_df = origin_df.rename(columns=rename_columns)
+
+        join_keys = left_keys if how in ["left", "inner", "outer"] else right_keys
+        merged_df = origin_df.merge(
+            other_df, left_on=join_keys, right_on=join_keys, how=how
+        )
+
+        label_keys = list(set(merged_df.columns) - set(self.data_keys))
+        fill_na = {key: 0 for key in self.data_keys}
+        fill_na.update({key: "" for key in label_keys})
+        merged_df = merged_df.fillna(value=fill_na)
+
+        return merged_df
+
+    @staticmethod
+    def _rename_duplicated_columns(
+        merged_df: pd.DataFrame, origin_vo_name: str, other_vo_name: str
+    ) -> pd.DataFrame:
+        merged_rename_columns = {}
+        for column in merged_df.columns:
+            if column.endswith("_x"):
+                column_name, _ = column.split("_")
+                merged_rename_columns[column] = f"{column_name}({origin_vo_name})"
+            elif column.endswith("_y"):
+                column_name, _ = column.split("_")
+                merged_rename_columns[column] = f"{column_name}({other_vo_name})"
+
+        return merged_df.rename(columns=merged_rename_columns)
 
     @staticmethod
     def _check_columns(
