@@ -408,23 +408,23 @@ class DataTransformationManager(DataTableManager):
         vars: dict = None,
     ) -> None:
         origin_vo = self.data_table_vos[0]
-        index, columns, values = (
-            self.options["index"],
-            self.options["columns"],
-            self.options["values"],
+        field_options = self.options["fields"]
+        label_fields, column_field, data_field = (
+            field_options["label_fields"],
+            field_options["column_field"],
+            field_options["data_field"],
         )
-        aggregation = self.options.get("aggregation", "sum")
-
+        aggregation = field_options.get("aggregation", "sum")
         raw_df = self._get_data_table(origin_vo, granularity, start, end, vars)
-        self._check_columns(raw_df, index, columns, values)
-        fill_value = self._set_fill_value_from_df(raw_df, values)
+        self._check_columns(raw_df, label_fields, column_field, data_field)
+        fill_value = self._set_fill_value_from_df(raw_df, data_field)
 
         try:
             pivot_table = pd.pivot_table(
                 raw_df,
-                values=values,
-                index=index,
-                columns=columns,
+                values=[data_field],
+                index=label_fields,
+                columns=[column_field],
                 aggfunc=aggregation,
                 fill_value=fill_value,
             )
@@ -643,26 +643,32 @@ class DataTransformationManager(DataTableManager):
 
     @staticmethod
     def _check_columns(
-        df: pd.DataFrame, indexes: list, columns: list, values: list
+        df: pd.DataFrame, label_fields: list, column_field: str, data_field: str
     ) -> None:
         df_columns = set(df.columns)
-        for col_type, col_list in [
-            ("index", indexes),
-            ("columns", columns),
-            ("values", values),
-        ]:
-            for col in col_list:
-                if col not in df_columns:
-                    raise ERROR_INVALID_PARAMETER(
-                        key=f"options.PIVOT.{col_type}",
-                        reason=f"Invalid key: {col}, columns={list(df_columns)}",
-                    )
+        for label_field in label_fields:
+            if label_field not in df_columns:
+                raise ERROR_INVALID_PARAMETER(
+                    key=f"options.PIVOT.label_fields",
+                    reason=f"Invalid key: {label_field}, columns={list(df_columns)}",
+                )
+
+        if column_field not in df_columns:
+            raise ERROR_INVALID_PARAMETER(
+                key=f"options.PIVOT.column_field",
+                reason=f"Invalid key: {column_field}, columns={list(df_columns)}",
+            )
+
+        if data_field not in df_columns:
+            raise ERROR_INVALID_PARAMETER(
+                key=f"options.PIVOT.data_field",
+                reason=f"Invalid key: {data_field}, columns={list(df_columns)}",
+            )
 
     @staticmethod
-    def _set_fill_value_from_df(df: pd.DataFrame, values: list) -> Union[int, str]:
-        for value in values:
-            if df[value].dtype == "object":
-                return ""
+    def _set_fill_value_from_df(df: pd.DataFrame, data_field: str) -> Union[int, str]:
+        if df[data_field].dtype == "object":
+            return ""
         return 0
 
     @staticmethod
