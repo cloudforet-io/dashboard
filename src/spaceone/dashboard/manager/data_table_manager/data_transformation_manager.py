@@ -9,7 +9,6 @@ from spaceone.dashboard.error.data_table import (
     ERROR_NOT_SUPPORTED_OPERATOR,
     ERROR_REQUIRED_PARAMETER,
     ERROR_DUPLICATED_DATA_FIELDS,
-    ERROR_NO_FIELDS_TO_JOIN,
     ERROR_INVALID_PARAMETER_TYPE,
 )
 from spaceone.dashboard.manager.data_table_manager import DataTableManager, GRANULARITY
@@ -726,6 +725,9 @@ class DataTransformationManager(DataTableManager):
         if sort := self.options.get("sort"):
             pivot_table = self._apply_row_sorting(pivot_table, sort, column_field_items)
             pivot_table = self._apply_column_sorting(pivot_table, sort, label_fields)
+            column_field_items = [
+                field for field in pivot_table.columns if field not in label_fields
+            ]
 
         if manual_column_fields := self.options.get("manual_column_fields"):
             pivot_table = self._apply_manual_column_sorting(
@@ -782,9 +784,10 @@ class DataTransformationManager(DataTableManager):
         column_field_items: list,
     ) -> pd.DataFrame:
         self._validate_manual_column_fields(manual_column_fields, column_field_items)
-        sorted_columns = [
-            col for col in column_field_items if col in manual_column_fields
-        ]
+        sorted_columns = []
+        for column_field in column_field_items:
+            if column_field in manual_column_fields:
+                sorted_columns.append(column_field)
         pivot_table = pivot_table[label_fields + sorted_columns]
         return pivot_table
 
