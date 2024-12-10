@@ -9,7 +9,6 @@ from spaceone.dashboard.error.data_table import (
     ERROR_NOT_SUPPORTED_OPERATOR,
     ERROR_REQUIRED_PARAMETER,
     ERROR_DUPLICATED_DATA_FIELDS,
-    ERROR_NO_FIELDS_TO_JOIN,
     ERROR_INVALID_PARAMETER_TYPE,
 )
 from spaceone.dashboard.manager.data_table_manager import DataTableManager, GRANULARITY
@@ -39,7 +38,16 @@ class DataTransformationManager(DataTableManager):
     ):
         super().__init__(*args, **kwargs)
 
-        if operator not in ["JOIN", "CONCAT", "AGGREGATE", "QUERY", "EVAL", "PIVOT"]:
+        if operator not in [
+            "JOIN",
+            "CONCAT",
+            "AGGREGATE",
+            "QUERY",
+            "EVAL",
+            "PIVOT",
+            "ADD_LABELS",
+            "VALUE_MAPPING",
+        ]:
             raise ERROR_NOT_SUPPORTED_OPERATOR(operator=operator)
 
         self.data_table_type = data_table_type
@@ -50,6 +58,7 @@ class DataTransformationManager(DataTableManager):
         self.data_table_vos = self._get_data_table_from_options(operator, options)
         self.data_keys = []
         self.label_keys = []
+        self.total_series = None
 
     def get_data_and_labels_info(self) -> Tuple[dict, dict]:
         data_info = {}
@@ -93,6 +102,10 @@ class DataTransformationManager(DataTableManager):
                 self.evaluate_data_table(granularity, start, end, vars)
             elif self.operator == "PIVOT":
                 self.pivot_data_table(granularity, start, end, vars)
+            elif self.operator == "ADD_LABELS":
+                self.add_labels_data_table(granularity, start, end, vars)
+            elif self.operator == "VALUE_MAPPING":
+                self.value_mapping_data_table(granularity, start, end, vars)
 
             self.state = "AVAILABLE"
             self.error_message = None
@@ -112,54 +125,28 @@ class DataTransformationManager(DataTableManager):
         vars: dict = None,
     ) -> None:
         how = self.options.get("how", "left")
-        if how not in ["left", "right", "inner", "outer"]:
-            raise ERROR_INVALID_PARAMETER(
-                key="options.JOIN.how", reason="Invalid join type"
-            )
+        left_keys = self.options.get("left_keys")
+        right_keys = self.options.get("right_keys")
+
+        self._validate_options(how, left_keys, right_keys)
 
         origin_vo = self.data_table_vos[0]
         other_vo = self.data_table_vos[1]
-        origin_data_keys = set(origin_vo.data_info.keys())
-        other_data_keys = set(other_vo.data_info.keys())
-
-        duplicate_keys = list(origin_data_keys & other_data_keys)
-        if len(duplicate_keys) > 0:
-            raise ERROR_DUPLICATED_DATA_FIELDS(field=", ".join(duplicate_keys))
-
-        self.data_keys = list(origin_data_keys | other_data_keys)
-        origin_label_keys = set(origin_vo.labels_info.keys())
-        other_label_keys = set(other_vo.labels_info.keys())
-        self.label_keys = list(origin_label_keys | other_label_keys)
-
-        on = list(origin_label_keys & other_label_keys)
-        if len(on) == 0:
-            raise ERROR_NO_FIELDS_TO_JOIN()
-
-        fill_na = {}
-        for key in self.data_keys:
-            fill_na[key] = 0
-
-        for key in self.label_keys:
-            fill_na[key] = ""
-
         origin_df = self._get_data_table(origin_vo, granularity, start, end, vars)
         other_df = self._get_data_table(other_vo, granularity, start, end, vars)
 
-        if len(other_df) == 0:
-            if how in ["left", "outer"]:
-                self.df = origin_df
-            else:
-                self.df = other_df
-            return
-        elif len(origin_df) == 0:
-            if how in ["right", "outer"]:
-                self.df = other_df
-            else:
-                self.df = origin_df
-            return
+        self._validate_join_keys(left_keys, right_keys, origin_vo, other_vo)
 
-        merged_df = origin_df.merge(other_df, left_on=on, right_on=on, how=how)
-        merged_df = merged_df.fillna(value=fill_na)
+        self._set_data_keys(origin_vo, other_vo)
+
+        merged_df = self._merge_data_frames(
+            origin_df, other_df, how, left_keys, right_keys
+        )
+        merged_df = self._rename_duplicated_columns(
+            merged_df, origin_vo.name, other_vo.name
+        )
+
+        self.label_keys = list(set(merged_df.columns) - set(self.data_keys))
         self.df = merged_df
 
     def concat_data_tables(
@@ -287,7 +274,6 @@ class DataTransformationManager(DataTableManager):
                 name = expression.get("name")
                 field_type = expression.get("field_type", "DATA")
                 condition = expression.get("condition")
-                else_condition = expression.get("else")
                 value_expression = expression.get("expression")
 
                 if name is None:
@@ -312,15 +298,6 @@ class DataTransformationManager(DataTableManager):
                     value_expression = self.remove_jinja_braces(value_expression)
                     value_expression = self.change_expression_data_type(
                         value_expression, gv_type_map
-                    )
-
-                if self.is_jinja_expression(else_condition):
-                    else_condition, gv_type_map = self.change_global_variables(
-                        else_condition, vars
-                    )
-                    else_condition = self.remove_jinja_braces(else_condition)
-                    else_condition = self.change_expression_data_type(
-                        else_condition, gv_type_map
                     )
 
                 template_vars = {}
@@ -372,11 +349,6 @@ class DataTransformationManager(DataTableManager):
                             df.loc[df.query(condition).index, last_key] = df.eval(
                                 merged_expr
                             )
-                            if else_condition:
-                                else_index = list(
-                                    set(df.index) - set(df.query(condition).index)
-                                )
-                                df.loc[else_index, last_key] = df.eval(else_condition)
 
                         else:
                             df.eval(merged_expr, inplace=True)
@@ -434,33 +406,72 @@ class DataTransformationManager(DataTableManager):
         vars: dict = None,
     ) -> None:
         origin_vo = self.data_table_vos[0]
-        index, columns, values = (
-            self.options["index"],
-            self.options["columns"],
-            self.options["values"],
+        field_options = self.options["fields"]
+        labels, column, data = (
+            field_options["labels"],
+            field_options["column"],
+            field_options["data"],
         )
-        aggregation = self.options.get("aggregation", "sum")
+        function = self.options.get("function", "sum")
 
         raw_df = self._get_data_table(origin_vo, granularity, start, end, vars)
-        self._check_columns(raw_df, index, columns, values)
-        fill_value = self._set_fill_value_from_df(raw_df, values)
+        self._check_columns(raw_df, labels, column, data)
+        fill_value = self._set_fill_value_from_df(raw_df, data)
 
-        try:
-            pivot_table = pd.pivot_table(
-                raw_df,
-                values=values,
-                index=index,
-                columns=columns,
-                aggfunc=aggregation,
-                fill_value=fill_value,
-            )
-        except Exception as e:
-            _LOGGER.error(f"[pivot_data_table] pivot error: {e}")
-            raise ERROR_INVALID_PARAMETER(key="options.PIVOT", reason=str(e))
+        pivot_table = self._create_pivot_table(
+            raw_df, labels, column, data, function, fill_value
+        )
 
-        pivot_table.reset_index(inplace=True)
-        self._set_keys(list(pivot_table.columns))
-        self.df = self._set_new_column_names(pivot_table)
+        pivot_table = self._sort_and_filter_pivot_table(pivot_table)
+        self.df = pivot_table
+
+    def add_labels_data_table(
+        self,
+        granularity: GRANULARITY = "MONTHLY",
+        start: str = None,
+        end: str = None,
+        vars: dict = None,
+    ) -> None:
+        data_table_vo = self.data_table_vos[0]
+        label_keys = list(data_table_vo.labels_info.keys())
+        data_keys = list(data_table_vo.data_info.keys())
+        labels = self.options.get("labels")
+
+        df = self._get_data_table(data_table_vo, granularity, start, end, vars)
+
+        self.validate_labels(labels, df)
+
+        self.add_labels_to_dataframe(df, labels, label_keys, data_keys)
+
+        df = df.reindex(columns=label_keys + data_keys)
+
+        self.label_keys = label_keys
+        self.data_keys = data_keys
+
+        self.df = df
+
+    def value_mapping_data_table(
+        self,
+        granularity: str = "MONTHLY",
+        start: str = None,
+        end: str = None,
+        vars: dict = None,
+    ) -> None:
+        data_table_vo = self.data_table_vos[0]
+        df = self._get_data_table(data_table_vo, granularity, start, end, vars)
+
+        self.label_keys = list(data_table_vo.labels_info.keys())
+        self.data_keys = list(data_table_vo.data_info.keys())
+        name = self.options["name"]
+        field_type = self.options.get("field_type", "LABEL")
+
+        filtered_df = self.filter_data(df, vars)
+        filtered_df = self.apply_cases(filtered_df)
+
+        df.loc[filtered_df.index, name] = filtered_df[name]
+        self.handle_unfiltered_data(df, filtered_df, name, field_type)
+
+        self.df = df
 
     def _get_data_table(
         self,
@@ -556,28 +567,145 @@ class DataTransformationManager(DataTableManager):
 
         return parent_dt_vos
 
-    @staticmethod
-    def _check_columns(
-        df: pd.DataFrame, indexes: list, columns: list, values: list
+    def _set_data_keys(
+        self,
+        origin_vo: Union[PublicDataTable, PrivateDataTable],
+        other_vo: Union[PublicDataTable, PrivateDataTable],
     ) -> None:
-        df_columns = set(df.columns)
-        for col_type, col_list in [
-            ("index", indexes),
-            ("columns", columns),
-            ("values", values),
-        ]:
-            for col in col_list:
-                if col not in df_columns:
-                    raise ERROR_INVALID_PARAMETER(
-                        key=f"options.PIVOT.{col_type}",
-                        reason=f"Invalid key: {col}, columns={list(df_columns)}",
-                    )
+        origin_data_keys = set(origin_vo.data_info.keys())
+        other_data_keys = set(other_vo.data_info.keys())
+
+        duplicate_keys = list(origin_data_keys & other_data_keys)
+        if duplicate_keys:
+            raise ERROR_DUPLICATED_DATA_FIELDS(field=", ".join(duplicate_keys))
+
+        self.data_keys = list(origin_data_keys | other_data_keys)
 
     @staticmethod
-    def _set_fill_value_from_df(df: pd.DataFrame, values: list) -> Union[int, str]:
-        for value in values:
-            if df[value].dtype == "object":
-                return ""
+    def _validate_options(how: str, left_keys: list, right_keys: list) -> None:
+        if how not in ["left", "right", "inner", "outer"]:
+            raise ERROR_INVALID_PARAMETER(
+                key="options.JOIN.how", reason="Invalid join type"
+            )
+        if not left_keys or not right_keys:
+            missing_key = "left_keys" if not left_keys else "right_keys"
+            raise ERROR_REQUIRED_PARAMETER(key=f"options.JOIN.{missing_key}")
+
+    @staticmethod
+    def _validate_join_keys(
+        left_keys: list,
+        right_keys: list,
+        origin_vo: Union[PublicDataTable, PrivateDataTable],
+        other_vo: Union[PublicDataTable, PrivateDataTable],
+    ) -> None:
+        origin_label_keys = set(origin_vo.labels_info.keys())
+        other_label_keys = set(other_vo.labels_info.keys())
+
+        if len(left_keys) != len(right_keys):
+            raise ERROR_INVALID_PARAMETER(
+                key="options.JOIN",
+                reason=f"left_keys and right_keys should have the same length. "
+                f"left_keys={list(origin_label_keys)}, right_keys={list(other_label_keys)}",
+            )
+
+        for key in left_keys:
+            if key not in origin_label_keys:
+                raise ERROR_INVALID_PARAMETER(
+                    key="options.JOIN.left_keys",
+                    reason=f"Invalid key: {key}, table keys={list(origin_label_keys)}",
+                )
+        for key in right_keys:
+            if key not in other_label_keys:
+                raise ERROR_INVALID_PARAMETER(
+                    key="options.JOIN.right_keys",
+                    reason=f"Invalid key: {key}, table keys={list(other_label_keys)}",
+                )
+
+    @staticmethod
+    def _create_rename_columns_from_join_keys(left_keys, right_keys, how):
+        # 키 매핑
+        multi_keys = zip(left_keys, right_keys)
+        rename_columns = {}
+        if how in ["left", "inner", "outer"]:
+            for left_key, right_key in multi_keys:
+                rename_columns[right_key] = left_key
+        elif how == "right":
+            for left_key, right_key in multi_keys:
+                rename_columns[left_key] = right_key
+
+        return rename_columns
+
+    def _merge_data_frames(
+        self,
+        origin_df: pd.DataFrame,
+        other_df: pd.DataFrame,
+        how: str,
+        left_keys: list,
+        right_keys: list,
+    ) -> pd.DataFrame:
+        rename_columns = self._create_rename_columns_from_join_keys(
+            left_keys, right_keys, how
+        )
+        if how in ["left", "inner", "outer"]:
+            other_df = other_df.rename(columns=rename_columns)
+        elif how == "right":
+            origin_df = origin_df.rename(columns=rename_columns)
+
+        join_keys = left_keys if how in ["left", "inner", "outer"] else right_keys
+        merged_df = origin_df.merge(
+            other_df, left_on=join_keys, right_on=join_keys, how=how
+        )
+
+        label_keys = list(set(merged_df.columns) - set(self.data_keys))
+        fill_na = {key: 0 for key in self.data_keys}
+        fill_na.update({key: "" for key in label_keys})
+        merged_df = merged_df.fillna(value=fill_na)
+
+        return merged_df
+
+    @staticmethod
+    def _rename_duplicated_columns(
+        merged_df: pd.DataFrame, origin_vo_name: str, other_vo_name: str
+    ) -> pd.DataFrame:
+        merged_rename_columns = {}
+        for column in merged_df.columns:
+            if column.endswith("_x"):
+                column_name, _ = column.split("_")
+                merged_rename_columns[column] = f"{column_name}({origin_vo_name})"
+            elif column.endswith("_y"):
+                column_name, _ = column.split("_")
+                merged_rename_columns[column] = f"{column_name}({other_vo_name})"
+
+        return merged_df.rename(columns=merged_rename_columns)
+
+    @staticmethod
+    def _check_columns(
+        df: pd.DataFrame, label_fields: list, column_field: str, data_field: str
+    ) -> None:
+        df_columns = set(df.columns)
+        for label_field in label_fields:
+            if label_field not in df_columns:
+                raise ERROR_INVALID_PARAMETER(
+                    key=f"options.PIVOT.labels",
+                    reason=f"Invalid key: {label_field}, columns={list(df_columns)}",
+                )
+
+        if column_field not in df_columns:
+            raise ERROR_INVALID_PARAMETER(
+                key=f"options.PIVOT.column",
+                reason=f"Invalid key: {column_field}, columns={list(df_columns)}",
+            )
+
+        if data_field not in df_columns:
+            raise ERROR_INVALID_PARAMETER(
+                key=f"options.PIVOT.data",
+                reason=f"Invalid key: {data_field}, columns={list(df_columns)}",
+            )
+
+    @staticmethod
+    def _set_fill_value_from_df(df: pd.DataFrame, data_field: str) -> Union[int, str]:
+        if df[data_field].dtype == "object":
+            return ""
         return 0
 
     @staticmethod
@@ -594,3 +722,212 @@ class DataTransformationManager(DataTableManager):
             upper_col for upper_col, lower_col in columns if not lower_col
         ]
         self.data_keys = [lower_col for upper_col, lower_col in columns if lower_col]
+
+    @staticmethod
+    def _validate_select_fields(
+        select_fields: list,
+        column_fields: list,
+    ) -> None:
+        for select_field in select_fields:
+            if select_field not in column_fields:
+                raise ERROR_INVALID_PARAMETER(
+                    key="options.PIVOT.select",
+                    reason=f"Invalid key: {select_field}, columns={column_fields}",
+                )
+
+    @staticmethod
+    def _validate_function(function: str) -> None:
+        if function not in ["sum", "mean", "max", "min"]:
+            raise ERROR_INVALID_PARAMETER(
+                key="options.PIVOT.function",
+                reason=f"Invalid function type: {function}",
+            )
+
+    def _create_pivot_table(
+        self,
+        raw_df: pd.DataFrame,
+        labels: list,
+        column: str,
+        data: str,
+        function: str,
+        fill_value: Union[int, str],
+    ) -> pd.DataFrame:
+        try:
+            self._validate_function(function)
+            pivot_table = pd.pivot_table(
+                raw_df,
+                values=[data],
+                index=labels,
+                columns=[column],
+                aggfunc=function,
+                fill_value=fill_value,
+            )
+            pivot_table.reset_index(inplace=True)
+            self._set_keys(list(pivot_table.columns))
+            return self._set_new_column_names(pivot_table)
+        except Exception as e:
+            _LOGGER.error(f"[pivot_data_table] pivot error: {e}")
+            raise ERROR_INVALID_PARAMETER(key="options.PIVOT", reason=str(e))
+
+    def _sort_and_filter_pivot_table(self, pivot_table: pd.DataFrame) -> pd.DataFrame:
+        column_fields = list(set(pivot_table.columns) - set(self.label_keys))
+        if not self.total_series:
+            self.total_series = pivot_table[column_fields].sum(axis=1)
+
+        pivot_table = self._apply_row_sorting(pivot_table)
+
+        if select_fields := self.options.get("select"):
+            self._validate_select_fields(select_fields, column_fields)
+            pivot_table = pivot_table[self.label_keys + select_fields]
+            column_fields = select_fields
+
+        if order_by := self.options.get("order_by"):
+            self._validate_order_by_type(order_by)
+            pivot_table = self._apply_order_by(pivot_table, order_by, column_fields)
+
+        if limit := self.options.get("limit"):
+            pivot_table = pivot_table.iloc[:, : len(self.label_keys) + limit]
+
+        pivot_table["Sub Total"] = self.total_series.loc[pivot_table.index]
+        self.data_keys = [
+            col for col in pivot_table.columns if col not in set(self.label_keys)
+        ]
+
+        return pivot_table
+
+    @staticmethod
+    def validate_labels(labels: dict, df: pd.DataFrame) -> None:
+        if not labels:
+            raise ERROR_REQUIRED_PARAMETER(key="options.ADD_LABELS.labels")
+
+        for label_key in labels.keys():
+            if label_key in df.columns:
+                raise ERROR_INVALID_PARAMETER(
+                    key="options.ADD_LABELS.labels",
+                    reason=f"Duplicated key: {label_key}, columns={list(df.columns)}",
+                )
+
+    @staticmethod
+    def update_keys(
+        key: str,
+        value,
+        label_keys: list,
+        data_keys: list,
+    ) -> None:
+        if isinstance(value, str):
+            label_keys.append(key)
+        elif isinstance(value, (int, float)):
+            data_keys.append(key)
+        else:
+            raise ERROR_INVALID_PARAMETER_TYPE(
+                key="options.ADD_LABELS.labels", type=type(value)
+            )
+
+    def add_labels_to_dataframe(
+        self,
+        df: pd.DataFrame,
+        labels: dict,
+        label_keys: list,
+        data_keys: list,
+    ) -> None:
+        for key, value in labels.items():
+            df[key] = value
+            self.update_keys(key, value, label_keys, data_keys)
+
+    def filter_data(self, df: pd.DataFrame, vars: dict) -> pd.DataFrame:
+        condition = self.options.get("condition")
+        if not condition:
+            return df.copy()
+
+        if self.is_jinja_expression(condition):
+            condition, gv_type_map = self.change_global_variables(condition, vars)
+            condition = self.remove_jinja_braces(condition)
+            condition = self.change_expression_data_type(condition, gv_type_map)
+
+        return df.query(condition).copy()
+
+    def apply_cases(self, filtered_df: pd.DataFrame) -> pd.DataFrame:
+        name = self.options["name"]
+        else_value = self.options.get("else", None)
+        cases = self.options.get("cases", [])
+
+        filtered_df.loc[:, name] = else_value
+
+        for case in cases:
+            self._validate_case(case)
+            key = case["key"]
+            operator = case["operator"]
+            value = case["value"]
+            match = case["match"]
+
+            if operator == "eq":
+                filtered_df.loc[filtered_df[key] == match, name] = value
+            elif operator == "regex":
+                filtered_df.loc[
+                    filtered_df[key].str.contains(match, na=False), name
+                ] = value
+
+        return filtered_df
+
+    def handle_unfiltered_data(
+        self,
+        df: pd.DataFrame,
+        filtered_df: pd.DataFrame,
+        name: str,
+        field_type: str,
+    ):
+        unfiltered_index = df.index.difference(filtered_df.index)
+
+        if field_type == "LABEL":
+            df.loc[unfiltered_index, name] = ""
+            self.label_keys.append(name)
+        elif field_type == "DATA":
+            df.loc[unfiltered_index, name] = 0
+            self.data_keys.append(name)
+
+    def _apply_row_sorting(
+        self,
+        pivot_table: pd.DataFrame,
+    ) -> pd.DataFrame:
+        pivot_table["_total"] = self.total_series
+        pivot_table = pivot_table.sort_values(by="_total", ascending=False)
+        pivot_table = pivot_table.drop(columns=["_total"])
+        return pivot_table
+
+    @staticmethod
+    def _validate_order_by_type(order_by: dict) -> None:
+        order_by_type = order_by.get("type", "key")
+        if order_by_type not in ["key", "value"]:
+            raise ERROR_INVALID_PARAMETER(
+                key="options.PIVOT.order_by.type",
+                reason=f"Invalid order_by type: {order_by_type}",
+            )
+
+    def _apply_order_by(
+        self,
+        pivot_table: pd.DataFrame,
+        order_by: dict,
+        column_fields: list,
+    ) -> pd.DataFrame:
+        order_by_type = order_by.get("type", "key")
+        desc = order_by.get("desc", False)
+        if order_by_type == "key":
+            pivot_table = pivot_table[
+                self.label_keys + sorted(column_fields, reverse=desc)
+            ]
+        else:
+            column_sums = pivot_table.drop(columns=self.label_keys).sum()
+            if desc:
+                ascending = False
+            else:
+                ascending = True
+            sorted_columns = column_sums.sort_values(ascending=ascending).index.tolist()
+            pivot_table = pivot_table[self.label_keys + sorted_columns]
+        return pivot_table
+
+    @staticmethod
+    def _validate_case(case):
+        required_keys = ["key", "match", "value", "operator"]
+        for key in required_keys:
+            if key not in case:
+                raise ERROR_REQUIRED_PARAMETER(key=f"options.VALUE_MAPPING.cases.{key}")
