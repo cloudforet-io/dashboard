@@ -261,7 +261,6 @@ class DataTransformationManager(DataTableManager):
                 name = expression.get("name")
                 field_type = expression.get("field_type", "DATA")
                 condition = expression.get("condition")
-                else_condition = expression.get("else")
                 value_expression = expression.get("expression")
 
                 if name is None:
@@ -286,15 +285,6 @@ class DataTransformationManager(DataTableManager):
                     value_expression = self.remove_jinja_braces(value_expression)
                     value_expression = self.change_expression_data_type(
                         value_expression, gv_type_map
-                    )
-
-                if self.is_jinja_expression(else_condition):
-                    else_condition, gv_type_map = self.change_global_variables(
-                        else_condition, vars
-                    )
-                    else_condition = self.remove_jinja_braces(else_condition)
-                    else_condition = self.change_expression_data_type(
-                        else_condition, gv_type_map
                     )
 
                 template_vars = {}
@@ -346,11 +336,6 @@ class DataTransformationManager(DataTableManager):
                             df.loc[df.query(condition).index, last_key] = df.eval(
                                 merged_expr
                             )
-                            if else_condition:
-                                else_index = list(
-                                    set(df.index) - set(df.query(condition).index)
-                                )
-                                df.loc[else_index, last_key] = df.eval(else_condition)
 
                         else:
                             df.eval(merged_expr, inplace=True)
