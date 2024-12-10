@@ -409,21 +409,22 @@ class DataTransformationManager(DataTableManager):
     ) -> None:
         origin_vo = self.data_table_vos[0]
         field_options = self.options["fields"]
-        label_fields, column_field, data_field = (
-            field_options["label_fields"],
-            field_options["column_field"],
-            field_options["data_field"],
+        labels, column, data = (
+            field_options["labels"],
+            field_options["column"],
+            field_options["data"],
         )
-        aggregation = field_options.get("aggregation", "sum")
+        function = self.options.get("function", "sum")
 
         raw_df = self._get_data_table(origin_vo, granularity, start, end, vars)
-        self._check_columns(raw_df, label_fields, column_field, data_field)
-        fill_value = self._set_fill_value_from_df(raw_df, data_field)
+        self._check_columns(raw_df, labels, column, data)
+        fill_value = self._set_fill_value_from_df(raw_df, data)
 
         pivot_table = self._create_pivot_table(
-            raw_df, label_fields, column_field, data_field, aggregation, fill_value
+            raw_df, labels, column, data, function, fill_value
         )
-        pivot_table = self._sort_and_filter_pivot_table(pivot_table, label_fields)
+
+        pivot_table = self._sort_and_filter_pivot_table(pivot_table)
         self.df = pivot_table
 
     def _get_data_table(
@@ -639,19 +640,19 @@ class DataTransformationManager(DataTableManager):
         for label_field in label_fields:
             if label_field not in df_columns:
                 raise ERROR_INVALID_PARAMETER(
-                    key=f"options.PIVOT.label_fields",
+                    key=f"options.PIVOT.labels",
                     reason=f"Invalid key: {label_field}, columns={list(df_columns)}",
                 )
 
         if column_field not in df_columns:
             raise ERROR_INVALID_PARAMETER(
-                key=f"options.PIVOT.column_field",
+                key=f"options.PIVOT.column",
                 reason=f"Invalid key: {column_field}, columns={list(df_columns)}",
             )
 
         if data_field not in df_columns:
             raise ERROR_INVALID_PARAMETER(
-                key=f"options.PIVOT.data_field",
+                key=f"options.PIVOT.data",
                 reason=f"Invalid key: {data_field}, columns={list(df_columns)}",
             )
 
@@ -677,33 +678,42 @@ class DataTransformationManager(DataTableManager):
         self.data_keys = [lower_col for upper_col, lower_col in columns if lower_col]
 
     @staticmethod
-    def _validate_manual_column_fields(
-        manual_column_fields: list,
+    def _validate_select_fields(
+        select_fields: list,
         column_fields: list,
     ) -> None:
-        for manual_column_field in manual_column_fields:
-            if manual_column_field not in column_fields:
+        for select_field in select_fields:
+            if select_field not in column_fields:
                 raise ERROR_INVALID_PARAMETER(
-                    key="options.PIVOT.manual_column_fields",
-                    reason=f"Invalid key: {manual_column_field}, columns={column_fields}",
+                    key="options.PIVOT.select",
+                    reason=f"Invalid key: {select_field}, columns={column_fields}",
                 )
+
+    @staticmethod
+    def _validate_function(function: str) -> None:
+        if function not in ["sum", "mean", "max", "min"]:
+            raise ERROR_INVALID_PARAMETER(
+                key="options.PIVOT.function",
+                reason=f"Invalid function type: {function}",
+            )
 
     def _create_pivot_table(
         self,
         raw_df: pd.DataFrame,
-        label_fields: list,
-        column_field: str,
-        data_field: str,
-        aggregation: str,
+        labels: list,
+        column: str,
+        data: str,
+        function: str,
         fill_value: Union[int, str],
     ) -> pd.DataFrame:
         try:
+            self._validate_function(function)
             pivot_table = pd.pivot_table(
                 raw_df,
-                values=[data_field],
-                index=label_fields,
-                columns=[column_field],
-                aggfunc=aggregation,
+                values=[data],
+                index=labels,
+                columns=[column],
+                aggfunc=function,
                 fill_value=fill_value,
             )
             pivot_table.reset_index(inplace=True)
@@ -713,114 +723,68 @@ class DataTransformationManager(DataTableManager):
             _LOGGER.error(f"[pivot_data_table] pivot error: {e}")
             raise ERROR_INVALID_PARAMETER(key="options.PIVOT", reason=str(e))
 
-    def _sort_and_filter_pivot_table(
-        self,
-        pivot_table: pd.DataFrame,
-        label_fields: list,
-    ) -> pd.DataFrame:
-        column_field_items = list(set(pivot_table.columns) - set(label_fields))
+    def _sort_and_filter_pivot_table(self, pivot_table: pd.DataFrame) -> pd.DataFrame:
+        column_fields = list(set(pivot_table.columns) - set(self.label_keys))
         if not self.total_series:
-            self.total_series = pivot_table[column_field_items].sum(axis=1)
+            self.total_series = pivot_table[column_fields].sum(axis=1)
 
-        if sort := self.options.get("sort"):
-            pivot_table = self._apply_row_sorting(pivot_table, sort, column_field_items)
-            pivot_table = self._apply_column_sorting(pivot_table, sort, label_fields)
-            column_field_items = [
-                field for field in pivot_table.columns if field not in label_fields
-            ]
+        pivot_table = self._apply_row_sorting(pivot_table)
 
-        if manual_column_fields := self.options.get("manual_column_fields"):
-            pivot_table = self._apply_manual_column_sorting(
-                pivot_table, manual_column_fields, label_fields, column_field_items
-            )
+        if select_fields := self.options.get("select"):
+            self._validate_select_fields(select_fields, column_fields)
+            pivot_table = pivot_table[self.label_keys + select_fields]
+            column_fields = select_fields
+
+        if order_by := self.options.get("order_by"):
+            self._validate_order_by_type(order_by)
+            pivot_table = self._apply_order_by(pivot_table, order_by, column_fields)
 
         if limit := self.options.get("limit"):
-            pivot_table = self._apply_limits(pivot_table, limit, label_fields)
+            pivot_table = pivot_table.iloc[:, : len(self.label_keys) + limit]
+
+        pivot_table["Sub Total"] = self.total_series.loc[pivot_table.index]
+        self.data_keys = [
+            col for col in pivot_table.columns if col not in set(self.label_keys)
+        ]
 
         return pivot_table
 
     def _apply_row_sorting(
         self,
         pivot_table: pd.DataFrame,
-        sort: dict,
-        column_field_items: list,
     ) -> pd.DataFrame:
-        if sort_keys := sort.get("rows"):
-            pivot_table["_total"] = self.total_series
-
-            if len(sort_keys) == 1 and "key" not in sort_keys[0]:
-                order_state = self._get_sort_order(sort_keys[0]["order"])
-                pivot_table = pivot_table.sort_values(
-                    by="_total", ascending=order_state
-                )
-            else:
-                multi_keys, multi_orders = self._parse_sort_keys(
-                    sort_keys, column_field_items
-                )
-                pivot_table = pivot_table.sort_values(
-                    by=multi_keys, ascending=multi_orders
-                )
-
-            pivot_table = pivot_table.drop(columns=["_total"])
+        pivot_table["_total"] = self.total_series
+        pivot_table = pivot_table.sort_values(by="_total", ascending=False)
+        pivot_table = pivot_table.drop(columns=["_total"])
         return pivot_table
 
     @staticmethod
-    def _apply_column_sorting(
-        pivot_table: pd.DataFrame,
-        sort: dict,
-        label_fields: list,
-    ) -> pd.DataFrame:
-        if sort.get("column_fields"):
-            column_sums = pivot_table.drop(columns=label_fields).sum()
-            sorted_columns = column_sums.sort_values(ascending=False).index.tolist()
-            pivot_table = pivot_table[label_fields + sorted_columns]
-        return pivot_table
+    def _validate_order_by_type(order_by: dict) -> None:
+        order_by_type = order_by.get("type", "key")
+        if order_by_type not in ["key", "value"]:
+            raise ERROR_INVALID_PARAMETER(
+                key="options.PIVOT.order_by.type",
+                reason=f"Invalid order_by type: {order_by_type}",
+            )
 
-    def _apply_manual_column_sorting(
+    def _apply_order_by(
         self,
         pivot_table: pd.DataFrame,
-        manual_column_fields: list,
-        label_fields: list,
-        column_field_items: list,
+        order_by: dict,
+        column_fields: list,
     ) -> pd.DataFrame:
-        self._validate_manual_column_fields(manual_column_fields, column_field_items)
-        sorted_columns = []
-        for column_field in column_field_items:
-            if column_field in manual_column_fields:
-                sorted_columns.append(column_field)
-        pivot_table = pivot_table[label_fields + sorted_columns]
+        order_by_type = order_by.get("type", "key")
+        desc = order_by.get("desc", False)
+        if order_by_type == "key":
+            pivot_table = pivot_table[
+                self.label_keys + sorted(column_fields, reverse=desc)
+            ]
+        else:
+            column_sums = pivot_table.drop(columns=self.label_keys).sum()
+            if desc:
+                ascending = False
+            else:
+                ascending = True
+            sorted_columns = column_sums.sort_values(ascending=ascending).index.tolist()
+            pivot_table = pivot_table[self.label_keys + sorted_columns]
         return pivot_table
-
-    @staticmethod
-    def _apply_limits(
-        pivot_table: pd.DataFrame,
-        limit: dict,
-        label_fields: list,
-    ) -> pd.DataFrame:
-        if rows := limit.get("rows"):
-            pivot_table = pivot_table.head(rows)
-        if column_fields := limit.get("column_fields"):
-            pivot_table = pivot_table.iloc[:, : len(label_fields) + column_fields]
-        return pivot_table
-
-    def _parse_sort_keys(self, sort_keys: list, column_field_items: list) -> tuple:
-        multi_keys = []
-        multi_orders = []
-        for sort_key_info in sort_keys:
-            sort_key = sort_key_info.get("key")
-            sort_order = sort_key_info.get("order")
-
-            if sort_key != "_total" and sort_key not in column_field_items:
-                raise ERROR_INVALID_PARAMETER(
-                    key="options.PIVOT.sort.keys",
-                    reason=f"Invalid key: {sort_key}, columns={column_field_items}",
-                )
-
-            order_state = self._get_sort_order(sort_order)
-            multi_keys.append(sort_key)
-            multi_orders.append(order_state)
-        return multi_keys, multi_orders
-
-    @staticmethod
-    def _get_sort_order(sort_order: str) -> bool:
-        return sort_order != "desc"
