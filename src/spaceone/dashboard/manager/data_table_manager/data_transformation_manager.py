@@ -38,7 +38,15 @@ class DataTransformationManager(DataTableManager):
     ):
         super().__init__(*args, **kwargs)
 
-        if operator not in ["JOIN", "CONCAT", "AGGREGATE", "QUERY", "EVAL", "PIVOT"]:
+        if operator not in [
+            "JOIN",
+            "CONCAT",
+            "AGGREGATE",
+            "QUERY",
+            "EVAL",
+            "PIVOT",
+            "ADD_LABELS",
+        ]:
             raise ERROR_NOT_SUPPORTED_OPERATOR(operator=operator)
 
         self.data_table_type = data_table_type
@@ -93,6 +101,8 @@ class DataTransformationManager(DataTableManager):
                 self.evaluate_data_table(granularity, start, end, vars)
             elif self.operator == "PIVOT":
                 self.pivot_data_table(granularity, start, end, vars)
+            elif self.operator == "ADD_LABELS":
+                self.add_labels_data_table(granularity, start, end, vars)
 
             self.state = "AVAILABLE"
             self.error_message = None
@@ -411,6 +421,48 @@ class DataTransformationManager(DataTableManager):
 
         pivot_table = self._sort_and_filter_pivot_table(pivot_table)
         self.df = pivot_table
+
+    def add_labels_data_table(
+        self,
+        granularity: GRANULARITY = "MONTHLY",
+        start: str = None,
+        end: str = None,
+        vars: dict = None,
+    ) -> None:
+        origin_vo = self.data_table_vos[0]
+        label_keys = list(origin_vo.labels_info.keys())
+        data_keys = list(origin_vo.data_info.keys())
+
+        labels = self.options.get("labels")
+
+        if not labels:
+            raise ERROR_REQUIRED_PARAMETER(key="options.ADD_LABELS.labels")
+
+        df = self._get_data_table(origin_vo, granularity, start, end, vars)
+
+        for label_key in labels.keys():
+            if label_key in df.columns:
+                raise ERROR_INVALID_PARAMETER(
+                    key="options.ADD_LABELS.labels",
+                    reason=f"Duplicated key: {label_key}, columns={list(df.columns)}",
+                )
+
+        for key, value in labels.items():
+            df[key] = value
+            if isinstance(value, str):
+                label_keys.append(key)
+            elif isinstance(value, (int, float)):
+                data_keys.append(key)
+            else:
+                raise ERROR_INVALID_PARAMETER_TYPE(
+                    key="options.ADD_LABELS.labels", type=type(value)
+                )
+        df = df.reindex(columns=label_keys + data_keys)
+
+        self.label_keys = label_keys
+        self.data_keys = data_keys
+
+        self.df = df
 
     def _get_data_table(
         self,
