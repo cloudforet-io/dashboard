@@ -42,12 +42,13 @@ class DataSourceManager(DataTableManager):
             raise ERROR_REQUIRED_PARAMETER(key="options.data_name")
 
         self.data_unit = options.get("data_unit")
-        self.date_format = options.get("date_format", "SINGLE")
         self.timediff = options.get("timediff")
+        if self.timediff:
+            self.timediff_data_name = self.timediff["data_name"]
+
         self.group_by = options.get("group_by")
         self.filter = options.get("filter")
         self.filter_or = options.get("filter_or")
-        self.additional_labels = options.get("additional_labels")
 
     def get_data_and_labels_info(self) -> Tuple[dict, dict]:
         data_info = {self.data_name: {}}
@@ -82,16 +83,7 @@ class DataSourceManager(DataTableManager):
                 else:
                     labels_info[group_option] = {}
 
-        if self.additional_labels:
-            for key in self.additional_labels.keys():
-                labels_info[key] = {}
-
-        if self.date_format == "SINGLE":
-            labels_info["Date"] = {}
-        else:
-            labels_info["Year"] = {}
-            labels_info["Month"] = {}
-            labels_info["Day"] = {}
+        labels_info["Date"] = {}
 
         return data_info, labels_info
 
@@ -105,16 +97,13 @@ class DataSourceManager(DataTableManager):
         try:
             start, end = self._get_time_from_granularity(granularity, start, end)
 
-            if self.timediff:
-                start, end = self._change_query_time(granularity, start, end)
-
             if self.source_type == "COST":
                 self._analyze_cost(granularity, start, end, vars)
             elif self.source_type == "ASSET":
                 self._analyze_asset(granularity, start, end, vars)
 
-            if additional_labels := self.options.get("additional_labels"):
-                self._add_labels(additional_labels)
+            if self.timediff:
+                self.df = self._apply_timediff(granularity, start, end, vars)
 
             self.state = "AVAILABLE"
             self.error_message = None
@@ -124,11 +113,9 @@ class DataSourceManager(DataTableManager):
             self.error_message = e.message if hasattr(e, "message") else str(e)
             _LOGGER.error(f"[load] add {self.source_type} source error: {e}")
 
-        return self.df
-
-    def _add_labels(self, labels: dict) -> None:
-        for key, value in labels.items():
-            self.df[key] = value
+        df = self.df.copy(deep=True)
+        self.df = None
+        return df
 
     def _analyze_asset(
         self,
@@ -195,28 +182,45 @@ class DataSourceManager(DataTableManager):
 
         self.df = pd.DataFrame(results)
 
-    def _change_datetime_format(self, results: list) -> list:
+    def _apply_timediff(
+        self, granularity: str, start: str, end: str, vars: dict
+    ) -> pd.DataFrame:
+        origin_df = self.df.copy()
+        self.data_name = self.timediff.get("data_name")
+
+        start, end = self._change_query_time(granularity, start, end)
+
+        if self.source_type == "COST":
+            self._analyze_cost(granularity, start, end, vars)
+        elif self.source_type == "ASSET":
+            self._analyze_asset(granularity, start, end, vars)
+
+        self.df["Date"] = self.df["Date"].apply(
+            lambda x: self._change_date_by_timediff(x)
+        )
+
+        origin_label_keys = [
+            column for column in origin_df.columns if column != self.data_name
+        ]
+        diff_label_keys = [
+            column for column in self.df.columns if column != self.timediff_data_name
+        ]
+        join_keys = list(set(origin_label_keys) & set(diff_label_keys))
+
+        merged_df = pd.merge(origin_df, self.df, on=join_keys, how="left")
+
+        fill_na = {key: 0 for key in [self.data_name, self.timediff_data_name]}
+        fill_na.update({key: "" for key in join_keys})
+        merged_df = merged_df.fillna(value=fill_na)
+
+        return merged_df
+
+    @staticmethod
+    def _change_datetime_format(results: list) -> list:
         changed_results = []
         for result in results:
             if date := result.get("date"):
-                if self.timediff:
-                    date = self._change_date_by_timediff(date)
-
-                if self.date_format == "SINGLE":
-                    result["Date"] = date
-                else:
-                    if len(date) == 4:
-                        result["Year"] = date
-                    elif len(date) == 7:
-                        year, month = date.split("-")
-                        result["Year"] = year
-                        result["Month"] = month
-                    elif len(date) == 10:
-                        year, month, day = date.split("-")
-                        result["Year"] = year
-                        result["Month"] = month
-                        result["Day"] = day
-
+                result["Date"] = date
                 del result["date"]
             changed_results.append(result)
         return changed_results
