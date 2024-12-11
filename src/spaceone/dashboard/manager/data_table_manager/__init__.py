@@ -113,8 +113,11 @@ class DataTableManager(BaseManager):
         if page:
             self.apply_page(page)
 
+        df = self.df.copy(deep=True)
+        self.df = None
+
         return {
-            "results": self.df.to_dict(orient="records"),
+            "results": df.to_dict(orient="records"),
             "total_count": total_count,
         }
 

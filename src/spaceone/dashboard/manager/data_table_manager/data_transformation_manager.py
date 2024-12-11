@@ -115,9 +115,7 @@ class DataTransformationManager(DataTableManager):
             self.error_message = e.message if hasattr(e, "message") else str(e)
             _LOGGER.error(f"[load] {self.operator} operation error: {e}")
 
-        df = self.df.copy(deep=True)
-        self.df = None
-        return df
+        return self.df
 
     def join_data_tables(
         self,
