@@ -113,7 +113,9 @@ class DataSourceManager(DataTableManager):
             self.error_message = e.message if hasattr(e, "message") else str(e)
             _LOGGER.error(f"[load] add {self.source_type} source error: {e}")
 
-        return self.df
+        df = self.df.copy(deep=True)
+        self.df = None
+        return df
 
     def _analyze_asset(
         self,
