@@ -42,12 +42,10 @@ class DataSourceManager(DataTableManager):
             raise ERROR_REQUIRED_PARAMETER(key="options.data_name")
 
         self.data_unit = options.get("data_unit")
-        self.date_format = options.get("date_format", "SINGLE")
         self.timediff = options.get("timediff")
         self.group_by = options.get("group_by")
         self.filter = options.get("filter")
         self.filter_or = options.get("filter_or")
-        self.additional_labels = options.get("additional_labels")
 
     def get_data_and_labels_info(self) -> Tuple[dict, dict]:
         data_info = {self.data_name: {}}
@@ -82,16 +80,7 @@ class DataSourceManager(DataTableManager):
                 else:
                     labels_info[group_option] = {}
 
-        if self.additional_labels:
-            for key in self.additional_labels.keys():
-                labels_info[key] = {}
-
-        if self.date_format == "SINGLE":
-            labels_info["Date"] = {}
-        else:
-            labels_info["Year"] = {}
-            labels_info["Month"] = {}
-            labels_info["Day"] = {}
+        labels_info["Date"] = {}
 
         return data_info, labels_info
 
@@ -113,9 +102,6 @@ class DataSourceManager(DataTableManager):
             elif self.source_type == "ASSET":
                 self._analyze_asset(granularity, start, end, vars)
 
-            if additional_labels := self.options.get("additional_labels"):
-                self._add_labels(additional_labels)
-
             self.state = "AVAILABLE"
             self.error_message = None
 
@@ -125,10 +111,6 @@ class DataSourceManager(DataTableManager):
             _LOGGER.error(f"[load] add {self.source_type} source error: {e}")
 
         return self.df
-
-    def _add_labels(self, labels: dict) -> None:
-        for key, value in labels.items():
-            self.df[key] = value
 
     def _analyze_asset(
         self,
@@ -202,21 +184,7 @@ class DataSourceManager(DataTableManager):
                 if self.timediff:
                     date = self._change_date_by_timediff(date)
 
-                if self.date_format == "SINGLE":
-                    result["Date"] = date
-                else:
-                    if len(date) == 4:
-                        result["Year"] = date
-                    elif len(date) == 7:
-                        year, month = date.split("-")
-                        result["Year"] = year
-                        result["Month"] = month
-                    elif len(date) == 10:
-                        year, month, day = date.split("-")
-                        result["Year"] = year
-                        result["Month"] = month
-                        result["Day"] = day
-
+                result["Date"] = date
                 del result["date"]
             changed_results.append(result)
         return changed_results
