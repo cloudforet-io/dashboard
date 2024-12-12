@@ -148,9 +148,9 @@ class PrivateWidgetService(BaseService):
                     if "data_table_id" in operator_options:
                         data_table_idx = operator_options["data_table_id"]
                         if data_table_idx in self.data_table_id_map:
-                            data_table["options"][operator][
-                                "data_table_id"
-                            ] = self.data_table_id_map[data_table_idx]
+                            data_table["options"][operator]["data_table_id"] = (
+                                self.data_table_id_map[data_table_idx]
+                            )
                         else:
                             retry_data_tables[idx] = data_table
                             idx += 1
@@ -209,9 +209,9 @@ class PrivateWidgetService(BaseService):
             if "data_table_id" in operator_options:
                 data_table_idx = operator_options["data_table_id"]
                 if data_table_idx in self.data_table_id_map:
-                    data_table["options"][operator][
-                        "data_table_id"
-                    ] = self.data_table_id_map[data_table_idx]
+                    data_table["options"][operator]["data_table_id"] = (
+                        self.data_table_id_map[data_table_idx]
+                    )
                 else:
                     retry_data_tables[idx] = data_table
                     idx += 1
