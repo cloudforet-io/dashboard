@@ -27,6 +27,7 @@ class DataTableManager(BaseManager):
         self.domain_id = None
 
         self.df: Union[pd.DataFrame, None] = None
+        self.data_keys = None
         self.jinja_variables = None
         self.state = None
         self.error_message = None
@@ -43,7 +44,12 @@ class DataTableManager(BaseManager):
     ) -> pd.DataFrame:
         raise NotImplementedError()
 
-    def load_from_widget(self, query: dict, vars: dict = None) -> dict:
+    def load_from_widget(
+        self,
+        query: dict,
+        vars: dict = None,
+        column_sum: bool = False,
+    ) -> dict:
         self._check_query(query)
         granularity = query["granularity"]
         start = query["start"]
@@ -64,7 +70,10 @@ class DataTableManager(BaseManager):
                 vars=vars,
             )
 
-        return self.response(sort, page)
+        if column_sum:
+            return self.response_sum_data()
+
+        return self.response_data(sort, page)
 
     def make_cache_data(self, granularity, start, end, vars) -> None:
         cache_key = f"dashboard:Widget:load:{granularity}:{start}:{end}:{vars}:{self.widget_id}:{self.domain_id}"
@@ -86,7 +95,7 @@ class DataTableManager(BaseManager):
         if "end" not in query:
             raise ERROR_REQUIRED_PARAMETER(key="query.end")
 
-    def response(self, sort: list = None, page: dict = None) -> dict:
+    def response_data(self, sort: list = None, page: dict = None) -> dict:
         total_count = len(self.df)
 
         if sort:
@@ -101,6 +110,24 @@ class DataTableManager(BaseManager):
         return {
             "results": df.to_dict(orient="records"),
             "total_count": total_count,
+        }
+
+    def response_sum_data(self) -> dict:
+        if self.data_keys:
+            sum_data = {
+                key: (float(self.df[key].sum()))
+                for key in self.data_keys
+                if key in self.df.columns
+            }
+        else:
+            numeric_columns = self.df.select_dtypes(include=["float", "int"]).columns
+            sum_data = {col: float(self.df[col].sum()) for col in numeric_columns}
+
+        results = [{column: sum_value} for column, sum_value in sum_data.items()]
+
+        return {
+            "results": results,
+            "total_count": len(results),
         }
 
     def apply_sort(self, sort: list) -> None:

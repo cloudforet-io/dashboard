@@ -413,6 +413,80 @@ class PublicWidgetService(BaseService):
             )
 
     @transaction(
+        permission="dashboard:PublicWidget.write",
+        role_types=["DOMAIN_ADMIN", "WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
+    )
+    @change_value_by_rule("APPEND", "workspace_id", "*")
+    @change_value_by_rule("APPEND", "user_projects", "*")
+    @convert_model
+    def load_sum(self, params: PublicWidgetLoadSumRequest) -> dict:
+        """Load public widget
+
+        Args:
+            params (dict): {
+                'widget_id': 'str',             # required
+                'query': 'dict (spaceone.api.core.v1.AnalyzeQuery)', # required
+                'vars': 'dict',
+                'workspace_id': 'str',          # injected from auth
+                'domain_id': 'str'              # injected from auth (required)
+                'user_projects': 'list'         # injected from auth
+            }
+
+        Returns:
+            None
+        """
+
+        pub_widget_vo: PublicWidget = self.pub_widget_mgr.get_public_widget(
+            params.widget_id,
+            params.domain_id,
+            params.workspace_id,
+            params.user_projects,
+        )
+
+        if pub_widget_vo.data_table_id is None:
+            raise ERROR_INVALID_PARAMETER(
+                key="widget_id", reason="Data table is not set."
+            )
+
+        pub_data_table_mgr = PublicDataTableManager()
+        pub_data_table_vo = pub_data_table_mgr.get_public_data_table(
+            pub_widget_vo.data_table_id,
+            params.domain_id,
+            params.workspace_id,
+            params.user_projects,
+        )
+
+        if pub_data_table_vo.data_type == "ADDED":
+            ds_mgr = DataSourceManager(
+                "PUBLIC",
+                pub_data_table_vo.source_type,
+                pub_data_table_vo.options,
+                pub_data_table_vo.widget_id,
+                pub_data_table_vo.domain_id,
+            )
+            return ds_mgr.load_from_widget(
+                params.query,
+                params.vars,
+                column_sum=True,
+            )
+        else:
+            operator = pub_data_table_vo.operator
+            options = pub_data_table_vo.options.get(operator, {})
+
+            dt_mgr = DataTransformationManager(
+                "PUBLIC",
+                pub_data_table_vo.operator,
+                options,
+                pub_data_table_vo.widget_id,
+                pub_data_table_vo.domain_id,
+            )
+            return dt_mgr.load_from_widget(
+                params.query,
+                params.vars,
+                column_sum=True,
+            )
+
+    @transaction(
         permission="dashboard:PublicWidget.read",
         role_types=["DOMAIN_ADMIN", "WORKSPACE_OWNER", "WORKSPACE_MEMBER"],
     )
