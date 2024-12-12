@@ -31,6 +31,12 @@ class PublicWidget(BaseAPI, public_widget_pb2_grpc.PublicWidgetServicer):
         response: dict = pub_widget_svc.load(params)
         return self.dict_to_message(response)
 
+    def load_sum(self, request, context):
+        params, metadata = self.parse_request(request, context)
+        pub_widget_svc = PublicWidgetService(metadata)
+        response: dict = pub_widget_svc.load_sum(params)
+        return self.dict_to_message(response)
+
     def get(self, request, context):
         params, metadata = self.parse_request(request, context)
         pub_widget_svc = PublicWidgetService(metadata)

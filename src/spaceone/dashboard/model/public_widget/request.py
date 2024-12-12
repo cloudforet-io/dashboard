@@ -6,6 +6,7 @@ __all__ = [
     "PublicWidgetUpdateRequest",
     "PublicWidgetDeleteRequest",
     "PublicWidgetLoadRequest",
+    "PublicWidgetLoadSumRequest",
     "PublicWidgetGetRequest",
     "PublicWidgetSearchQueryRequest",
 ]
@@ -57,6 +58,15 @@ class PublicWidgetGetRequest(BaseModel):
 
 
 class PublicWidgetLoadRequest(BaseModel):
+    widget_id: str
+    query: dict
+    vars: Union[dict, None] = None
+    workspace_id: Union[str, list, None] = None
+    domain_id: str
+    user_projects: Union[list, None] = None
+
+
+class PublicWidgetLoadSumRequest(BaseModel):
     widget_id: str
     query: dict
     vars: Union[dict, None] = None

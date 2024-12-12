@@ -31,6 +31,12 @@ class PrivateWidget(BaseAPI, private_widget_pb2_grpc.PrivateWidgetServicer):
         response: dict = pri_widget_svc.load(params)
         return self.dict_to_message(response)
 
+    def load_sum(self, request, context):
+        params, metadata = self.parse_request(request, context)
+        pri_widget_svc = PrivateWidgetService(metadata)
+        response: dict = pri_widget_svc.load_sum(params)
+        return self.dict_to_message(response)
+
     def get(self, request, context):
         params, metadata = self.parse_request(request, context)
         pri_widget_svc = PrivateWidgetService(metadata)
