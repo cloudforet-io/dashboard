@@ -125,6 +125,8 @@ class DataTableManager(BaseManager):
 
         results = [{column: sum_value} for column, sum_value in sum_data.items()]
 
+        self.df = None
+
         return {
             "results": results,
             "total_count": len(results),
