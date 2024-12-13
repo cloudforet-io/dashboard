@@ -407,7 +407,7 @@ class PublicDataTableService(BaseService):
                 params.end,
                 params.vars,
             )
-            return ds_mgr.response(params.sort, params.page)
+            return ds_mgr.response_data(params.sort, params.page)
 
         else:
             operator = pub_data_table_vo.operator
@@ -428,7 +428,7 @@ class PublicDataTableService(BaseService):
                 params.end,
                 params.vars,
             )
-            return dt_mgr.response(params.sort, params.page)
+            return dt_mgr.response_data(params.sort, params.page)
 
     @transaction(
         permission="dashboard:PublicDataTable.read",
