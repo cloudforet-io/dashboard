@@ -405,6 +405,77 @@ class PrivateWidgetService(BaseService):
     @change_value_by_rule("APPEND", "workspace_id", "*")
     @change_value_by_rule("APPEND", "project_id", "*")
     @convert_model
+    def load_sum(self, params: PrivateWidgetLoadRequest) -> dict:
+        """Load private widget
+
+        Args:
+            params (dict): {
+                'widget_id': 'str',             # required
+                'query': 'dict (spaceone.api.core.v1.AnalyzeQuery)', # required
+                'vars': 'dict',
+                'user_id': 'str',               # injected from auth (required)
+                'domain_id': 'str'              # injected from auth (required)
+            }
+
+        Returns:
+            None
+        """
+
+        pri_widget_vo = self.pri_widget_mgr.get_private_widget(
+            params.widget_id,
+            params.domain_id,
+            params.user_id,
+        )
+
+        if pri_widget_vo.data_table_id is None:
+            raise ERROR_INVALID_PARAMETER(
+                key="widget_id", reason="Data table is not set."
+            )
+
+        pri_data_table_mgr = PrivateDataTableManager()
+        pri_data_table_vo = pri_data_table_mgr.get_private_data_table(
+            pri_widget_vo.data_table_id,
+            params.domain_id,
+            params.user_id,
+        )
+
+        if pri_data_table_vo.data_type == "ADDED":
+            ds_mgr = DataSourceManager(
+                "PRIVATE",
+                pri_data_table_vo.source_type,
+                pri_data_table_vo.options,
+                pri_data_table_vo.widget_id,
+                pri_data_table_vo.domain_id,
+            )
+            return ds_mgr.load_from_widget(
+                params.query,
+                params.vars,
+                column_sum=True,
+            )
+        else:
+            operator = pri_data_table_vo.operator
+            options = pri_data_table_vo.options.get(operator, {})
+
+            dt_mgr = DataTransformationManager(
+                "PRIVATE",
+                pri_data_table_vo.operator,
+                options,
+                pri_data_table_vo.widget_id,
+                pri_data_table_vo.domain_id,
+            )
+            return dt_mgr.load_from_widget(
+                params.query,
+                params.vars,
+                column_sum=True,
+            )
+
+    @transaction(
+        permission="dashboard:PrivateWidget.read",
+        role_types=["USER"],
+    )
+    @change_value_by_rule("APPEND", "workspace_id", "*")
+    @change_value_by_rule("APPEND", "project_id", "*")
+    @convert_model
     def get(
         self, params: PrivateWidgetGetRequest
     ) -> Union[PrivateWidgetResponse, dict]:
