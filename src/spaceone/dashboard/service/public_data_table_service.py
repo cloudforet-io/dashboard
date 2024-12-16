@@ -4,6 +4,7 @@ from typing import Union
 
 from spaceone.core.service import *
 from spaceone.core.error import *
+from spaceone.dashboard.error.data_table import ERROR_UNAVAILABLE_DATA_TABLE
 from spaceone.dashboard.manager.public_data_table_manager import PublicDataTableManager
 from spaceone.dashboard.manager.public_widget_manager import PublicWidgetManager
 from spaceone.dashboard.manager.data_table_manager.data_source_manager import (
@@ -392,6 +393,11 @@ class PublicDataTableService(BaseService):
                 params.user_projects,
             )
         )
+
+        if pub_data_table_vo.state == "UNAVAILABLE":
+            raise ERROR_UNAVAILABLE_DATA_TABLE(
+                data_table_id=pub_data_table_vo.data_table_id
+            )
 
         if pub_data_table_vo.data_type == "ADDED":
             ds_mgr = DataSourceManager(
