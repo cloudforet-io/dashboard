@@ -10,6 +10,7 @@ from spaceone.core.manager import BaseManager
 from spaceone.dashboard.error.data_table import (
     ERROR_NO_FIELDS_TO_GLOBAL_VARIABLES,
     ERROR_NOT_GLOBAL_VARIABLE_KEY,
+    ERROR_QUERY_OPTION,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -89,11 +90,16 @@ class DataTableManager(BaseManager):
                 cache.set(f"dashboard:Widget:load:{query_hash}", response, expire=600)
 
         if column_sum:
-            return self.response_sum_data(response)
+            return self.response_sum_data_from_widget(response)
 
-        return self.response_data(response, sort, page)
+        return self.response_data_from_widget(response, sort, page)
 
-    def response_data(self, response, sort: list = None, page: dict = None) -> dict:
+    def response_data_from_widget(
+        self,
+        response,
+        sort: list = None,
+        page: dict = None,
+    ) -> dict:
         data = response["results"]
         total_count = len(data)
 
@@ -108,7 +114,7 @@ class DataTableManager(BaseManager):
             "total_count": total_count,
         }
 
-    def response_sum_data(self, response) -> dict:
+    def response_sum_data_from_widget(self, response) -> dict:
         data = response["results"]
         if self.data_keys:
             sum_data = {
@@ -152,6 +158,52 @@ class DataTableManager(BaseManager):
                 start_index = start - 1
                 end_index = start_index + limit
                 return data[start_index:end_index]
+
+    def response_data(self, sort: list = None, page: dict = None) -> dict:
+        total_count = len(self.df)
+
+        if sort:
+            self.apply_sort_to_df(sort)
+
+        if page:
+            self.apply_page_df(page)
+
+        df = self.df.copy(deep=True)
+        self.df = None
+
+        return {
+            "results": df.to_dict(orient="records"),
+            "total_count": total_count,
+        }
+
+    def apply_sort_to_df(self, sort: list) -> None:
+        if len(self.df) > 0:
+            keys = []
+            ascendings = []
+
+            for sort_option in sort:
+                key = sort_option.get("key")
+                ascending = not sort_option.get("desc", False)
+
+                if key:
+                    keys.append(key)
+                    ascendings.append(ascending)
+
+            try:
+                self.df = self.df.sort_values(by=keys, ascending=ascendings)
+            except Exception as e:
+                _LOGGER.error(f"[_sort] Sort Error: {e}")
+                raise ERROR_QUERY_OPTION(key="sort")
+
+    def apply_page_df(self, page: dict) -> None:
+        if len(self.df) > 0:
+            if limit := page.get("limit"):
+                if limit > 0:
+                    start = page.get("start", 1)
+                    if start < 1:
+                        start = 1
+
+                    self.df = self.df.iloc[start - 1 : start + limit - 1]
 
     def is_jinja_expression(self, expression: str) -> bool:
         env = Environment()
