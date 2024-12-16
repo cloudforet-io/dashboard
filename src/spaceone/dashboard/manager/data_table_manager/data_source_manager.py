@@ -57,10 +57,9 @@ class DataSourceManager(DataTableManager):
             data_info[self.data_name]["unit"] = self.data_unit
 
         if self.timediff:
-            data_info[self.data_name]["timediff"] = self.timediff
+            data_info[self.timediff["data_name"]] = {}
 
         labels_info = {}
-
         if self.group_by:
             for group_option in copy.deepcopy(self.group_by):
                 if isinstance(group_option, dict):
@@ -186,7 +185,6 @@ class DataSourceManager(DataTableManager):
         self, granularity: str, start: str, end: str, vars: dict
     ) -> pd.DataFrame:
         origin_df = self.df.copy()
-        self.data_name = self.timediff.get("data_name")
 
         start, end = self._change_query_time(granularity, start, end)
 
