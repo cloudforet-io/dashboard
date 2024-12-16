@@ -6,6 +6,7 @@ __all__ = [
     "PrivateWidgetUpdateRequest",
     "PrivateWidgetDeleteRequest",
     "PrivateWidgetLoadRequest",
+    "PrivateWidgetLoadSumRequest",
     "PrivateWidgetGetRequest",
     "PrivateWidgetSearchQueryRequest",
 ]
@@ -48,7 +49,21 @@ class PrivateWidgetDeleteRequest(BaseModel):
 
 class PrivateWidgetLoadRequest(BaseModel):
     widget_id: str
-    query: dict
+    granularity: str
+    start: str
+    end: str
+    sort: Union[list, None] = None
+    page: Union[dict, None] = None
+    vars: Union[dict, None] = None
+    user_id: str
+    domain_id: str
+
+
+class PrivateWidgetLoadSumRequest(BaseModel):
+    widget_id: str
+    granularity: str
+    start: str
+    end: str
     vars: Union[dict, None] = None
     user_id: str
     domain_id: str

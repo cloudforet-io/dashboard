@@ -342,7 +342,11 @@ class PrivateWidgetService(BaseService):
         Args:
             params (dict): {
                 'widget_id': 'str',             # required
-                'query': 'dict (spaceone.api.core.v1.AnalyzeQuery)', # required
+                'granularity': 'str',           # required
+                'start': 'str',                 # required
+                'end': 'str',                   # required
+                'sort': 'list',
+                'page': 'dict',
                 'vars': 'dict',
                 'user_id': 'str',               # injected from auth (required)
                 'domain_id': 'str'              # injected from auth (required)
@@ -379,7 +383,11 @@ class PrivateWidgetService(BaseService):
                 pri_data_table_vo.domain_id,
             )
             return ds_mgr.load_from_widget(
-                params.query,
+                params.granularity,
+                params.start,
+                params.end,
+                params.sort,
+                params.page,
                 params.vars,
             )
         else:
@@ -394,7 +402,11 @@ class PrivateWidgetService(BaseService):
                 pri_data_table_vo.domain_id,
             )
             return dt_mgr.load_from_widget(
-                params.query,
+                params.granularity,
+                params.start,
+                params.end,
+                params.sort,
+                params.page,
                 params.vars,
             )
 
@@ -405,13 +417,15 @@ class PrivateWidgetService(BaseService):
     @change_value_by_rule("APPEND", "workspace_id", "*")
     @change_value_by_rule("APPEND", "project_id", "*")
     @convert_model
-    def load_sum(self, params: PrivateWidgetLoadRequest) -> dict:
+    def load_sum(self, params: PrivateWidgetLoadSumRequest) -> dict:
         """Load private widget
 
         Args:
             params (dict): {
                 'widget_id': 'str',             # required
-                'query': 'dict (spaceone.api.core.v1.AnalyzeQuery)', # required
+                'granularity': 'str',           # required
+                'start': 'str',                 # required
+                'end': 'str',                   # required
                 'vars': 'dict',
                 'user_id': 'str',               # injected from auth (required)
                 'domain_id': 'str'              # injected from auth (required)
@@ -448,8 +462,10 @@ class PrivateWidgetService(BaseService):
                 pri_data_table_vo.domain_id,
             )
             return ds_mgr.load_from_widget(
-                params.query,
-                params.vars,
+                params.granularity,
+                params.start,
+                params.end,
+                vars=params.vars,
                 column_sum=True,
             )
         else:
@@ -464,8 +480,10 @@ class PrivateWidgetService(BaseService):
                 pri_data_table_vo.domain_id,
             )
             return dt_mgr.load_from_widget(
-                params.query,
-                params.vars,
+                params.granularity,
+                params.start,
+                params.end,
+                vars=params.vars,
                 column_sum=True,
             )
 

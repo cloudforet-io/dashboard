@@ -8,10 +8,6 @@ import pandas as pd
 from spaceone.core import cache, utils
 from spaceone.core.manager import BaseManager
 from spaceone.dashboard.error.data_table import (
-    ERROR_REQUIRED_PARAMETER,
-)
-from spaceone.dashboard.error.data_table import (
-    ERROR_QUERY_OPTION,
     ERROR_NO_FIELDS_TO_GLOBAL_VARIABLES,
     ERROR_NOT_GLOBAL_VARIABLE_KEY,
 )
@@ -46,16 +42,14 @@ class DataTableManager(BaseManager):
 
     def load_from_widget(
         self,
-        query: dict,
+        granularity: str,
+        start: str,
+        end: str,
+        sort: list = None,
+        page: dict = None,
         vars: dict = None,
         column_sum: bool = False,
     ) -> dict:
-        self._check_query(query)
-        granularity = query["granularity"]
-        start = query["start"]
-        end = query["end"]
-        sort = query.get("sort")
-        page = query.get("page")
 
         user_id = self.transaction.get_meta(
             "authorization.user_id"
@@ -98,26 +92,6 @@ class DataTableManager(BaseManager):
             return self.response_sum_data(response)
 
         return self.response_data(response, sort, page)
-
-    def make_cache_data(self, granularity, start, end, vars) -> None:
-        cache_key = f"dashboard:Widget:load:{granularity}:{start}:{end}:{vars}:{self.widget_id}:{self.domain_id}"
-        if not cache.get(cache_key) and self.df is not None:
-            cache.set(
-                cache_key,
-                self.df.to_dict(orient="records"),
-                expire=1800,
-            )
-
-    @staticmethod
-    def _check_query(query: dict) -> None:
-        if "granularity" not in query:
-            raise ERROR_REQUIRED_PARAMETER(key="query.granularity")
-
-        if "start" not in query:
-            raise ERROR_REQUIRED_PARAMETER(key="query.start")
-
-        if "end" not in query:
-            raise ERROR_REQUIRED_PARAMETER(key="query.end")
 
     def response_data(self, response, sort: list = None, page: dict = None) -> dict:
         data = response["results"]
