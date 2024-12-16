@@ -77,7 +77,7 @@ class DataTableManager(BaseManager):
 
     def make_cache_data(self, granularity, start, end, vars) -> None:
         cache_key = f"dashboard:Widget:load:{granularity}:{start}:{end}:{vars}:{self.widget_id}:{self.domain_id}"
-        if not cache.get(cache_key):
+        if not cache.get(cache_key) and self.df is not None:
             cache.set(
                 cache_key,
                 self.df.to_dict(orient="records"),
