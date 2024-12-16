@@ -112,8 +112,6 @@ class DataSourceManager(DataTableManager):
             self.error_message = e.message if hasattr(e, "message") else str(e)
             _LOGGER.error(f"[load] add {self.source_type} source error: {e}")
 
-        self.make_cache_data(granularity, start, end, vars)
-
         return self.df
 
     def _analyze_asset(

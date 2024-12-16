@@ -5,7 +5,7 @@ from typing import Union, Literal, Tuple
 from jinja2 import Environment, meta
 import pandas as pd
 
-from spaceone.core import cache
+from spaceone.core import cache, utils
 from spaceone.core.manager import BaseManager
 from spaceone.dashboard.error.data_table import (
     ERROR_REQUIRED_PARAMETER,
@@ -57,10 +57,28 @@ class DataTableManager(BaseManager):
         sort = query.get("sort")
         page = query.get("page")
 
-        if cache_data := cache.get(
-            f"dashboard:Widget:load:{granularity}:{start}:{end}:{vars}:{self.widget_id}:{self.domain_id}"
-        ):
-            self.df = pd.DataFrame(cache_data)
+        user_id = self.transaction.get_meta(
+            "authorization.user_id"
+        ) or self.transaction.get_meta("authorization.app_id")
+        role_type = self.transaction.get_meta("authorization.role_type")
+
+        query_data = {
+            "granularity": granularity,
+            "start": start,
+            "end": end,
+            "sort": sort,
+            "widget_id": self.widget_id,
+            "domain_id": self.domain_id,
+        }
+
+        if role_type == "WORKSPACE_MEMBER":
+            query_data["user_id"] = user_id
+
+        query_hash = utils.dict_to_hash(query_data)
+
+        response = {"results": []}
+        if cache_data := cache.get(f"dashboard:Widget:load:{query_hash}"):
+            response = cache_data
 
         else:
             self.load(
@@ -70,10 +88,16 @@ class DataTableManager(BaseManager):
                 vars=vars,
             )
 
-        if column_sum:
-            return self.response_sum_data()
+            if self.df is not None:
+                response = {
+                    "results": self.df.copy(deep=True).to_dict(orient="records")
+                }
+                cache.set(f"dashboard:Widget:load:{query_hash}", response, expire=600)
 
-        return self.response_data(sort, page)
+        if column_sum:
+            return self.response_sum_data(response)
+
+        return self.response_data(response, sort, page)
 
     def make_cache_data(self, granularity, start, end, vars) -> None:
         cache_key = f"dashboard:Widget:load:{granularity}:{start}:{end}:{vars}:{self.widget_id}:{self.domain_id}"
@@ -95,71 +119,65 @@ class DataTableManager(BaseManager):
         if "end" not in query:
             raise ERROR_REQUIRED_PARAMETER(key="query.end")
 
-    def response_data(self, sort: list = None, page: dict = None) -> dict:
-        total_count = len(self.df)
+    def response_data(self, response, sort: list = None, page: dict = None) -> dict:
+        data = response["results"]
+        total_count = len(data)
 
         if sort:
-            self.apply_sort(sort)
+            data = self.apply_sort(data, sort)
 
         if page:
-            self.apply_page(page)
-
-        df = self.df.copy(deep=True)
-        self.df = None
+            data = self.apply_page(data, page)
 
         return {
-            "results": df.to_dict(orient="records"),
+            "results": data,
             "total_count": total_count,
         }
 
-    def response_sum_data(self) -> dict:
+    def response_sum_data(self, response) -> dict:
+        data = response["results"]
         if self.data_keys:
             sum_data = {
-                key: (float(self.df[key].sum()))
+                key: sum(float(row.get(key, 0)) for row in data)
                 for key in self.data_keys
-                if key in self.df.columns
             }
         else:
-            numeric_columns = self.df.select_dtypes(include=["float", "int"]).columns
-            sum_data = {col: float(self.df[col].sum()) for col in numeric_columns}
+            numeric_columns = {
+                key
+                for row in data
+                for key, value in row.items()
+                if isinstance(value, (int, float))
+            }
+            sum_data = {
+                key: sum(float(row.get(key, 0)) for row in data)
+                for key in numeric_columns
+            }
 
         results = [{column: sum_value} for column, sum_value in sum_data.items()]
-
-        self.df = None
-
         return {
             "results": results,
             "total_count": len(results),
         }
 
-    def apply_sort(self, sort: list) -> None:
-        if len(self.df) > 0:
-            keys = []
-            ascendings = []
+    @staticmethod
+    def apply_sort(data: list, sort: list) -> list:
+        for rule in reversed(sort):
+            key = rule["key"]
+            reverse = rule.get("desc", False)
+            data = sorted(data, key=lambda item: item[key], reverse=reverse)
+        return data
 
-            for sort_option in sort:
-                key = sort_option.get("key")
-                ascending = not sort_option.get("desc", False)
+    @staticmethod
+    def apply_page(data: list, page: dict) -> list:
+        if limit := page.get("limit"):
+            if limit > 0:
+                start = page.get("start", 1)
+                if start < 1:
+                    start = 1
 
-                if key:
-                    keys.append(key)
-                    ascendings.append(ascending)
-
-            try:
-                self.df = self.df.sort_values(by=keys, ascending=ascendings)
-            except Exception as e:
-                _LOGGER.error(f"[_sort] Sort Error: {e}")
-                raise ERROR_QUERY_OPTION(key="sort")
-
-    def apply_page(self, page: dict) -> None:
-        if len(self.df) > 0:
-            if limit := page.get("limit"):
-                if limit > 0:
-                    start = page.get("start", 1)
-                    if start < 1:
-                        start = 1
-
-                    self.df = self.df.iloc[start - 1 : start + limit - 1]
+                start_index = start - 1
+                end_index = start_index + limit
+                return data[start_index:end_index]
 
     def is_jinja_expression(self, expression: str) -> bool:
         env = Environment()
