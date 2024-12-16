@@ -59,7 +59,11 @@ class PublicWidgetGetRequest(BaseModel):
 
 class PublicWidgetLoadRequest(BaseModel):
     widget_id: str
-    query: dict
+    granularity: str
+    start: str
+    end: str
+    sort: Union[list, None] = None
+    page: Union[dict, None] = None
     vars: Union[dict, None] = None
     workspace_id: Union[str, list, None] = None
     domain_id: str
@@ -68,7 +72,9 @@ class PublicWidgetLoadRequest(BaseModel):
 
 class PublicWidgetLoadSumRequest(BaseModel):
     widget_id: str
-    query: dict
+    granularity: str
+    start: str
+    end: str
     vars: Union[dict, None] = None
     workspace_id: Union[str, list, None] = None
     domain_id: str

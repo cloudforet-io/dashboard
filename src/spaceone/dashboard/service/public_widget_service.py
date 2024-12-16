@@ -353,7 +353,11 @@ class PublicWidgetService(BaseService):
         Args:
             params (dict): {
                 'widget_id': 'str',             # required
-                'query': 'dict (spaceone.api.core.v1.AnalyzeQuery)', # required
+                'granularity': 'str',           # required
+                'start': 'str',                 # required
+                'end': 'str',                   # required
+                'sort': 'list',
+                'page': 'dict',
                 'vars': 'dict',
                 'workspace_id': 'str',          # injected from auth
                 'domain_id': 'str'              # injected from auth (required)
@@ -393,7 +397,11 @@ class PublicWidgetService(BaseService):
                 pub_data_table_vo.domain_id,
             )
             return ds_mgr.load_from_widget(
-                params.query,
+                params.granularity,
+                params.start,
+                params.end,
+                params.sort,
+                params.page,
                 params.vars,
             )
         else:
@@ -408,7 +416,11 @@ class PublicWidgetService(BaseService):
                 pub_data_table_vo.domain_id,
             )
             return dt_mgr.load_from_widget(
-                params.query,
+                params.granularity,
+                params.start,
+                params.end,
+                params.sort,
+                params.page,
                 params.vars,
             )
 
@@ -425,7 +437,9 @@ class PublicWidgetService(BaseService):
         Args:
             params (dict): {
                 'widget_id': 'str',             # required
-                'query': 'dict (spaceone.api.core.v1.AnalyzeQuery)', # required
+                'granularity': 'str',           # required
+                'start': 'str',                 # required
+                'end': 'str',                   # required
                 'vars': 'dict',
                 'workspace_id': 'str',          # injected from auth
                 'domain_id': 'str'              # injected from auth (required)
@@ -465,8 +479,10 @@ class PublicWidgetService(BaseService):
                 pub_data_table_vo.domain_id,
             )
             return ds_mgr.load_from_widget(
-                params.query,
-                params.vars,
+                params.granularity,
+                params.start,
+                params.end,
+                vars=params.vars,
                 column_sum=True,
             )
         else:
@@ -481,8 +497,10 @@ class PublicWidgetService(BaseService):
                 pub_data_table_vo.domain_id,
             )
             return dt_mgr.load_from_widget(
-                params.query,
-                params.vars,
+                params.granularity,
+                params.start,
+                params.end,
+                vars=params.vars,
                 column_sum=True,
             )
 
