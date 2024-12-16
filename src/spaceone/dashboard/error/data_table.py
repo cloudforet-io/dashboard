@@ -13,6 +13,10 @@ class ERROR_NOT_SUPPORTED_OPERATOR(ERROR_INVALID_ARGUMENT):
     _message = "Data table does not support operator. (operator = {operator})"
 
 
+class ERROR_UNAVAILABLE_DATA_TABLE(ERROR_INVALID_ARGUMENT):
+    _message = "Data table is not available. (data_table_id = {data_table_id})"
+
+
 class ERROR_DUPLICATED_DATA_FIELDS(ERROR_INVALID_ARGUMENT):
     _message = "Data fields for join are duplicated. (fields = {fields})"
 
