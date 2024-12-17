@@ -787,6 +787,8 @@ class DataTransformationManager(DataTableManager):
             pivot_table = self._apply_order_by(pivot_table, order_by, column_fields)
 
         if limit := self.options.get("limit"):
+            if isinstance(limit, float):
+                limit = int(limit)
             pivot_table = pivot_table.iloc[:, : len(self.label_keys) + limit]
 
         pivot_table["Sub Total"] = self.total_series.loc[pivot_table.index]
