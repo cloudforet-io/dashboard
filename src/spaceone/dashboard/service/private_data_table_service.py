@@ -4,6 +4,8 @@ from typing import Union
 
 from spaceone.core.service import *
 from spaceone.core.error import *
+
+from spaceone.dashboard.error.data_table import ERROR_UNAVAILABLE_DATA_TABLE
 from spaceone.dashboard.manager.private_data_table_manager import (
     PrivateDataTableManager,
 )
@@ -383,6 +385,12 @@ class PrivateDataTableService(BaseService):
                 params.end,
                 params.vars,
             )
+
+            if ds_mgr.state == "UNAVAILABLE":
+                raise ERROR_UNAVAILABLE_DATA_TABLE(
+                    data_table_id=pri_data_table_vo.data_table_id
+                )
+
             return ds_mgr.response_data(params.sort, params.page)
 
         else:
@@ -398,12 +406,19 @@ class PrivateDataTableService(BaseService):
                 widget_id,
                 domain_id,
             )
+
             dt_mgr.load(
                 params.granularity,
                 params.start,
                 params.end,
                 params.vars,
             )
+
+            if dt_mgr.state == "UNAVAILABLE":
+                raise ERROR_UNAVAILABLE_DATA_TABLE(
+                    data_table_id=pri_data_table_vo.data_table_id
+                )
+
             return dt_mgr.response_data(params.sort, params.page)
 
     @transaction(

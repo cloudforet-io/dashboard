@@ -413,6 +413,12 @@ class PublicDataTableService(BaseService):
                 params.end,
                 params.vars,
             )
+
+            if ds_mgr.state == "UNAVAILABLE":
+                raise ERROR_UNAVAILABLE_DATA_TABLE(
+                    data_table_id=pub_data_table_vo.data_table_id
+                )
+
             return ds_mgr.response_data(params.sort, params.page)
 
         else:
@@ -434,6 +440,12 @@ class PublicDataTableService(BaseService):
                 params.end,
                 params.vars,
             )
+
+            if dt_mgr.state == "UNAVAILABLE":
+                raise ERROR_UNAVAILABLE_DATA_TABLE(
+                    data_table_id=pub_data_table_vo.data_table_id
+                )
+
             return dt_mgr.response_data(params.sort, params.page)
 
     @transaction(
