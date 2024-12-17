@@ -17,6 +17,7 @@ class PrivateDataTableResponse(BaseModel):
     tags: Union[dict, None] = None
     labels_info: Union[dict, None] = None
     data_info: Union[dict, None] = None
+    sort_keys: Union[List[str], None] = None
     error_message: Union[str, None] = None
     dashboard_id: Union[str, None] = None
     widget_id: Union[str, None] = None
