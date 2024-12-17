@@ -31,3 +31,9 @@ class ERROR_NOT_GLOBAL_VARIABLE_KEY(ERROR_INVALID_ARGUMENT):
 
 class ERROR_NO_FIELDS_TO_GLOBAL_VARIABLES(ERROR_INVALID_ARGUMENT):
     _message = "There is no fields in GLOBAL_VARIABLES. (vars = {vars})"
+
+
+class ERROR_DUPLICATED_FIELD_NAME(ERROR_INVALID_ARGUMENT):
+    _message = (
+        "The variable to be created is duplicated. (field = {field}, fields = {fields})"
+    )

@@ -10,6 +10,7 @@ from spaceone.dashboard.error.data_table import (
     ERROR_REQUIRED_PARAMETER,
     ERROR_DUPLICATED_DATA_FIELDS,
     ERROR_INVALID_PARAMETER_TYPE,
+    ERROR_DUPLICATED_FIELD_NAME,
 )
 from spaceone.dashboard.manager.data_table_manager import DataTableManager, GRANULARITY
 from spaceone.dashboard.manager.data_table_manager.data_source_manager import (
@@ -279,6 +280,11 @@ class DataTransformationManager(DataTableManager):
                 if name is None:
                     raise ERROR_REQUIRED_PARAMETER(key="options.EVAL.expressions.name")
 
+                if name in self.data_keys or name in self.label_keys:
+                    raise ERROR_DUPLICATED_FIELD_NAME(
+                        field=name, fields=list(df.columns)
+                    )
+
                 if value_expression is None:
                     raise ERROR_REQUIRED_PARAMETER(
                         key="options.EVAL.expressions.expression"
@@ -462,7 +468,11 @@ class DataTransformationManager(DataTableManager):
 
         self.label_keys = list(data_table_vo.labels_info.keys())
         self.data_keys = list(data_table_vo.data_info.keys())
+
         name = self.options["name"]
+        if name in self.data_keys or name in self.label_keys:
+            raise ERROR_DUPLICATED_FIELD_NAME(field=name, fields=list(df.columns))
+
         field_type = self.options.get("field_type", "LABEL")
 
         filtered_df = self.filter_data(df, vars)
