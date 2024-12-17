@@ -287,6 +287,9 @@ class PublicDataTableService(BaseService):
                     elif months := timediff.get("months"):
                         options["timediff"] = {"months": months}
 
+                    if data_name := timediff.get("data_name"):
+                        options["timediff"].update({"data_name": data_name})
+
                     params_dict["options"] = options
             else:
                 operator = pub_data_table_vo.operator
