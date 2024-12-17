@@ -59,6 +59,7 @@ class DataTransformationManager(DataTableManager):
         self.data_table_vos = self._get_data_table_from_options(operator, options)
         self.data_keys = []
         self.label_keys = []
+        self.sort_keys = []
         self.total_series = None
 
     def get_data_and_labels_info(self) -> Tuple[dict, dict]:
@@ -421,6 +422,7 @@ class DataTransformationManager(DataTableManager):
         function = self.options.get("function", "sum")
 
         raw_df = self._get_data_table(origin_vo, granularity, start, end, vars)
+
         self._check_columns(raw_df, labels, column, data)
         fill_value = self._set_fill_value_from_df(raw_df, data)
 
@@ -429,6 +431,8 @@ class DataTransformationManager(DataTableManager):
         )
 
         pivot_table = self._sort_and_filter_pivot_table(pivot_table)
+        self.sort_keys = list(pivot_table.columns)
+
         self.df = pivot_table
 
     def add_labels_data_table(

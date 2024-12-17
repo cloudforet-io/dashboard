@@ -17,6 +17,7 @@ class PrivateDataTable(MongoModel):
     tags = DictField(default=None)
     labels_info = DictField(default=None)
     data_info = DictField(default=None)
+    sort_keys = ListField(default=None)
     dashboard_id = StringField(max_length=40)
     widget_id = StringField(max_length=40)
     resource_group = StringField(
@@ -36,6 +37,7 @@ class PrivateDataTable(MongoModel):
             "tags",
             "labels_info",
             "data_info",
+            "sort_keys",
         ],
         "minimal_fields": [
             "data_table_id",
