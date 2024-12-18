@@ -223,8 +223,8 @@ class DataSourceManager(DataTableManager):
 
     def _change_date_by_timediff(self, date: str) -> str:
         dt = self._get_datetime_from_str(date)
-        years = self.timediff.get("years", 0)
-        months = self.timediff.get("months", 0)
+        years = int(self.timediff.get("years", 0))
+        months = int(self.timediff.get("months", 0))
 
         if years:
             dt = dt - relativedelta(years=years)
