@@ -383,6 +383,7 @@ class PrivateWidgetService(BaseService):
                 pri_data_table_vo.domain_id,
             )
             return ds_mgr.load_from_widget(
+                pri_data_table_vo.data_table_id,
                 params.granularity,
                 params.start,
                 params.end,
@@ -402,6 +403,7 @@ class PrivateWidgetService(BaseService):
                 pri_data_table_vo.domain_id,
             )
             return dt_mgr.load_from_widget(
+                pri_data_table_vo.data_table_id,
                 params.granularity,
                 params.start,
                 params.end,
@@ -462,6 +464,7 @@ class PrivateWidgetService(BaseService):
                 pri_data_table_vo.domain_id,
             )
             return ds_mgr.load_from_widget(
+                pri_data_table_vo.data_table_id,
                 params.granularity,
                 params.start,
                 params.end,
@@ -480,6 +483,7 @@ class PrivateWidgetService(BaseService):
                 pri_data_table_vo.domain_id,
             )
             return dt_mgr.load_from_widget(
+                pri_data_table_vo.data_table_id,
                 params.granularity,
                 params.start,
                 params.end,
