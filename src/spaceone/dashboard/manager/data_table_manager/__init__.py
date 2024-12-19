@@ -43,6 +43,7 @@ class DataTableManager(BaseManager):
 
     def load_from_widget(
         self,
+        data_table_id: str,
         granularity: str,
         start: str,
         end: str,
@@ -62,6 +63,7 @@ class DataTableManager(BaseManager):
             "start": start,
             "end": end,
             "sort": sort,
+            "data_table_id": data_table_id,
             "widget_id": self.widget_id,
             "domain_id": self.domain_id,
         }

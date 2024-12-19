@@ -397,6 +397,7 @@ class PublicWidgetService(BaseService):
                 pub_data_table_vo.domain_id,
             )
             return ds_mgr.load_from_widget(
+                pub_widget_vo.data_table_id,
                 params.granularity,
                 params.start,
                 params.end,
@@ -416,6 +417,7 @@ class PublicWidgetService(BaseService):
                 pub_data_table_vo.domain_id,
             )
             return dt_mgr.load_from_widget(
+                pub_widget_vo.data_table_id,
                 params.granularity,
                 params.start,
                 params.end,
@@ -479,6 +481,7 @@ class PublicWidgetService(BaseService):
                 pub_data_table_vo.domain_id,
             )
             return ds_mgr.load_from_widget(
+                pub_data_table_vo.data_table_id,
                 params.granularity,
                 params.start,
                 params.end,
@@ -497,6 +500,7 @@ class PublicWidgetService(BaseService):
                 pub_data_table_vo.domain_id,
             )
             return dt_mgr.load_from_widget(
+                pub_data_table_vo.data_table_id,
                 params.granularity,
                 params.start,
                 params.end,
