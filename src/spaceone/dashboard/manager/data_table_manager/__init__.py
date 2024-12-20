@@ -11,6 +11,9 @@ from spaceone.dashboard.error.data_table import (
     ERROR_NO_FIELDS_TO_GLOBAL_VARIABLES,
     ERROR_NOT_GLOBAL_VARIABLE_KEY,
     ERROR_QUERY_OPTION,
+    ERROR_QUERY_GROUP_BY_OPTION,
+    ERROR_EMPTY_DATA_FIELD,
+    ERROR_INVALID_SORT_OPTIONS,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -47,37 +50,23 @@ class DataTableManager(BaseManager):
         granularity: str,
         start: str,
         end: str,
+        group_by: list = None,
         sort: list = None,
         page: dict = None,
         vars: dict = None,
         column_sum: bool = False,
     ) -> dict:
+        self.check_group_by_and_sort_options(group_by, sort)
 
-        user_id = self.transaction.get_meta(
-            "authorization.user_id"
-        ) or self.transaction.get_meta("authorization.app_id")
-        role_type = self.transaction.get_meta("authorization.role_type")
-
-        query_data = {
-            "granularity": granularity,
-            "start": start,
-            "end": end,
-            "sort": sort,
-            "data_table_id": data_table_id,
-            "widget_id": self.widget_id,
-            "domain_id": self.domain_id,
-        }
-
-        if role_type == "WORKSPACE_MEMBER":
-            query_data["user_id"] = user_id
+        query_data = self._prepare_query_data(
+            data_table_id, granularity, start, end, group_by, sort
+        )
 
         query_hash = utils.dict_to_hash(query_data)
+        response = self._get_cached_response(query_hash)
 
-        response = {"results": []}
-        if cache_data := cache.get(f"dashboard:Widget:load:{query_hash}"):
-            response = cache_data
+        if not response:
 
-        else:
             self.load(
                 granularity,
                 start,
@@ -86,6 +75,8 @@ class DataTableManager(BaseManager):
             )
 
             if self.df is not None:
+                self._apply_group_by(group_by)
+
                 response = {
                     "results": self.df.copy(deep=True).to_dict(orient="records")
                 }
@@ -116,7 +107,7 @@ class DataTableManager(BaseManager):
             "total_count": total_count,
         }
 
-    def response_sum_data_from_widget(self, response) -> dict:
+    def response_sum_data_from_widget(self, response: dict) -> dict:
         data = response["results"]
         if self.data_keys:
             sum_data = {
@@ -295,3 +286,64 @@ class DataTableManager(BaseManager):
                 expression = expression.replace(gv_value, f'"{gv_value}"')
 
         return expression
+
+    @staticmethod
+    def check_group_by_and_sort_options(group_by: list, sort: list) -> None:
+        sort_keys = [sort_option["key"] for sort_option in sort]
+        for sort_key in sort_keys:
+            if sort_key not in group_by:
+                raise ERROR_INVALID_SORT_OPTIONS(group_by=group_by, sort=sort_keys)
+
+    def _prepare_query_data(
+        self,
+        data_table_id: str,
+        granularity: str,
+        start: str,
+        end: str,
+        group_by: list,
+        sort: list,
+    ) -> dict:
+        user_id = self.transaction.get_meta(
+            "authorization.user_id"
+        ) or self.transaction.get_meta("authorization.app_id")
+        role_type = self.transaction.get_meta("authorization.role_type")
+
+        query_data = {
+            "granularity": granularity,
+            "start": start,
+            "end": end,
+            "group_by": group_by,
+            "sort": sort,
+            "data_table_id": data_table_id,
+            "widget_id": self.widget_id,
+            "domain_id": self.domain_id,
+        }
+
+        if role_type == "WORKSPACE_MEMBER":
+            query_data["user_id"] = user_id
+
+        return query_data
+
+    @staticmethod
+    def _get_cached_response(query_hash: str) -> dict:
+        cache_data = cache.get(f"dashboard:Widget:load:{query_hash}")
+        return cache_data if cache_data else None
+
+    def _apply_group_by(self, group_by: list):
+        if group_by:
+            for key in group_by:
+                if key not in self.df.columns:
+                    raise ERROR_QUERY_GROUP_BY_OPTION(
+                        key="group_by", fields=list(self.df.columns)
+                    )
+
+            agg_funcs = {
+                column: "sum"
+                for column in self.df.columns
+                if pd.api.types.is_numeric_dtype(self.df[column])
+            }
+
+            if not agg_funcs:
+                raise ERROR_EMPTY_DATA_FIELD(fields=list(self.df.columns))
+
+            self.df = self.df.groupby(group_by).agg(agg_funcs).reset_index()

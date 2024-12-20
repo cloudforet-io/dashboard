@@ -356,6 +356,7 @@ class PublicWidgetService(BaseService):
                 'granularity': 'str',           # required
                 'start': 'str',                 # required
                 'end': 'str',                   # required
+                'group_by': 'list',
                 'sort': 'list',
                 'page': 'dict',
                 'vars': 'dict',
@@ -401,6 +402,7 @@ class PublicWidgetService(BaseService):
                 params.granularity,
                 params.start,
                 params.end,
+                params.group_by,
                 params.sort,
                 params.page,
                 params.vars,
@@ -421,6 +423,7 @@ class PublicWidgetService(BaseService):
                 params.granularity,
                 params.start,
                 params.end,
+                params.group_by,
                 params.sort,
                 params.page,
                 params.vars,

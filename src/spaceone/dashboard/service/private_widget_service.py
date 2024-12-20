@@ -345,6 +345,7 @@ class PrivateWidgetService(BaseService):
                 'granularity': 'str',           # required
                 'start': 'str',                 # required
                 'end': 'str',                   # required
+                'group_by': 'list',
                 'sort': 'list',
                 'page': 'dict',
                 'vars': 'dict',
@@ -387,6 +388,7 @@ class PrivateWidgetService(BaseService):
                 params.granularity,
                 params.start,
                 params.end,
+                params.group_by,
                 params.sort,
                 params.page,
                 params.vars,
@@ -408,6 +410,7 @@ class PrivateWidgetService(BaseService):
                 params.start,
                 params.end,
                 params.sort,
+                params.group_by,
                 params.page,
                 params.vars,
             )
