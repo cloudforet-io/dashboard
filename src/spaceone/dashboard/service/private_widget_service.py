@@ -383,7 +383,7 @@ class PrivateWidgetService(BaseService):
                 pri_data_table_vo.widget_id,
                 pri_data_table_vo.domain_id,
             )
-            return ds_mgr.load_from_widget(
+            response = ds_mgr.load_from_widget(
                 pri_data_table_vo.data_table_id,
                 params.granularity,
                 params.start,
@@ -393,6 +393,8 @@ class PrivateWidgetService(BaseService):
                 params.page,
                 params.vars,
             )
+
+            cached_hash_key = ds_mgr.cache_hash_key
         else:
             operator = pri_data_table_vo.operator
             options = pri_data_table_vo.options.get(operator, {})
@@ -404,7 +406,7 @@ class PrivateWidgetService(BaseService):
                 pri_data_table_vo.widget_id,
                 pri_data_table_vo.domain_id,
             )
-            return dt_mgr.load_from_widget(
+            response = dt_mgr.load_from_widget(
                 pri_data_table_vo.data_table_id,
                 params.granularity,
                 params.start,
@@ -414,6 +416,14 @@ class PrivateWidgetService(BaseService):
                 params.page,
                 params.vars,
             )
+
+            cached_hash_key = dt_mgr.cache_hash_key
+        if cached_hash_key and pri_data_table_vo.cache_key != cached_hash_key:
+            pri_data_table_mgr.update_private_data_table_by_vo(
+                {"cache_key": cached_hash_key}, pri_data_table_vo
+            )
+
+        return response
 
     @transaction(
         permission="dashboard:PrivateWidget.read",
@@ -466,7 +476,7 @@ class PrivateWidgetService(BaseService):
                 pri_data_table_vo.widget_id,
                 pri_data_table_vo.domain_id,
             )
-            return ds_mgr.load_from_widget(
+            response = ds_mgr.load_from_widget(
                 pri_data_table_vo.data_table_id,
                 params.granularity,
                 params.start,
@@ -474,6 +484,9 @@ class PrivateWidgetService(BaseService):
                 vars=params.vars,
                 column_sum=True,
             )
+
+            cached_hash_key = ds_mgr.cache_hash_key
+
         else:
             operator = pri_data_table_vo.operator
             options = pri_data_table_vo.options.get(operator, {})
@@ -485,7 +498,7 @@ class PrivateWidgetService(BaseService):
                 pri_data_table_vo.widget_id,
                 pri_data_table_vo.domain_id,
             )
-            return dt_mgr.load_from_widget(
+            response = dt_mgr.load_from_widget(
                 pri_data_table_vo.data_table_id,
                 params.granularity,
                 params.start,
@@ -493,6 +506,15 @@ class PrivateWidgetService(BaseService):
                 vars=params.vars,
                 column_sum=True,
             )
+
+            cached_hash_key = dt_mgr.cache_hash_key
+
+        if cached_hash_key and pri_data_table_vo.cache_key != cached_hash_key:
+            pri_data_table_mgr.update_private_data_table_by_vo(
+                {"cache_key": cached_hash_key}, pri_data_table_vo
+            )
+
+        return response
 
     @transaction(
         permission="dashboard:PrivateWidget.read",

@@ -397,7 +397,7 @@ class PublicWidgetService(BaseService):
                 pub_data_table_vo.widget_id,
                 pub_data_table_vo.domain_id,
             )
-            return ds_mgr.load_from_widget(
+            response = ds_mgr.load_from_widget(
                 pub_widget_vo.data_table_id,
                 params.granularity,
                 params.start,
@@ -407,6 +407,9 @@ class PublicWidgetService(BaseService):
                 params.page,
                 params.vars,
             )
+
+            cached_hash_key = ds_mgr.cache_hash_key
+
         else:
             operator = pub_data_table_vo.operator
             options = pub_data_table_vo.options.get(operator, {})
@@ -418,7 +421,7 @@ class PublicWidgetService(BaseService):
                 pub_data_table_vo.widget_id,
                 pub_data_table_vo.domain_id,
             )
-            return dt_mgr.load_from_widget(
+            response = dt_mgr.load_from_widget(
                 pub_widget_vo.data_table_id,
                 params.granularity,
                 params.start,
@@ -428,6 +431,14 @@ class PublicWidgetService(BaseService):
                 params.page,
                 params.vars,
             )
+
+            cached_hash_key = dt_mgr.cache_hash_key
+        if cached_hash_key and pub_data_table_vo.cache_key != cached_hash_key:
+            pub_data_table_mgr.update_public_data_table_by_vo(
+                {"cache_key": cached_hash_key}, pub_data_table_vo
+            )
+
+        return response
 
     @transaction(
         permission="dashboard:PublicWidget.write",
@@ -483,7 +494,7 @@ class PublicWidgetService(BaseService):
                 pub_data_table_vo.widget_id,
                 pub_data_table_vo.domain_id,
             )
-            return ds_mgr.load_from_widget(
+            response = ds_mgr.load_from_widget(
                 pub_data_table_vo.data_table_id,
                 params.granularity,
                 params.start,
@@ -491,6 +502,9 @@ class PublicWidgetService(BaseService):
                 vars=params.vars,
                 column_sum=True,
             )
+
+            cached_hash_key = ds_mgr.cache_hash_key
+
         else:
             operator = pub_data_table_vo.operator
             options = pub_data_table_vo.options.get(operator, {})
@@ -502,7 +516,7 @@ class PublicWidgetService(BaseService):
                 pub_data_table_vo.widget_id,
                 pub_data_table_vo.domain_id,
             )
-            return dt_mgr.load_from_widget(
+            response = dt_mgr.load_from_widget(
                 pub_data_table_vo.data_table_id,
                 params.granularity,
                 params.start,
@@ -510,6 +524,15 @@ class PublicWidgetService(BaseService):
                 vars=params.vars,
                 column_sum=True,
             )
+
+            cached_hash_key = dt_mgr.cache_hash_key
+
+        if cached_hash_key and pub_data_table_vo.cache_key != cached_hash_key:
+            pub_data_table_mgr.update_public_data_table_by_vo(
+                {"cache_key": cached_hash_key}, pub_data_table_vo
+            )
+
+        return response
 
     @transaction(
         permission="dashboard:PublicWidget.read",

@@ -2,6 +2,7 @@ import logging
 import copy
 from typing import Union
 
+from spaceone.core import cache
 from spaceone.core.service import *
 from spaceone.core.error import *
 
@@ -312,6 +313,13 @@ class PrivateDataTableService(BaseService):
             if raw_filter:
                 params_dict["options"]["filter"] = raw_filter
 
+        if pri_data_table_vo.cache_key:
+            cache_key = f"dashboard:Widget:load:{pri_data_table_vo.cache_key}"
+            if cache.get(cache_key):
+                cache.delete(cache_key)
+
+            params_dict["cache_key"] = None
+
         pri_data_table_vo = self.pri_data_table_mgr.update_private_data_table_by_vo(
             params_dict, pri_data_table_vo
         )
@@ -344,6 +352,11 @@ class PrivateDataTableService(BaseService):
                 params.user_id,
             )
         )
+
+        if pri_data_table_vo.cache_key:
+            cache_key = f"dashboard:Widget:load:{pri_data_table_vo.cache_key}"
+            if cache.get(cache_key):
+                cache.delete(cache_key)
 
         self.pri_data_table_mgr.delete_private_data_table_by_vo(pri_data_table_vo)
 
