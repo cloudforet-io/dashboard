@@ -20,6 +20,7 @@ class PublicDataTableResponse(BaseModel):
     labels_info: Union[dict, None] = None
     data_info: Union[dict, None] = None
     sort_keys: Union[List[str], None] = None
+    cache_key: Union[str, None] = None
     error_message: Union[str, None] = None
     dashboard_id: Union[str, None] = None
     widget_id: Union[str, None] = None

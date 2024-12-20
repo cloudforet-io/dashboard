@@ -62,6 +62,7 @@ class PublicWidgetLoadRequest(BaseModel):
     granularity: str
     start: str
     end: str
+    group_by: Union[list, None] = None
     sort: Union[list, None] = None
     page: Union[dict, None] = None
     vars: Union[dict, None] = None

@@ -18,6 +18,7 @@ class PublicDataTable(MongoModel):
     labels_info = DictField(default=None)
     data_info = DictField(default=None)
     sort_keys = ListField(default=None)
+    cache_key = StringField(max_length=255, default=None, null=True)
     dashboard_id = StringField(max_length=40)
     widget_id = StringField(max_length=40)
     resource_group = StringField(
@@ -39,6 +40,7 @@ class PublicDataTable(MongoModel):
             "labels_info",
             "data_info",
             "sort_keys",
+            "cache_key",
             "project_id",
             "workspace_id",
         ],
