@@ -292,10 +292,11 @@ class DataTableManager(BaseManager):
 
     @staticmethod
     def check_group_by_and_sort_options(group_by: list, sort: list) -> None:
-        sort_keys = [sort_option["key"] for sort_option in sort]
-        for sort_key in sort_keys:
-            if sort_key not in group_by:
-                raise ERROR_INVALID_SORT_OPTIONS(group_by=group_by, sort=sort_keys)
+        if group_by and sort:
+            sort_keys = [sort_option["key"] for sort_option in sort]
+            for sort_key in sort_keys:
+                if sort_key not in group_by:
+                    raise ERROR_INVALID_SORT_OPTIONS(group_by=group_by, sort=sort_keys)
 
     def _prepare_query_data(
         self,
