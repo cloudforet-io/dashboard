@@ -9,10 +9,6 @@ class ERROR_QUERY_OPTION(ERROR_INVALID_ARGUMENT):
     _message = "Query option is invalid. (key = {key})"
 
 
-class ERROR_INVALID_SORT_OPTIONS(ERROR_INVALID_ARGUMENT):
-    _message = "All sort keys must be included in group_by. (group_by = {group_by}, sort = {sort})"
-
-
 class ERROR_EMPTY_DATA_FIELD(ERROR_INVALID_ARGUMENT):
     _message = "Data field is empty. (fields = {fields})"
 
