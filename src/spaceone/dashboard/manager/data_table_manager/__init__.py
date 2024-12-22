@@ -13,7 +13,6 @@ from spaceone.dashboard.error.data_table import (
     ERROR_QUERY_OPTION,
     ERROR_QUERY_GROUP_BY_OPTION,
     ERROR_EMPTY_DATA_FIELD,
-    ERROR_INVALID_SORT_OPTIONS,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -57,8 +56,6 @@ class DataTableManager(BaseManager):
         vars: dict = None,
         column_sum: bool = False,
     ) -> dict:
-        self.check_group_by_and_sort_options(group_by, sort)
-
         query_data = self._prepare_query_data(
             data_table_id, granularity, start, end, group_by, sort
         )
@@ -289,14 +286,6 @@ class DataTableManager(BaseManager):
                 expression = expression.replace(gv_value, f'"{gv_value}"')
 
         return expression
-
-    @staticmethod
-    def check_group_by_and_sort_options(group_by: list, sort: list) -> None:
-        if group_by and sort:
-            sort_keys = [sort_option["key"] for sort_option in sort]
-            for sort_key in sort_keys:
-                if sort_key not in group_by:
-                    raise ERROR_INVALID_SORT_OPTIONS(group_by=group_by, sort=sort_keys)
 
     def _prepare_query_data(
         self,
