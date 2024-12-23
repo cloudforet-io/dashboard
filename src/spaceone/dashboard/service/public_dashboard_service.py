@@ -85,7 +85,7 @@ class PublicDashboardService(BaseService):
         elif resource_group == "WORKSPACE":
             if workspace_id := params_dict.get("workspace_id"):
                 self.identity_mgr.check_workspace(workspace_id, domain_id)
-                params_dict["project_id"] = "-"
+                params_dict["project_id"] = "*"
             else:
                 raise ERROR_REQUIRED_PARAMETER(key="workspace_id")
         else:
@@ -340,7 +340,7 @@ class PublicDashboardService(BaseService):
             else:
                 updated_params["scope"] = "WORKSPACE"
         elif pub_dashboard_vo.resource_group == "WORKSPACE":
-            updated_params["project_id"] = "*"
+            # updated_params["project_id"] = "*"
             updated_params["scope"] = "PROJECT"
         elif pub_dashboard_vo.resource_group == "PROJECT":
             raise ERROR_PERMISSION_DENIED()
@@ -424,7 +424,7 @@ class PublicDashboardService(BaseService):
             updated_params["project_id"] = "-"
             updated_params["scope"] = None
         elif pub_dashboard_vo.resource_group == "WORKSPACE":
-            updated_params["project_id"] = "-"
+            # updated_params["project_id"] = "-"
             updated_params["scope"] = None
         elif pub_dashboard_vo.resource_group == "PROJECT":
             raise ERROR_PERMISSION_DENIED()
