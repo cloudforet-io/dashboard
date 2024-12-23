@@ -135,7 +135,9 @@ class DataTransformationManager(DataTableManager):
         origin_vo = self.data_table_vos[0]
         other_vo = self.data_table_vos[1]
         origin_df = self._get_data_table(origin_vo, granularity, start, end, vars)
+        _LOGGER.debug(f"[join_data_tables] origin_df columns: {origin_df.columns}")
         other_df = self._get_data_table(other_vo, granularity, start, end, vars)
+        _LOGGER.debug(f"[join_data_tables] other_df columns: {other_df.columns}")
 
         self._validate_join_keys(left_keys, right_keys, origin_vo, other_vo)
 
@@ -144,6 +146,7 @@ class DataTransformationManager(DataTableManager):
         merged_df = self._merge_data_frames(
             origin_df, other_df, how, left_keys, right_keys
         )
+        _LOGGER.debug(f"[join_data_tables] merged_df columns: {merged_df.columns}")
         merged_df = self._rename_duplicated_columns(
             merged_df, origin_vo.name, other_vo.name
         )
