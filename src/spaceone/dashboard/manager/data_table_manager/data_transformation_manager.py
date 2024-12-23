@@ -91,31 +91,31 @@ class DataTransformationManager(DataTableManager):
         end: str = None,
         vars: dict = None,
     ) -> pd.DataFrame:
-        # try:
-        if self.operator == "JOIN":
-            self.join_data_tables(granularity, start, end, vars)
-        elif self.operator == "CONCAT":
-            self.concat_data_tables(granularity, start, end, vars)
-        elif self.operator == "AGGREGATE":
-            self.aggregate_data_table(granularity, start, end, vars)
-        elif self.operator == "QUERY":
-            self.query_data_table(granularity, start, end, vars)
-        elif self.operator == "EVAL":
-            self.evaluate_data_table(granularity, start, end, vars)
-        elif self.operator == "PIVOT":
-            self.pivot_data_table(granularity, start, end, vars)
-        elif self.operator == "ADD_LABELS":
-            self.add_labels_data_table(granularity, start, end, vars)
-        elif self.operator == "VALUE_MAPPING":
-            self.value_mapping_data_table(granularity, start, end, vars)
+        try:
+            if self.operator == "JOIN":
+                self.join_data_tables(granularity, start, end, vars)
+            elif self.operator == "CONCAT":
+                self.concat_data_tables(granularity, start, end, vars)
+            elif self.operator == "AGGREGATE":
+                self.aggregate_data_table(granularity, start, end, vars)
+            elif self.operator == "QUERY":
+                self.query_data_table(granularity, start, end, vars)
+            elif self.operator == "EVAL":
+                self.evaluate_data_table(granularity, start, end, vars)
+            elif self.operator == "PIVOT":
+                self.pivot_data_table(granularity, start, end, vars)
+            elif self.operator == "ADD_LABELS":
+                self.add_labels_data_table(granularity, start, end, vars)
+            elif self.operator == "VALUE_MAPPING":
+                self.value_mapping_data_table(granularity, start, end, vars)
 
-        self.state = "AVAILABLE"
-        self.error_message = None
+            self.state = "AVAILABLE"
+            self.error_message = None
 
-        # except Exception as e:
-        #     self.state = "UNAVAILABLE"
-        #     self.error_message = e.message if hasattr(e, "message") else str(e)
-        #     _LOGGER.error(f"[load] {self.operator} operation error: {e}")
+        except Exception as e:
+            self.state = "UNAVAILABLE"
+            self.error_message = e.message if hasattr(e, "message") else str(e)
+            _LOGGER.error(f"[load] {self.operator} operation error: {e}")
 
         return self.df
 
@@ -135,9 +135,7 @@ class DataTransformationManager(DataTableManager):
         origin_vo = self.data_table_vos[0]
         other_vo = self.data_table_vos[1]
         origin_df = self._get_data_table(origin_vo, granularity, start, end, vars)
-        _LOGGER.debug(f"[join_data_tables] origin_df columns: {origin_df.columns}")
         other_df = self._get_data_table(other_vo, granularity, start, end, vars)
-        _LOGGER.debug(f"[join_data_tables] other_df columns: {other_df.columns}")
 
         self._validate_join_keys(left_keys, right_keys, origin_vo, other_vo)
 
@@ -146,7 +144,6 @@ class DataTransformationManager(DataTableManager):
         merged_df = self._merge_data_frames(
             origin_df, other_df, how, left_keys, right_keys
         )
-        _LOGGER.debug(f"[join_data_tables] merged_df columns: {merged_df.columns}")
         merged_df = self._rename_duplicated_columns(
             merged_df, origin_vo.name, other_vo.name
         )
