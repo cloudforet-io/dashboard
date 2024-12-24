@@ -30,7 +30,6 @@ class DataTableManager(BaseManager):
         self.jinja_variables = None
         self.state = None
         self.error_message = None
-        self.cache_hash_key = None
 
     def get_data_and_labels_info(self) -> Tuple[dict, dict]:
         raise NotImplementedError()
@@ -60,8 +59,8 @@ class DataTableManager(BaseManager):
             data_table_id, granularity, start, end, group_by, sort
         )
 
-        self.cache_hash_key = utils.dict_to_hash(query_data)
-        response = self._get_cached_response()
+        cache_hash_key = utils.dict_to_hash(query_data)
+        response = self._get_cached_response(cache_hash_key)
 
         if not response:
 
@@ -79,8 +78,12 @@ class DataTableManager(BaseManager):
                     "results": self.df.copy(deep=True).to_dict(orient="records")
                 }
                 cache.set(
-                    f"dashboard:Widget:load:{self.cache_hash_key}", response, expire=600
+                    f"dashboard:widget:load:{self.domain_id}:{self.widget_id}:{cache_hash_key}",
+                    response,
+                    expire=600,
                 )
+
+                self.df = None
 
         if column_sum:
             return self.response_sum_data_from_widget(response)
@@ -317,8 +320,10 @@ class DataTableManager(BaseManager):
 
         return query_data
 
-    def _get_cached_response(self) -> dict:
-        cache_data = cache.get(f"dashboard:Widget:load:{self.cache_hash_key}")
+    def _get_cached_response(self, cache_hash_key) -> dict:
+        cache_data = cache.get(
+            f"dashboard:widget:load:{self.domain_id}:{self.widget_id}:{cache_hash_key}"
+        )
         return cache_data if cache_data else None
 
     def _apply_group_by(self, group_by: list):
