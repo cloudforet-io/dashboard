@@ -330,12 +330,10 @@ class PublicDataTableService(BaseService):
             if raw_filter:
                 params_dict["options"]["filter"] = raw_filter
 
-        if pub_data_table_vo.cache_key:
-            cache_key = f"dashboard:Widget:load:{pub_data_table_vo.cache_key}"
-            if cache.get(cache_key):
-                cache.delete(cache_key)
-
-            params_dict["cache_key"] = None
+        cache_key = (
+            f"dashboard:widget:load:{params.domain_id}:{pub_data_table_vo.widget_id}:*"
+        )
+        cache.delete_pattern(cache_key)
 
         pub_data_table_vo = self.pub_data_table_mgr.update_public_data_table_by_vo(
             params_dict, pub_data_table_vo
@@ -372,10 +370,10 @@ class PublicDataTableService(BaseService):
             )
         )
 
-        if pub_data_table_vo.cache_key:
-            cache_key = f"dashboard:Widget:load:{pub_data_table_vo.cache_key}"
-            if cache.get(cache_key):
-                cache.delete(cache_key)
+        cache_key = (
+            f"dashboard:Widget:load:{params.domain_id}:{pub_data_table_vo.widget_id}:*"
+        )
+        cache.delete_pattern(cache_key)
 
         self.pub_data_table_mgr.delete_public_data_table_by_vo(pub_data_table_vo)
 
