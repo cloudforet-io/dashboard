@@ -148,9 +148,9 @@ class PublicFolderService(BaseService):
 
         if pub_folder_vo.resource_group == "DOMAIN":
             updated_params["workspace_id"] = "*"
+            updated_params["project_id"] = "*"
             if params.scope == "PROJECT":
                 updated_params["scope"] = "PROJECT"
-                updated_params["project_id"] = "*"
             else:
                 updated_params["scope"] = "WORKSPACE"
         elif pub_folder_vo.resource_group == "WORKSPACE":
