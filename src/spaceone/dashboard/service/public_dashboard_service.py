@@ -349,7 +349,8 @@ class PublicDashboardService(BaseService):
             updated_params, pub_dashboard_vo
         )
 
-        if pub_dashboard_vo.resource_group in ["DOMAIN", "WORKSPACE"]:
+        # if pub_dashboard_vo.resource_group in ["DOMAIN", "WORKSPACE"]:
+        if pub_dashboard_vo.resource_group == "DOMAIN":
             # Cascade update for widgets
             pub_widget_mgr = PublicWidgetManager()
             pub_widget_vos = pub_widget_mgr.filter_public_widgets(
@@ -433,7 +434,8 @@ class PublicDashboardService(BaseService):
             updated_params, pub_dashboard_vo
         )
 
-        if pub_dashboard_vo.resource_group in ["DOMAIN", "WORKSPACE"]:
+        # if pub_dashboard_vo.resource_group in ["DOMAIN", "WORKSPACE"]:
+        if pub_dashboard_vo.resource_group == "DOMAIN":
             # Cascade update for widgets
             pub_widget_mgr = PublicWidgetManager()
             pub_widget_vos = pub_widget_mgr.filter_public_widgets(

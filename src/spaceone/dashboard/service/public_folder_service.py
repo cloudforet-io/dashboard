@@ -62,7 +62,7 @@ class PublicFolderService(BaseService):
                 raise ERROR_REQUIRED_PARAMETER(key="workspace_id")
 
             self.identity_mgr.check_workspace(params.workspace_id, params.domain_id)
-            params.project_id = "-"
+            params.project_id = "*"
         else:
             params.workspace_id = "-"
             params.project_id = "-"
@@ -154,7 +154,7 @@ class PublicFolderService(BaseService):
             else:
                 updated_params["scope"] = "WORKSPACE"
         elif pub_folder_vo.resource_group == "WORKSPACE":
-            updated_params["project_id"] = "*"
+            # updated_params["project_id"] = "*"
             updated_params["scope"] = "PROJECT"
         elif pub_folder_vo.resource_group == "PROJECT":
             raise ERROR_PERMISSION_DENIED()
@@ -222,7 +222,7 @@ class PublicFolderService(BaseService):
             updated_params["project_id"] = "-"
             updated_params["scope"] = None
         elif pub_folder_vo.resource_group == "WORKSPACE":
-            updated_params["project_id"] = "-"
+            # updated_params["project_id"] = "-"
             updated_params["scope"] = None
         elif pub_folder_vo.resource_group == "PROJECT":
             raise ERROR_PERMISSION_DENIED()
