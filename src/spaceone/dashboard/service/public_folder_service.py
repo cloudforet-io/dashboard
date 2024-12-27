@@ -163,7 +163,7 @@ class PublicFolderService(BaseService):
             updated_params, pub_folder_vo
         )
 
-        if pub_folder_vo.resource_group in ["DOMAIN", "WORKSPACE"]:
+        if pub_folder_vo.resource_group == "DOMAIN":
             pub_dashboard_svc = PublicDashboardService()
             pub_dashboard_mgr = PublicDashboardManager()
             pub_dashboard_vos = pub_dashboard_mgr.filter_public_dashboards(
@@ -231,7 +231,7 @@ class PublicFolderService(BaseService):
             updated_params, pub_folder_vo
         )
 
-        if pub_folder_vo.resource_group in ["DOMAIN", "WORKSPACE"]:
+        if pub_folder_vo.resource_group == "DOMAIN":
             pub_dashboard_svc = PublicDashboardService()
             pub_dashboard_mgr = PublicDashboardManager()
             pub_dashboard_vos = pub_dashboard_mgr.filter_public_dashboards(
