@@ -194,6 +194,7 @@ class DataSourceManager(DataTableManager):
         self.df["Date"] = self.df["Date"].apply(
             lambda x: self._change_date_by_timediff(x)
         )
+        self.df.rename(columns={self.data_name: self.timediff_data_name}, inplace=True)
 
         origin_label_keys = [
             column for column in origin_df.columns if column != self.data_name
