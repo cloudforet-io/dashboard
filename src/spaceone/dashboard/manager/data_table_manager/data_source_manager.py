@@ -193,6 +193,8 @@ class DataSourceManager(DataTableManager):
         elif self.source_type == "ASSET":
             self._analyze_asset(granularity, start, end, vars)
         _LOGGER.debug(f"[timediff] {self.timediff}")
+        _LOGGER.debug(f"[origin_df column] {origin_df.columns}")
+        _LOGGER.debug(f"[self.df column] {self.df.columns}")
         self.df["Date"] = self.df["Date"].apply(
             lambda x: self._change_date_by_timediff(x)
         )
