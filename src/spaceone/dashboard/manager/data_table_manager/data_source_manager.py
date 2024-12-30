@@ -93,24 +93,26 @@ class DataSourceManager(DataTableManager):
         end: str = None,
         vars: dict = None,
     ) -> pd.DataFrame:
-        try:
-            start, end = self._get_time_from_granularity(granularity, start, end)
+        # try:
+        start, end = self._get_time_from_granularity(granularity, start, end)
 
-            if self.source_type == "COST":
-                self._analyze_cost(granularity, start, end, vars)
-            elif self.source_type == "ASSET":
-                self._analyze_asset(granularity, start, end, vars)
+        if self.source_type == "COST":
+            self._analyze_cost(granularity, start, end, vars)
+        elif self.source_type == "ASSET":
+            self._analyze_asset(granularity, start, end, vars)
+        _LOGGER.debug(f"[before load] {self.df}")
+        if self.timediff:
+            self.df = self._apply_timediff(granularity, start, end, vars)
 
-            if self.timediff:
-                self.df = self._apply_timediff(granularity, start, end, vars)
+        _LOGGER.debug(f"[after load] {self.df}")
 
-            self.state = "AVAILABLE"
-            self.error_message = None
+        self.state = "AVAILABLE"
+        self.error_message = None
 
-        except Exception as e:
-            self.state = "UNAVAILABLE"
-            self.error_message = e.message if hasattr(e, "message") else str(e)
-            _LOGGER.error(f"[load] add {self.source_type} source error: {e}")
+        # except Exception as e:
+        #     self.state = "UNAVAILABLE"
+        #     self.error_message = e.message if hasattr(e, "message") else str(e)
+        #     _LOGGER.error(f"[load] add {self.source_type} source error: {e}")
 
         return self.df
 
@@ -190,7 +192,7 @@ class DataSourceManager(DataTableManager):
             self._analyze_cost(granularity, start, end, vars)
         elif self.source_type == "ASSET":
             self._analyze_asset(granularity, start, end, vars)
-
+        _LOGGER.debug(f"[timediff] {self.timediff}")
         self.df["Date"] = self.df["Date"].apply(
             lambda x: self._change_date_by_timediff(x)
         )
@@ -203,6 +205,10 @@ class DataSourceManager(DataTableManager):
             column for column in self.df.columns if column != self.timediff_data_name
         ]
         join_keys = list(set(origin_label_keys) & set(diff_label_keys))
+
+        _LOGGER.debug(f"[origin_label_keys] {origin_label_keys}")
+        _LOGGER.debug(f"[diff_label_keys] {diff_label_keys}")
+        _LOGGER.debug(f"[join_keys] {join_keys}")
 
         merged_df = pd.merge(origin_df, self.df, on=join_keys, how="left")
 
