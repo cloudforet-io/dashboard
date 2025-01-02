@@ -410,8 +410,8 @@ class PrivateWidgetService(BaseService):
                 params.granularity,
                 params.start,
                 params.end,
-                params.sort,
                 params.group_by,
+                params.sort,
                 params.page,
                 params.vars,
             )
