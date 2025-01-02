@@ -59,7 +59,6 @@ class DataTransformationManager(DataTableManager):
         self.data_table_vos = self._get_data_table_from_options(operator, options)
         self.data_keys = []
         self.label_keys = []
-        self.sort_keys = []
         self.total_series = None
 
     def get_data_and_labels_info(self) -> Tuple[dict, dict]:
@@ -431,7 +430,6 @@ class DataTransformationManager(DataTableManager):
         )
 
         pivot_table = self._sort_and_filter_pivot_table(pivot_table)
-        self.sort_keys = list(pivot_table.columns)
 
         self.df = pivot_table
 
@@ -638,7 +636,6 @@ class DataTransformationManager(DataTableManager):
 
     @staticmethod
     def _create_rename_columns_from_join_keys(left_keys, right_keys, how):
-        # 키 매핑
         multi_keys = zip(left_keys, right_keys)
         rename_columns = {}
         if how in ["left", "inner", "outer"]:
