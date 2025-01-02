@@ -200,9 +200,6 @@ class PrivateDataTableService(BaseService):
         params_dict["state"] = dt_mgr.state
         params_dict["error_message"] = dt_mgr.error_message
 
-        if operator == "PIVOT":
-            params_dict["sort_keys"] = dt_mgr.sort_keys
-
         pri_data_table_vo = self.pri_data_table_mgr.create_private_data_table(
             params_dict
         )
@@ -302,9 +299,6 @@ class PrivateDataTableService(BaseService):
                 params_dict["options"] = {
                     operator: operator_options,
                 }
-
-                if operator == "PIVOT":
-                    params_dict["sort_keys"] = dt_mgr.sort_keys
 
                 # Get dt_mgr state and error_message
                 params_dict["state"] = dt_mgr.state
