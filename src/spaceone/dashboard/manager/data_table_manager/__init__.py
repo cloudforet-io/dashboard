@@ -27,6 +27,7 @@ class DataTableManager(BaseManager):
 
         self.df: Union[pd.DataFrame, None] = None
         self.data_keys = None
+        self.label_keys = None
         self.jinja_variables = None
         self.state = None
         self.error_message = None
@@ -105,9 +106,13 @@ class DataTableManager(BaseManager):
         if page:
             data = self.apply_page(data, page)
 
+        data_info, labels_info = self.get_data_and_labels_info()
         return {
             "results": data,
             "total_count": total_count,
+            "labels_info": labels_info,
+            "data_info": data_info,
+            "order": self.label_keys + self.data_keys,
         }
 
     def response_sum_data_from_widget(self, response: dict) -> dict:
