@@ -74,9 +74,13 @@ class DataTableManager(BaseManager):
 
             if self.df is not None:
                 self._apply_group_by(group_by)
+                data_info, labels_info = self.get_data_and_labels_info()
 
                 response = {
-                    "results": self.df.copy(deep=True).to_dict(orient="records")
+                    "results": self.df.copy(deep=True).to_dict(orient="records"),
+                    "labels_info": labels_info,
+                    "data_info": data_info,
+                    "order": self.label_keys + self.data_keys,
                 }
                 cache.set(
                     f"dashboard:widget:load:{self.domain_id}:{self.widget_id}:{cache_hash_key}",
@@ -98,6 +102,10 @@ class DataTableManager(BaseManager):
         page: dict = None,
     ) -> dict:
         data = response["results"]
+        labels_info = response["labels_info"]
+        data_info = response["data_info"]
+        order = response["order"]
+
         total_count = len(data)
 
         if sort:
@@ -106,13 +114,12 @@ class DataTableManager(BaseManager):
         if page:
             data = self.apply_page(data, page)
 
-        data_info, labels_info = self.get_data_and_labels_info()
         return {
             "results": data,
             "total_count": total_count,
             "labels_info": labels_info,
             "data_info": data_info,
-            "order": self.label_keys + self.data_keys,
+            "order": order,
         }
 
     def response_sum_data_from_widget(self, response: dict) -> dict:
