@@ -803,7 +803,14 @@ class DataTransformationManager(DataTableManager):
         if limit := self.options.get("limit"):
             if isinstance(limit, float):
                 limit = int(limit)
+            limited_columns = pivot_table.iloc[
+                :, len(self.label_keys) : len(self.label_keys) + limit
+            ]
             pivot_table = pivot_table.iloc[:, : len(self.label_keys) + limit]
+
+            pivot_table["Others"] = self.total_series.loc[
+                pivot_table.index
+            ] - limited_columns.sum(axis=1)
 
         pivot_table["Sub Total"] = self.total_series.loc[pivot_table.index]
         self.data_keys = [
