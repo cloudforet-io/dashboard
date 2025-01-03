@@ -892,7 +892,7 @@ class DataTransformationManager(DataTableManager):
             self._validate_case(case)
             operator = case["operator"]
             value = case["value"]
-            match = case["match"]
+            match = case["match"].strip()
 
             if operator == "eq":
                 filtered_df.loc[filtered_df[key] == match, name] = value
