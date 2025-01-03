@@ -422,16 +422,19 @@ class DataTransformationManager(DataTableManager):
 
         raw_df = self._get_data_table(origin_vo, granularity, start, end, vars)
 
-        self._check_columns(raw_df, labels, column, data)
-        fill_value = self._set_fill_value_from_df(raw_df, data)
+        if raw_df.empty:
+            self.df = raw_df
+        else:
+            self._check_columns(raw_df, labels, column, data)
+            fill_value = self._set_fill_value_from_df(raw_df, data)
 
-        pivot_table = self._create_pivot_table(
-            raw_df, labels, column, data, function, fill_value
-        )
+            pivot_table = self._create_pivot_table(
+                raw_df, labels, column, data, function, fill_value
+            )
 
-        pivot_table = self._sort_and_filter_pivot_table(pivot_table)
+            pivot_table = self._sort_and_filter_pivot_table(pivot_table)
 
-        self.df = pivot_table
+            self.df = pivot_table
 
     def add_labels_data_table(
         self,
