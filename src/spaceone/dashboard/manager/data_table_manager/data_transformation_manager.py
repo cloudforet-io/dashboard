@@ -144,6 +144,7 @@ class DataTransformationManager(DataTableManager):
         merged_df = self._merge_data_frames(
             origin_df, other_df, how, left_keys, right_keys
         )
+
         merged_df = self._rename_duplicated_columns(
             merged_df, origin_vo.name, other_vo.name
         )
@@ -663,6 +664,12 @@ class DataTransformationManager(DataTableManager):
             other_df = other_df.rename(columns=rename_columns)
         elif how == "right":
             origin_df = origin_df.rename(columns=rename_columns)
+
+        if origin_df.empty:
+            origin_df = pd.DataFrame(columns=left_keys)
+
+        if other_df.empty:
+            other_df = pd.DataFrame(columns=right_keys)
 
         join_keys = left_keys if how in ["left", "inner", "outer"] else right_keys
         merged_df = origin_df.merge(
