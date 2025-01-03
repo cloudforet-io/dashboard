@@ -149,7 +149,6 @@ class DataTableManager(BaseManager):
                 key: sum(float(row.get(key, 0)) for row in data)
                 for key in numeric_columns
             }
-            print(sum_data)
 
         # results = [{column: sum_value} for column, sum_value in sum_data.items()]
         results = [sum_data]
