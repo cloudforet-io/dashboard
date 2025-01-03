@@ -11,8 +11,9 @@ from spaceone.dashboard.error.data_table import (
     ERROR_DUPLICATED_DATA_FIELDS,
     ERROR_INVALID_PARAMETER_TYPE,
     ERROR_DUPLICATED_FIELD_NAME,
+    ERROR_NOT_ALLOWED_DATA_FIELD,
 )
-from spaceone.dashboard.manager.data_table_manager import DataTableManager, GRANULARITY
+from spaceone.dashboard.manager.data_table_manager import DataTableManager
 from spaceone.dashboard.manager.data_table_manager.data_source_manager import (
     DataSourceManager,
 )
@@ -85,7 +86,7 @@ class DataTransformationManager(DataTableManager):
 
     def load(
         self,
-        granularity: GRANULARITY = "MONTHLY",
+        granularity: str = "MONTHLY",
         start: str = None,
         end: str = None,
         vars: dict = None,
@@ -114,13 +115,13 @@ class DataTransformationManager(DataTableManager):
         except Exception as e:
             self.state = "UNAVAILABLE"
             self.error_message = e.message if hasattr(e, "message") else str(e)
-            _LOGGER.error(f"[load] {self.operator} operation error: {e}")
+            _LOGGER.error(f"[load] {self.operator} operation error: {e}", exc_info=True)
 
         return self.df
 
     def join_data_tables(
         self,
-        granularity: GRANULARITY = "MONTHLY",
+        granularity: str,
         start: str = None,
         end: str = None,
         vars: dict = None,
@@ -152,7 +153,7 @@ class DataTransformationManager(DataTableManager):
 
     def concat_data_tables(
         self,
-        granularity: GRANULARITY = "MONTHLY",
+        granularity: str,
         start: str = None,
         end: str = None,
         vars: dict = None,
@@ -183,7 +184,7 @@ class DataTransformationManager(DataTableManager):
 
     def aggregate_data_table(
         self,
-        granularity: GRANULARITY = "MONTHLY",
+        granularity: str,
         start: str = None,
         end: str = None,
         vars: dict = None,
@@ -226,7 +227,7 @@ class DataTransformationManager(DataTableManager):
 
     def query_data_table(
         self,
-        granularity: GRANULARITY = "MONTHLY",
+        granularity: str,
         start: str = None,
         end: str = None,
         vars: dict = None,
@@ -257,7 +258,7 @@ class DataTransformationManager(DataTableManager):
 
     def evaluate_data_table(
         self,
-        granularity: GRANULARITY = "MONTHLY",
+        granularity: str,
         start: str = None,
         end: str = None,
         vars: dict = None,
@@ -323,7 +324,6 @@ class DataTransformationManager(DataTableManager):
                     try:
                         value_expression = value_expression.format(**template_vars)
                     except KeyError as e:
-
                         value_expression = value_expression.replace("{", "{{").replace(
                             "}", "}}"
                         )
@@ -371,7 +371,6 @@ class DataTransformationManager(DataTableManager):
                     )
 
             elif isinstance(expression, str):
-
                 if "@" in expression:
                     raise ERROR_INVALID_PARAMETER(
                         key="options.EVAL.expressions",
@@ -406,7 +405,7 @@ class DataTransformationManager(DataTableManager):
 
     def pivot_data_table(
         self,
-        granularity: GRANULARITY = "MONTHLY",
+        granularity: str,
         start: str = None,
         end: str = None,
         vars: dict = None,
@@ -435,7 +434,7 @@ class DataTransformationManager(DataTableManager):
 
     def add_labels_data_table(
         self,
-        granularity: GRANULARITY = "MONTHLY",
+        granularity: str,
         start: str = None,
         end: str = None,
         vars: dict = None,
@@ -472,8 +471,10 @@ class DataTransformationManager(DataTableManager):
         self.data_keys = list(data_table_vo.data_info.keys())
 
         name = self.options["name"]
-        if name in self.data_keys or name in self.label_keys:
-            raise ERROR_DUPLICATED_FIELD_NAME(field=name, fields=list(df.columns))
+        if name in self.data_keys:
+            raise ERROR_NOT_ALLOWED_DATA_FIELD(
+                name=name, data_fields=list(self.data_keys)
+            )
 
         field_type = self.options.get("field_type", "LABEL")
 
@@ -488,7 +489,7 @@ class DataTransformationManager(DataTableManager):
     def _get_data_table(
         self,
         data_table_vo: Union[PublicDataTable, PrivateDataTable],
-        granularity: GRANULARITY,
+        granularity: str,
         start: str,
         end: str,
         vars: dict,
@@ -869,14 +870,16 @@ class DataTransformationManager(DataTableManager):
 
     def apply_cases(self, filtered_df: pd.DataFrame) -> pd.DataFrame:
         name = self.options["name"]
-        else_value = self.options.get("else", None)
+        key = self.options["key"]
+        else_value = self.options.get("else")
         cases = self.options.get("cases", [])
 
-        filtered_df.loc[:, name] = else_value
+        temp_key_column = f"_{key}_backup"
+        if temp_key_column not in filtered_df.columns:
+            filtered_df[temp_key_column] = filtered_df[key]
 
         for case in cases:
             self._validate_case(case)
-            key = case["key"]
             operator = case["operator"]
             value = case["value"]
             match = case["match"]
@@ -887,6 +890,15 @@ class DataTransformationManager(DataTableManager):
                 filtered_df.loc[
                     filtered_df[key].str.contains(match, na=False), name
                 ] = value
+
+        if else_value is not None:
+            filtered_df.loc[filtered_df[name].isna(), name] = else_value
+        else:
+            filtered_df.loc[filtered_df[name].isna(), name] = filtered_df[
+                temp_key_column
+            ]
+
+        filtered_df.drop(columns=[temp_key_column], inplace=True)
 
         return filtered_df
 
@@ -948,7 +960,7 @@ class DataTransformationManager(DataTableManager):
 
     @staticmethod
     def _validate_case(case):
-        required_keys = ["key", "match", "value", "operator"]
+        required_keys = ["match", "value", "operator"]
         for key in required_keys:
             if key not in case:
                 raise ERROR_REQUIRED_PARAMETER(key=f"options.VALUE_MAPPING.cases.{key}")

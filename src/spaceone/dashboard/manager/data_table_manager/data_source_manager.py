@@ -5,7 +5,7 @@ from datetime import datetime
 from dateutil.relativedelta import relativedelta
 import pandas as pd
 
-from spaceone.dashboard.manager.data_table_manager import DataTableManager, GRANULARITY
+from spaceone.dashboard.manager.data_table_manager import DataTableManager
 from spaceone.dashboard.manager.cost_analysis_manager import CostAnalysisManager
 from spaceone.dashboard.manager.inventory_manager import InventoryManager
 from spaceone.dashboard.error.data_table import *
@@ -88,7 +88,7 @@ class DataSourceManager(DataTableManager):
 
     def load(
         self,
-        granularity: GRANULARITY = "MONTHLY",
+        granularity: str = "MONTHLY",
         start: str = None,
         end: str = None,
         vars: dict = None,
@@ -116,7 +116,7 @@ class DataSourceManager(DataTableManager):
 
     def _analyze_asset(
         self,
-        granularity: GRANULARITY,
+        granularity: str,
         start: str,
         end: str,
         vars: dict = None,
@@ -147,7 +147,7 @@ class DataSourceManager(DataTableManager):
 
     def _analyze_cost(
         self,
-        granularity: GRANULARITY,
+        granularity: str,
         start: str,
         end: str,
         vars: dict = None,
@@ -309,7 +309,7 @@ class DataSourceManager(DataTableManager):
 
     @staticmethod
     def _get_time_from_granularity(
-        granularity: GRANULARITY,
+        granularity: str,
         start: str = None,
         end: str = None,
     ) -> Tuple[str, str]:
@@ -336,7 +336,7 @@ class DataSourceManager(DataTableManager):
     def _make_query(
         self,
         data_key: str,
-        granularity: GRANULARITY,
+        granularity: str,
         start: str,
         end: str,
         vars: dict = None,

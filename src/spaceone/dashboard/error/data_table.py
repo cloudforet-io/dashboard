@@ -45,3 +45,7 @@ class ERROR_DUPLICATED_FIELD_NAME(ERROR_INVALID_ARGUMENT):
     _message = (
         "The variable to be created is duplicated. (field = {field}, fields = {fields})"
     )
+
+
+class ERROR_NOT_ALLOWED_DATA_FIELD(ERROR_INVALID_ARGUMENT):
+    _message = "The field name is not allowed data field. (name = {name}, data_fields = {data_fields})"
