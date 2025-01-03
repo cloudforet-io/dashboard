@@ -88,7 +88,7 @@ class DataSourceManager(DataTableManager):
 
     def load(
         self,
-        granularity: str,
+        granularity: str = "MONTHLY",
         start: str = None,
         end: str = None,
         vars: dict = None,
