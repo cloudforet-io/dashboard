@@ -347,7 +347,7 @@ class DataTableManager(BaseManager):
         return cache_data if cache_data else None
 
     def _apply_group_by(self, group_by: list):
-        if group_by:
+        if group_by and not self.df.empty:
             for key in group_by:
                 if key not in self.df.columns:
                     raise ERROR_QUERY_GROUP_BY_OPTION(
