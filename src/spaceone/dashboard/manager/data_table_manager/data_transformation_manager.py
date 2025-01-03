@@ -12,7 +12,7 @@ from spaceone.dashboard.error.data_table import (
     ERROR_INVALID_PARAMETER_TYPE,
     ERROR_DUPLICATED_FIELD_NAME,
 )
-from spaceone.dashboard.manager.data_table_manager import DataTableManager, GRANULARITY
+from spaceone.dashboard.manager.data_table_manager import DataTableManager
 from spaceone.dashboard.manager.data_table_manager.data_source_manager import (
     DataSourceManager,
 )
@@ -85,7 +85,7 @@ class DataTransformationManager(DataTableManager):
 
     def load(
         self,
-        granularity: GRANULARITY = "MONTHLY",
+        granularity: str,
         start: str = None,
         end: str = None,
         vars: dict = None,
@@ -120,7 +120,7 @@ class DataTransformationManager(DataTableManager):
 
     def join_data_tables(
         self,
-        granularity: GRANULARITY = "MONTHLY",
+        granularity: str,
         start: str = None,
         end: str = None,
         vars: dict = None,
@@ -152,7 +152,7 @@ class DataTransformationManager(DataTableManager):
 
     def concat_data_tables(
         self,
-        granularity: GRANULARITY = "MONTHLY",
+        granularity: str,
         start: str = None,
         end: str = None,
         vars: dict = None,
@@ -183,7 +183,7 @@ class DataTransformationManager(DataTableManager):
 
     def aggregate_data_table(
         self,
-        granularity: GRANULARITY = "MONTHLY",
+        granularity: str,
         start: str = None,
         end: str = None,
         vars: dict = None,
@@ -226,7 +226,7 @@ class DataTransformationManager(DataTableManager):
 
     def query_data_table(
         self,
-        granularity: GRANULARITY = "MONTHLY",
+        granularity: str,
         start: str = None,
         end: str = None,
         vars: dict = None,
@@ -257,7 +257,7 @@ class DataTransformationManager(DataTableManager):
 
     def evaluate_data_table(
         self,
-        granularity: GRANULARITY = "MONTHLY",
+        granularity: str,
         start: str = None,
         end: str = None,
         vars: dict = None,
@@ -323,7 +323,6 @@ class DataTransformationManager(DataTableManager):
                     try:
                         value_expression = value_expression.format(**template_vars)
                     except KeyError as e:
-
                         value_expression = value_expression.replace("{", "{{").replace(
                             "}", "}}"
                         )
@@ -371,7 +370,6 @@ class DataTransformationManager(DataTableManager):
                     )
 
             elif isinstance(expression, str):
-
                 if "@" in expression:
                     raise ERROR_INVALID_PARAMETER(
                         key="options.EVAL.expressions",
@@ -406,7 +404,7 @@ class DataTransformationManager(DataTableManager):
 
     def pivot_data_table(
         self,
-        granularity: GRANULARITY = "MONTHLY",
+        granularity: str,
         start: str = None,
         end: str = None,
         vars: dict = None,
@@ -435,7 +433,7 @@ class DataTransformationManager(DataTableManager):
 
     def add_labels_data_table(
         self,
-        granularity: GRANULARITY = "MONTHLY",
+        granularity: str,
         start: str = None,
         end: str = None,
         vars: dict = None,
@@ -488,7 +486,7 @@ class DataTransformationManager(DataTableManager):
     def _get_data_table(
         self,
         data_table_vo: Union[PublicDataTable, PrivateDataTable],
-        granularity: GRANULARITY,
+        granularity: str,
         start: str,
         end: str,
         vars: dict,

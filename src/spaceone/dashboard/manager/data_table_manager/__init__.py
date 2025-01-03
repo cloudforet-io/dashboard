@@ -16,7 +16,6 @@ from spaceone.dashboard.error.data_table import (
 )
 
 _LOGGER = logging.getLogger(__name__)
-GRANULARITY = Literal["DAILY", "MONTHLY", "YEARLY"]
 
 
 class DataTableManager(BaseManager):
@@ -37,7 +36,7 @@ class DataTableManager(BaseManager):
 
     def load(
         self,
-        granularity: GRANULARITY = "DAILY",
+        granularity: str,
         start: str = None,
         end: str = None,
         vars: dict = None,
@@ -64,7 +63,6 @@ class DataTableManager(BaseManager):
         response = self._get_cached_response(cache_hash_key)
 
         if not response:
-
             self.load(
                 granularity,
                 start,
@@ -119,6 +117,7 @@ class DataTableManager(BaseManager):
         if page:
             data = self.apply_page(data, page)
 
+        print(data)
         results = {
             "results": data,
             "total_count": total_count,
@@ -238,7 +237,6 @@ class DataTableManager(BaseManager):
     def change_global_variables(self, expression: str, vars: dict):
         gv_type_map = {}
         if "global" in self.jinja_variables:
-
             if not vars:
                 raise ERROR_NO_FIELDS_TO_GLOBAL_VARIABLES(vars=vars)
 
@@ -252,7 +250,6 @@ class DataTableManager(BaseManager):
 
             global_variables = jinja_variables - exclude_keys
             for global_variable_key in global_variables:
-
                 if global_variable_key not in vars:
                     raise ERROR_NOT_GLOBAL_VARIABLE_KEY(
                         global_variable_key=global_variable_key
