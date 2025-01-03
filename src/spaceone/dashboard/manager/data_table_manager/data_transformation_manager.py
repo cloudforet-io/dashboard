@@ -179,7 +179,7 @@ class DataTransformationManager(DataTableManager):
         origin_df = self._get_data_table(origin_vo, granularity, start, end, vars)
         other_df = self._get_data_table(other_vo, granularity, start, end, vars)
 
-        merged_df = pd.concat([origin_df, other_df])
+        merged_df = pd.concat([origin_df, other_df], ignore_index=True)
         merged_df = merged_df.fillna(value=fill_na)
         self.df = merged_df
 
