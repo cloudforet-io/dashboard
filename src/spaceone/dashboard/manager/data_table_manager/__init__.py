@@ -78,10 +78,18 @@ class DataTableManager(BaseManager):
 
                 response = {
                     "results": self.df.copy(deep=True).to_dict(orient="records"),
-                    "labels_info": labels_info,
-                    "data_info": data_info,
-                    "order": self.label_keys + self.data_keys,
                 }
+
+                if labels_info:
+                    response["labels_info"] = labels_info
+
+                if data_info:
+                    response["data_info"] = data_info
+
+                if self.label_keys and self.data_keys:
+                    order = self.label_keys + self.data_keys
+                    response["order"] = order
+
                 cache.set(
                     f"dashboard:widget:load:{self.domain_id}:{self.widget_id}:{cache_hash_key}",
                     response,
@@ -102,9 +110,6 @@ class DataTableManager(BaseManager):
         page: dict = None,
     ) -> dict:
         data = response["results"]
-        labels_info = response["labels_info"]
-        data_info = response["data_info"]
-        order = response["order"]
 
         total_count = len(data)
 
@@ -114,13 +119,19 @@ class DataTableManager(BaseManager):
         if page:
             data = self.apply_page(data, page)
 
-        return {
+        results = {
             "results": data,
             "total_count": total_count,
-            "labels_info": labels_info,
-            "data_info": data_info,
-            "order": order,
         }
+
+        if "labels_info" in response:
+            results["labels_info"] = response["labels_info"]
+        if "data_info" in response:
+            results["data_info"] = response["data_info"]
+        if "order" in response:
+            results["order"] = response["order"]
+
+        return results
 
     def response_sum_data_from_widget(self, response: dict) -> dict:
         data = response["results"]
