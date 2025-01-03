@@ -154,9 +154,9 @@ class PublicWidgetService(BaseService):
                     if "data_table_id" in operator_options:
                         data_table_idx = operator_options["data_table_id"]
                         if data_table_idx in self.data_table_id_map:
-                            data_table["options"][operator]["data_table_id"] = (
-                                self.data_table_id_map[data_table_idx]
-                            )
+                            data_table["options"][operator][
+                                "data_table_id"
+                            ] = self.data_table_id_map[data_table_idx]
                         else:
                             retry_data_tables[idx] = data_table
                             idx += 1
@@ -205,7 +205,7 @@ class PublicWidgetService(BaseService):
         if retry_data_tables:
             self._retry_create_data_tables(retry_data_tables)
 
-    def _retry_create_data_tables(self, data_tables: dict):
+    def _retry_create_data_tables(self, data_tables: dict, retry_count: int = 0):
         retry_data_tables = {}
         for idx, data_table in data_tables.items():
             operator = data_table.get("operator")
@@ -215,9 +215,9 @@ class PublicWidgetService(BaseService):
             if "data_table_id" in operator_options:
                 data_table_idx = operator_options["data_table_id"]
                 if data_table_idx in self.data_table_id_map:
-                    data_table["options"][operator]["data_table_id"] = (
-                        self.data_table_id_map[data_table_idx]
-                    )
+                    data_table["options"][operator][
+                        "data_table_id"
+                    ] = self.data_table_id_map[data_table_idx]
                 else:
                     retry_data_tables[idx] = data_table
                     idx += 1
@@ -250,8 +250,16 @@ class PublicWidgetService(BaseService):
             _LOGGER.debug(f"[create_widget] create data table: {created_data_table_id}")
             self.data_table_id_map[idx] = created_data_table_id
 
+        if retry_count > 10:
+            raise ERROR_INVALID_PARAMETER(
+                key="data_tables",
+                reason="Failed to create data tables in the widget: "
+                "Incorrect index order detected during bulk creation.",
+            )
+
         if retry_data_tables:
-            self._retry_create_data_tables(retry_data_tables)
+            retry_count += 1
+            self._retry_create_data_tables(retry_data_tables, retry_count)
 
     @transaction(
         permission="dashboard:PublicWidget.write",
