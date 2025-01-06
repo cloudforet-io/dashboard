@@ -210,7 +210,7 @@ class DataSourceManager(DataTableManager):
         ]
         join_keys = list(set(origin_label_keys) & set(diff_label_keys))
 
-        merged_df = pd.merge(origin_df, self.df, on=join_keys, how="left")
+        merged_df = pd.merge(origin_df, self.df, on=join_keys, how="outer")
 
         fill_na = {key: 0 for key in [self.data_name, self.timediff_data_name]}
         fill_na.update({key: "" for key in join_keys})
