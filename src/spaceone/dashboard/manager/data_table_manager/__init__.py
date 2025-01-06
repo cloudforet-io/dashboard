@@ -228,6 +228,9 @@ class DataTableManager(BaseManager):
         if not expression:
             return False
 
+        if isinstance(expression, list):
+            expression = str(expression)
+
         env = Environment()
 
         jinja_pattern = re.compile(r"\{\{\s*(.*?)\s*\}\}")
