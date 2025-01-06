@@ -85,7 +85,7 @@ class DataTableManager(BaseManager):
                 if data_info:
                     response["data_info"] = data_info
 
-                if self.label_keys and self.data_keys:
+                if self.data_keys:
                     order = self.label_keys + self.data_keys
                     response["order"] = order
 
