@@ -28,6 +28,7 @@ class DataTableManager(BaseManager):
         self.data_keys = None
         self.label_keys = None
         self.jinja_variables = None
+        self.jinja_variables_contain_space = []
         self.state = None
         self.error_message = None
 
@@ -224,12 +225,38 @@ class DataTableManager(BaseManager):
                     self.df = self.df.iloc[start - 1 : start + limit - 1]
 
     def is_jinja_expression(self, expression: str) -> bool:
+        if not expression:
+            return False
+
         env = Environment()
 
-        parsed_content = env.parse(expression)
+        jinja_pattern = re.compile(r"\{\{\s*(.*?)\s*\}\}")
+
+        modified_expression = re.sub(
+            jinja_pattern,
+            lambda m: "{{" + m.group(1).replace(" ", "_") + "}}",
+            expression,
+        )
+
+        jinja_keys_with_space = {}
+        if expression != modified_expression:
+            keys_with_space = re.findall(jinja_pattern, expression)
+            for key in keys_with_space:
+                jinja_keys_with_space[key.replace(" ", "_")] = key
+
+        parsed_content = env.parse(modified_expression)
         variables = meta.find_undeclared_variables(parsed_content)
 
         if variables:
+            if jinja_keys_with_space:
+                for key, key_with_space in jinja_keys_with_space.items():
+                    self.jinja_variables_contain_space.append(
+                        {
+                            "origin_key": key_with_space,
+                            "modified_key": key,
+                        }
+                    )
+
             self.jinja_variables = variables
 
         return bool(variables)
@@ -276,6 +303,15 @@ class DataTableManager(BaseManager):
 
     @staticmethod
     def remove_jinja_braces(expression: str) -> Union[str, float, list]:
+        jinja_pattern = re.compile(r"\{\{\s*(.*?)\s*\}\}")
+
+        modified_expression = re.sub(
+            jinja_pattern,
+            lambda m: "{{" + m.group(1).replace(" ", "_") + "}}",
+            expression,
+        )
+        expression = modified_expression
+
         while "{{" in expression and "}}" in expression:
             if re.match(r"{{\s*(\w+)\s*}}", expression):
                 expression = re.sub(r"{{\s*(\w+)\s*}}", r"\1", expression)
@@ -307,6 +343,15 @@ class DataTableManager(BaseManager):
         for gv_value, data_type in gv_type_map.items():
             if isinstance(data_type(gv_value), str):
                 expression = expression.replace(gv_value, f'"{gv_value}"')
+
+        return expression
+
+    def change_space_variable(self, expression: str) -> str:
+        if self.jinja_variables_contain_space:
+            for space_variable in self.jinja_variables_contain_space:
+                expression = expression.replace(
+                    space_variable["modified_key"], f"`{space_variable['origin_key']}`"
+                )
 
         return expression
 
