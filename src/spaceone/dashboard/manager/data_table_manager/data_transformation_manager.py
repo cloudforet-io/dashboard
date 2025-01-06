@@ -417,7 +417,7 @@ class DataTransformationManager(DataTableManager):
         origin_vo = self.data_table_vos[0]
         field_options = self.options["fields"]
         labels, column, data = (
-            field_options["labels"],
+            field_options.get("labels"),
             field_options["column"],
             field_options["data"],
         )
@@ -709,12 +709,13 @@ class DataTransformationManager(DataTableManager):
         df: pd.DataFrame, label_fields: list, column_field: str, data_field: str
     ) -> None:
         df_columns = set(df.columns)
-        for label_field in label_fields:
-            if label_field not in df_columns:
-                raise ERROR_INVALID_PARAMETER(
-                    key=f"options.PIVOT.labels",
-                    reason=f"Invalid key: {label_field}, columns={list(df_columns)}",
-                )
+        if label_fields:
+            for label_field in label_fields:
+                if label_field not in df_columns:
+                    raise ERROR_INVALID_PARAMETER(
+                        key=f"options.PIVOT.labels",
+                        reason=f"Invalid key: {label_field}, columns={list(df_columns)}",
+                    )
 
         if column_field not in df_columns:
             raise ERROR_INVALID_PARAMETER(
@@ -736,18 +737,27 @@ class DataTransformationManager(DataTableManager):
 
     @staticmethod
     def _set_new_column_names(pivot_table: pd.DataFrame) -> pd.DataFrame:
-        new_columns = [
-            lower_col if lower_col else upper_col
-            for upper_col, lower_col in pivot_table.columns
-        ]
-        pivot_table.columns = new_columns
+        if pivot_table.columns[0] == "index":
+            pivot_table = pivot_table.iloc[:, 1:]
+        else:
+            new_columns = [
+                lower_col if lower_col else upper_col
+                for upper_col, lower_col in pivot_table.columns
+            ]
+            pivot_table.columns = new_columns
         return pivot_table
 
     def _set_keys(self, columns: list) -> None:
-        self.label_keys = [
-            upper_col for upper_col, lower_col in columns if not lower_col
-        ]
-        self.data_keys = [lower_col for upper_col, lower_col in columns if lower_col]
+        if columns[0] == "index":
+            self.label_keys = []
+            self.data_keys = [col for col in columns if col != "index"]
+        else:
+            self.label_keys = [
+                upper_col for upper_col, lower_col in columns if not lower_col
+            ]
+            self.data_keys = [
+                lower_col for upper_col, lower_col in columns if lower_col
+            ]
 
     @staticmethod
     def _validate_select_fields(
