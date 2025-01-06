@@ -246,6 +246,7 @@ class DataTransformationManager(DataTableManager):
                 condition, gv_type_map = self.change_global_variables(condition, vars)
                 condition = self.remove_jinja_braces(condition)
                 condition = self.change_expression_data_type(condition, gv_type_map)
+                condition = self.change_space_variable(condition)
 
             try:
                 df = df.query(condition)
@@ -298,6 +299,7 @@ class DataTransformationManager(DataTableManager):
                     )
                     condition = self.remove_jinja_braces(condition)
                     condition = self.change_expression_data_type(condition, gv_type_map)
+                    condition = self.change_space_variable(condition)
 
                 if self.is_jinja_expression(value_expression):
                     value_expression, gv_type_map = self.change_global_variables(
@@ -307,6 +309,7 @@ class DataTransformationManager(DataTableManager):
                     value_expression = self.change_expression_data_type(
                         value_expression, gv_type_map
                     )
+                    value_expression = self.change_space_variable(value_expression)
 
                 template_vars = {}
                 for key in self.data_keys:
@@ -875,6 +878,7 @@ class DataTransformationManager(DataTableManager):
             condition, gv_type_map = self.change_global_variables(condition, vars)
             condition = self.remove_jinja_braces(condition)
             condition = self.change_expression_data_type(condition, gv_type_map)
+            condition = self.change_space_variable(condition)
 
         return df.query(condition).copy()
 
