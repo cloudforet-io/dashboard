@@ -188,12 +188,30 @@ class DataTableManager(BaseManager):
             self.apply_page_df(page)
 
         df = self.df.copy(deep=True)
+        data_info, labels_info = self.get_data_and_labels_info()
+
         self.df = None
 
-        return {
+        results = {
             "results": df.to_dict(orient="records"),
             "total_count": total_count,
         }
+
+        if labels_info:
+            results["labels_info"] = labels_info
+
+        if data_info:
+            results["data_info"] = data_info
+
+        if self.data_keys:
+            if self.label_keys is None:
+                order = self.data_keys
+            else:
+                order = self.label_keys + self.data_keys
+
+            results["order"] = order
+
+        return results
 
     def apply_sort_to_df(self, sort: list) -> None:
         if len(self.df) > 0:
