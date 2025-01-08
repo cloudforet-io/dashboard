@@ -283,10 +283,8 @@ class DataTransformationManager(DataTableManager):
                 if name is None:
                     raise ERROR_REQUIRED_PARAMETER(key="options.EVAL.expressions.name")
 
-                if name in self.data_keys or name in self.label_keys:
-                    raise ERROR_DUPLICATED_FIELD_NAME(
-                        field=name, fields=list(df.columns)
-                    )
+                if name in self.data_keys:
+                    raise ERROR_DUPLICATED_FIELD_NAME(field=name, fields=self.data_keys)
 
                 if value_expression is None:
                     raise ERROR_REQUIRED_PARAMETER(
@@ -352,13 +350,17 @@ class DataTransformationManager(DataTableManager):
                     else:
                         self.data_keys = list(set(self.data_keys) | {name})
 
-                    last_key = df.eval(merged_expr).columns[-1:][0]
+                    if name in df.columns:
+                        last_key = name
+                    else:
+                        last_key = df.eval(merged_expr).columns[-1:][0]
 
                     if not df.empty:
                         if condition:
-                            df.loc[df.query(condition).index, last_key] = df.eval(
-                                merged_expr
-                            )
+                            matched_index = df.query(condition).index
+                            df.loc[matched_index, last_key] = df.eval(merged_expr).loc[
+                                matched_index, last_key
+                            ]
 
                         else:
                             df.eval(merged_expr, inplace=True)
