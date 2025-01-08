@@ -358,9 +358,18 @@ class DataTransformationManager(DataTableManager):
                     if not df.empty:
                         if condition:
                             matched_index = df.query(condition).index
-                            df.loc[matched_index, last_key] = df.eval(merged_expr).loc[
-                                matched_index, last_key
-                            ]
+                            if " " in name and name in df.columns:
+                                temp_key = name.replace(" ", "_")
+                                df.rename(columns={name: temp_key}, inplace=True)
+                                merged_expr = f"`{temp_key}` = {value_expression}"
+                                df.loc[matched_index, temp_key] = df.eval(
+                                    merged_expr
+                                ).loc[matched_index, temp_key]
+                                df.rename(columns={temp_key: name}, inplace=True)
+                            else:
+                                df.loc[matched_index, last_key] = df.eval(
+                                    merged_expr
+                                ).loc[matched_index, last_key]
 
                         else:
                             df.eval(merged_expr, inplace=True)
