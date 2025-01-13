@@ -285,9 +285,6 @@ class DataTableManager(BaseManager):
     def change_global_variables(self, expression: str, vars: dict):
         gv_type_map = {}
         if "global" in self.jinja_variables:
-            if not vars:
-                raise ERROR_NO_FIELDS_TO_GLOBAL_VARIABLES(vars=vars)
-
             exclude_keys = set(key for key in self.jinja_variables if key != "global")
             expression = expression.replace("global.", "")
 
@@ -297,11 +294,7 @@ class DataTableManager(BaseManager):
             jinja_variables = meta.find_undeclared_variables(parsed_content)
 
             global_variables = jinja_variables - exclude_keys
-            for global_variable_key in global_variables:
-                if global_variable_key not in vars:
-                    raise ERROR_NOT_GLOBAL_VARIABLE_KEY(
-                        global_variable_key=global_variable_key
-                    )
+            for global_variable_key in global_variables and vars:
 
                 global_variable_value = vars[global_variable_key]
                 gv_type = type(global_variable_value)
