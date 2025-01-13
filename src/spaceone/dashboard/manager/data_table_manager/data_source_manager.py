@@ -104,6 +104,9 @@ class DataSourceManager(DataTableManager):
             if self.timediff:
                 self.df = self._apply_timediff(granularity, start, end, vars)
 
+            if self.group_by:
+                self._add_none_value_group_by_columns()
+
             self.state = "AVAILABLE"
             self.error_message = None
 
@@ -367,3 +370,10 @@ class DataSourceManager(DataTableManager):
             "filter_or": self.filter_or,
             "fields": {self.data_name: {"key": data_key, "operator": "sum"}},
         }
+
+    def _add_none_value_group_by_columns(self) -> None:
+        group_by_columns = [group_option.get("name") for group_option in self.group_by]
+        none_group_by_columns = list(set(group_by_columns) - set(self.df.columns))
+
+        for column in none_group_by_columns:
+            self.df[column] = None
