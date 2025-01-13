@@ -351,7 +351,7 @@ class DataSourceManager(DataTableManager):
                     query_value, gv_type_map = self.change_global_variables(
                         query_value, vars
                     )
-                    query_value = self.remove_jinja_braces(query_value)
+                    query_value = self.remove_jinja_braces(query_value, gv_type_map)
                     if (
                         isinstance(query_value, str)
                         or isinstance(query_value, int)

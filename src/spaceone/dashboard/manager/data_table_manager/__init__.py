@@ -57,7 +57,7 @@ class DataTableManager(BaseManager):
         column_sum: bool = False,
     ) -> dict:
         query_data = self._prepare_query_data(
-            data_table_id, granularity, start, end, group_by, sort
+            data_table_id, granularity, start, end, group_by, sort, vars
         )
 
         cache_hash_key = utils.dict_to_hash(query_data)
@@ -323,15 +323,18 @@ class DataTableManager(BaseManager):
         return expression, gv_type_map
 
     @staticmethod
-    def remove_jinja_braces(expression: str) -> Union[str, float, list]:
-        jinja_pattern = re.compile(r"\{\{\s*(.*?)\s*\}\}")
-
-        modified_expression = re.sub(
-            jinja_pattern,
-            lambda m: "{{" + m.group(1).replace(" ", "_") + "}}",
-            expression,
-        )
-        expression = modified_expression
+    def remove_jinja_braces(
+        expression: str,
+        gv_type_map: dict = None,
+    ) -> Union[str, float, list]:
+        if not gv_type_map:
+            jinja_pattern = re.compile(r"\{\{\s*(.*?)\s*\}\}")
+            modified_expression = re.sub(
+                jinja_pattern,
+                lambda m: "{{" + m.group(1).replace(" ", "_") + "}}",
+                expression,
+            )
+            expression = modified_expression
 
         while "{{" in expression and "}}" in expression:
             if re.match(r"{{\s*(\w+)\s*}}", expression):
@@ -384,6 +387,7 @@ class DataTableManager(BaseManager):
         end: str,
         group_by: list,
         sort: list,
+        vars: dict,
     ) -> dict:
         user_id = self.transaction.get_meta(
             "authorization.user_id"
@@ -399,6 +403,7 @@ class DataTableManager(BaseManager):
             "data_table_id": data_table_id,
             "widget_id": self.widget_id,
             "domain_id": self.domain_id,
+            "vars": vars,
         }
 
         if role_type == "WORKSPACE_MEMBER":
