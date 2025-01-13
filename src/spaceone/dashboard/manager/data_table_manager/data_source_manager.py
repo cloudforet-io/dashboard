@@ -347,6 +347,7 @@ class DataSourceManager(DataTableManager):
         if self.filter:
             for filter_info in self.filter:
                 query_value = filter_info.get("v") or filter_info.get("value")
+                query_key = filter_info.get("k") or filter_info.get("key")
                 if self.is_jinja_expression(query_value):
                     query_value, gv_type_map = self.change_global_variables(
                         query_value, vars
@@ -360,6 +361,9 @@ class DataSourceManager(DataTableManager):
                         filter_info["v"] = [query_value]
                     elif isinstance(query_value, list):
                         filter_info["v"] = query_value
+
+                if query_key == query_value:
+                    self.filter = None
 
         return {
             "granularity": granularity,
