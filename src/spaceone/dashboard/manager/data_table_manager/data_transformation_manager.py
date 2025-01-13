@@ -244,7 +244,7 @@ class DataTransformationManager(DataTableManager):
         for condition in conditions:
             if self.is_jinja_expression(condition):
                 condition, gv_type_map = self.change_global_variables(condition, vars)
-                condition = self.remove_jinja_braces(condition)
+                condition = self.remove_jinja_braces(condition, gv_type_map)
                 condition = self.change_expression_data_type(condition, gv_type_map)
                 condition = self.change_space_variable(condition)
 
@@ -295,7 +295,7 @@ class DataTransformationManager(DataTableManager):
                     condition, gv_type_map = self.change_global_variables(
                         condition, vars
                     )
-                    condition = self.remove_jinja_braces(condition)
+                    condition = self.remove_jinja_braces(condition, gv_type_map)
                     condition = self.change_expression_data_type(condition, gv_type_map)
                     condition = self.change_space_variable(condition)
 
@@ -303,7 +303,9 @@ class DataTransformationManager(DataTableManager):
                     value_expression, gv_type_map = self.change_global_variables(
                         value_expression, vars
                     )
-                    value_expression = self.remove_jinja_braces(value_expression)
+                    value_expression = self.remove_jinja_braces(
+                        value_expression, gv_type_map
+                    )
                     value_expression = self.change_expression_data_type(
                         value_expression, gv_type_map
                     )
@@ -897,7 +899,7 @@ class DataTransformationManager(DataTableManager):
 
         if self.is_jinja_expression(condition):
             condition, gv_type_map = self.change_global_variables(condition, vars)
-            condition = self.remove_jinja_braces(condition)
+            condition = self.remove_jinja_braces(condition, gv_type_map)
             condition = self.change_expression_data_type(condition, gv_type_map)
             condition = self.change_space_variable(condition)
 
