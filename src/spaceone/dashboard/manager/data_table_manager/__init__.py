@@ -290,12 +290,10 @@ class DataTableManager(BaseManager):
 
             parsed_content = env.parse(expression)
             jinja_variables = meta.find_undeclared_variables(parsed_content)
-
             global_variables = jinja_variables - exclude_keys
 
-            if vars:
-                for global_variable_key in global_variables:
-
+            for global_variable_key in global_variables:
+                if global_variable_key in vars:
                     global_variable_value = vars[global_variable_key]
                     gv_type = type(global_variable_value)
 
