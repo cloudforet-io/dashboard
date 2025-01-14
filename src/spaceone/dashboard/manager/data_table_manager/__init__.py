@@ -1,15 +1,13 @@
 import logging
 import ast
 import re
-from typing import Union, Literal, Tuple
+from typing import Union, Tuple
 from jinja2 import Environment, meta
 import pandas as pd
 
 from spaceone.core import cache, utils
 from spaceone.core.manager import BaseManager
 from spaceone.dashboard.error.data_table import (
-    ERROR_NO_FIELDS_TO_GLOBAL_VARIABLES,
-    ERROR_NOT_GLOBAL_VARIABLE_KEY,
     ERROR_QUERY_OPTION,
     ERROR_QUERY_GROUP_BY_OPTION,
     ERROR_EMPTY_DATA_FIELD,
@@ -294,24 +292,26 @@ class DataTableManager(BaseManager):
             jinja_variables = meta.find_undeclared_variables(parsed_content)
 
             global_variables = jinja_variables - exclude_keys
-            for global_variable_key in global_variables and vars:
 
-                global_variable_value = vars[global_variable_key]
-                gv_type = type(global_variable_value)
+            if vars:
+                for global_variable_key in global_variables:
 
-                if isinstance(global_variable_value, int) or isinstance(
-                    global_variable_value, float
-                ):
-                    global_variable_value = str(global_variable_value)
+                    global_variable_value = vars[global_variable_key]
+                    gv_type = type(global_variable_value)
 
-                if isinstance(global_variable_value, list):
-                    global_variable_value = str(global_variable_value)
+                    if isinstance(global_variable_value, int) or isinstance(
+                        global_variable_value, float
+                    ):
+                        global_variable_value = str(global_variable_value)
 
-                gv_type_map[global_variable_value] = gv_type
+                    if isinstance(global_variable_value, list):
+                        global_variable_value = str(global_variable_value)
 
-                expression = expression.replace(
-                    global_variable_key, global_variable_value
-                )
+                    gv_type_map[global_variable_value] = gv_type
+
+                    expression = expression.replace(
+                        global_variable_key, global_variable_value
+                    )
 
         return expression, gv_type_map
 
