@@ -293,7 +293,7 @@ class DataTableManager(BaseManager):
             global_variables = jinja_variables - exclude_keys
 
             for global_variable_key in global_variables:
-                if global_variable_key in vars:
+                if vars and global_variable_key in vars:
                     global_variable_value = vars[global_variable_key]
                     gv_type = type(global_variable_value)
 
