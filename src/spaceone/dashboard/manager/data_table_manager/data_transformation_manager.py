@@ -922,11 +922,24 @@ class DataTransformationManager(DataTableManager):
             match = case["match"].strip()
 
             if operator == "eq":
-                filtered_df.loc[filtered_df[key] == match, name] = value
+                if name not in filtered_df.columns:
+                    filtered_df.loc[filtered_df[key] == match, name] = value
+                else:
+                    filtered_df.loc[
+                        (filtered_df[key] == match) & (filtered_df[name].isna()), name
+                    ] = value
+
             elif operator == "regex":
-                filtered_df.loc[
-                    filtered_df[key].str.contains(match, na=False), name
-                ] = value
+                if name not in filtered_df.columns:
+                    filtered_df.loc[
+                        filtered_df[key].str.contains(match, na=False), name
+                    ] = value
+                else:
+                    filtered_df.loc[
+                        (filtered_df[key].str.contains(match, na=False))
+                        & (filtered_df[name].isna()),
+                        name,
+                    ] = value
 
         if else_value is not None:
             filtered_df.loc[filtered_df[name].isna(), name] = else_value
