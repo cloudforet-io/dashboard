@@ -85,7 +85,10 @@ class PublicDataTableService(BaseService):
 
         if source_type == "COST":
             if plugin_id := options.get("COST", {}).get("plugin_id"):
-                data_source_id = self._get_data_source_id_from_plugin_id(plugin_id)
+                data_source_id = options.get("COST", {}).get("data_source_id")
+                data_source_id = self._get_data_source_id_from_plugin_id(
+                    plugin_id, data_source_id
+                )
                 options["COST"]["data_source_id"] = data_source_id
                 params_dict["options"] = options
                 del params_dict["options"]["COST"]["plugin_id"]
@@ -124,13 +127,22 @@ class PublicDataTableService(BaseService):
         return pub_data_table_vo.to_dict()
 
     @staticmethod
-    def _get_data_source_id_from_plugin_id(plugin_id: str) -> str:
+    def _get_data_source_id_from_plugin_id(
+        plugin_id: str,
+        data_source_id: str = None,
+    ) -> str:
         cost_mgr = CostAnalysisManager()
         params = {
             "query": {
                 "filter": [{"k": "plugin_info.plugin_id", "v": plugin_id, "o": "eq"}],
             }
         }
+
+        if data_source_id:
+            params["query"]["filter"].append(
+                {"k": "data_source_id", "v": data_source_id, "o": "eq"}
+            )
+
         data_sources_info = cost_mgr.list_data_sources(params)
         if data_sources_info.get("total_count", 0) == 0:
             raise ERROR_INVALID_PARAMETER(
