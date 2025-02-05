@@ -1,9 +1,10 @@
 import logging
 import ast
 import re
+import pandas as pd
+from markupsafe import escape
 from typing import Union, Tuple
 from jinja2 import Environment, meta
-import pandas as pd
 
 from spaceone.core import cache, utils
 from spaceone.core.manager import BaseManager
@@ -247,7 +248,10 @@ class DataTableManager(BaseManager):
         if isinstance(expression, list):
             expression = str(expression)
 
-        env = Environment()
+        expression = self._sanitize_input(expression)
+        expression = escape(expression)
+
+        env = Environment(autoescape=True)
 
         jinja_pattern = re.compile(r"\{\{\s*(.*?)\s*\}\}")
 
@@ -282,12 +286,12 @@ class DataTableManager(BaseManager):
 
     def change_global_variables(self, expression: str, vars: dict):
         gv_type_map = {}
+
         if "global" in self.jinja_variables:
             exclude_keys = set(key for key in self.jinja_variables if key != "global")
             expression = expression.replace("global.", "")
 
-            env = Environment()
-
+            env = Environment(autoescape=True)
             parsed_content = env.parse(expression)
             jinja_variables = meta.find_undeclared_variables(parsed_content)
             global_variables = jinja_variables - exclude_keys
@@ -297,18 +301,19 @@ class DataTableManager(BaseManager):
                     global_variable_value = vars[global_variable_key]
                     gv_type = type(global_variable_value)
 
-                    if isinstance(global_variable_value, int) or isinstance(
-                        global_variable_value, float
-                    ):
-                        global_variable_value = str(global_variable_value)
+                    if isinstance(global_variable_value, str):
+                        global_variable_value = self._sanitize_input(
+                            global_variable_value
+                        )
+                        global_variable_value = escape(global_variable_value)
 
-                    if isinstance(global_variable_value, list):
-                        global_variable_value = str(global_variable_value)
+                    elif isinstance(global_variable_value, (int, float, list)):
+                        global_variable_value = escape(str(global_variable_value))
 
                     gv_type_map[global_variable_value] = gv_type
 
                     expression = expression.replace(
-                        global_variable_key, global_variable_value
+                        global_variable_key, str(global_variable_value)
                     )
 
         return expression, gv_type_map
@@ -426,3 +431,7 @@ class DataTableManager(BaseManager):
                 raise ERROR_EMPTY_DATA_FIELD(fields=list(self.df.columns))
 
             self.df = self.df.groupby(group_by).agg(agg_funcs).reset_index()
+
+    @staticmethod
+    def _sanitize_input(value: str) -> str:
+        return re.sub(r"<.*?>", "", value)
