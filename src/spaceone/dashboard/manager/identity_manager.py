@@ -21,3 +21,10 @@ class IdentityManager(BaseManager):
 
     def get_project(self, project_id: str) -> dict:
         return self.identity_conn.dispatch("Project.get", {"project_id": project_id})
+
+    def list_service_accounts(self, workspace_id: str) -> dict:
+        if workspace_id:
+            query = {"workspace_id": workspace_id}
+        else:
+            query = {}
+        return self.identity_conn.dispatch("ServiceAccount.list", query)
