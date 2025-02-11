@@ -279,6 +279,7 @@ class PublicDataTableService(BaseService):
                     options,
                     pub_data_table_vo.widget_id,
                     pub_data_table_vo.domain_id,
+                    pub_data_table_vo.workspace_id,
                 )
 
                 # Load data source to verify options

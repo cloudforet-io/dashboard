@@ -8,6 +8,7 @@ import pandas as pd
 from spaceone.dashboard.manager.data_table_manager import DataTableManager
 from spaceone.dashboard.manager.cost_analysis_manager import CostAnalysisManager
 from spaceone.dashboard.manager.inventory_manager import InventoryManager
+from spaceone.dashboard.manager.identity_manager import IdentityManager
 from spaceone.dashboard.error.data_table import *
 
 _LOGGER = logging.getLogger(__name__)
@@ -21,6 +22,7 @@ class DataSourceManager(DataTableManager):
         options: dict,
         widget_id: str,
         domain_id: str,
+        workspace_id: str = None,
         *args,
         **kwargs,
     ):
@@ -32,10 +34,12 @@ class DataSourceManager(DataTableManager):
         self.data_table_type = data_table_type
         self.cost_analysis_mgr = CostAnalysisManager()
         self.inventory_mgr = InventoryManager()
+        self.identity_mgr = IdentityManager()
         self.source_type = source_type
         self.options = options
         self.widget_id = widget_id
         self.domain_id = domain_id
+        self.workspace_id = workspace_id
 
         self.data_name = options.get("data_name")
         if self.data_name is None:
@@ -79,6 +83,15 @@ class DataSourceManager(DataTableManager):
                         del group_option["key"]
 
                     labels_info[group_name] = group_option
+
+                    if group_key == "service_account_id":
+                        service_account_info = group_option.get("tags")
+                        if service_account_info:
+                            for key in service_account_info:
+                                labels_info[f"tags.{key}"] = {}
+
+                            labels_info[group_name] = {}
+
                 else:
                     labels_info[group_option] = {}
 
@@ -106,6 +119,15 @@ class DataSourceManager(DataTableManager):
 
             if self.group_by:
                 self._add_none_value_group_by_columns()
+
+                group_by_keys = {option.get("key"): option for option in self.group_by}
+
+                service_account_info = group_by_keys.get("service_account_id")
+                if service_account_info and service_account_info.get("tags"):
+                    service_account_keys = service_account_info["tags"]
+                    self._apply_left_join_tags_from_service_account(
+                        service_account_keys
+                    )
 
             self.state = "AVAILABLE"
             self.error_message = None
@@ -384,3 +406,36 @@ class DataSourceManager(DataTableManager):
 
         for column in none_group_by_columns:
             self.df[column] = None
+
+    def _apply_left_join_tags_from_service_account(self, service_account_keys) -> None:
+        service_accounts_info = self.identity_mgr.list_service_accounts(
+            self.workspace_id
+        )
+
+        if service_accounts_info:
+            flattened_data = []
+            for service_account_info in service_accounts_info["results"]:
+                tags_data = {
+                    key: value
+                    for key, value in service_account_info.items()
+                    if key != "tags" and key == "service_account_id"
+                }
+                tags = service_account_info.get("tags", {})
+                for key, value in tags.items():
+                    if key in service_account_keys:
+                        tags_data[f"tags.{key}"] = value
+                flattened_data.append(tags_data)
+
+            tags_df = pd.DataFrame(flattened_data)
+
+            self.df = pd.merge(
+                self.df,
+                tags_df,
+                left_on="Service Account",
+                right_on="service_account_id",
+                how="left",
+            )
+            self.df.drop(columns=["service_account_id"], inplace=True)
+
+            fill_na = {f"tags.{key}": "" for key in service_account_keys}
+            self.df = self.df.fillna(value=fill_na)
