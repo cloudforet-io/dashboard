@@ -49,6 +49,7 @@ class DataTransformationManager(DataTableManager):
             "PIVOT",
             "ADD_LABELS",
             "VALUE_MAPPING",
+            "SORT",
         ]:
             raise ERROR_NOT_SUPPORTED_OPERATOR(operator=operator)
 
@@ -108,6 +109,8 @@ class DataTransformationManager(DataTableManager):
                 self.add_labels_data_table(granularity, start, end, vars)
             elif self.operator == "VALUE_MAPPING":
                 self.value_mapping_data_table(granularity, start, end, vars)
+            elif self.operator == "SORT":
+                self.sort_data_table(granularity, start, end, vars)
 
             self.state = "AVAILABLE"
             self.error_message = None
@@ -504,6 +507,33 @@ class DataTransformationManager(DataTableManager):
         df.loc[filtered_df.index, name] = filtered_df[name]
         self.handle_unfiltered_data(df, filtered_df, name, field_type)
 
+        self.df = df
+
+    def sort_data_table(
+        self,
+        granularity: str = "MONTHLY",
+        start: str = None,
+        end: str = None,
+        vars: dict = None,
+    ) -> None:
+        data_table_vo = self.data_table_vos[0]
+        df = self._get_data_table(data_table_vo, granularity, start, end, vars)
+
+        self.label_keys = list(data_table_vo.labels_info.keys())
+        self.data_keys = list(data_table_vo.data_info.keys())
+
+        sort_options = self.options.get("sort")
+        for sort_option in sort_options:
+            if sort_option["key"] not in df.columns:
+                raise ERROR_INVALID_PARAMETER(
+                    key="options.SORT.key",
+                    reason=f"Invalid key: {sort_option['key']}",
+                )
+
+        sort_keys = [option["key"] for option in sort_options]
+        ascending_list = [not option.get("desc", False) for option in sort_options]
+
+        df = df.sort_values(by=sort_keys, ascending=ascending_list)
         self.df = df
 
     def _get_data_table(

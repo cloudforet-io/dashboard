@@ -53,6 +53,7 @@ class DataSourceManager(DataTableManager):
         self.group_by = options.get("group_by")
         self.filter = options.get("filter")
         self.filter_or = options.get("filter_or")
+        self.sort = options.get("sort")
 
     def get_data_and_labels_info(self) -> Tuple[dict, dict]:
         data_info = {self.data_name: {}}
@@ -398,6 +399,7 @@ class DataSourceManager(DataTableManager):
             "filter": self.filter,
             "filter_or": self.filter_or,
             "fields": {self.data_name: {"key": data_key, "operator": "sum"}},
+            "sort": self.sort,
         }
 
     def _add_none_value_group_by_columns(self) -> None:
