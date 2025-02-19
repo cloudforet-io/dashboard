@@ -1,3 +1,4 @@
+import re
 import logging
 from typing import List, Union, Tuple
 
@@ -251,13 +252,7 @@ class DataTransformationManager(DataTableManager):
                 condition = self.change_expression_data_type(condition, gv_type_map)
                 condition = self.change_space_variable(condition)
 
-            try:
-                df = df.query(condition)
-            except Exception as e:
-                _LOGGER.error(f"[query_data_table] query error: {e}")
-                raise ERROR_INVALID_PARAMETER(
-                    key="options.QUERY.conditions", reason=condition
-                )
+            df = self.apply_query(df, condition)
 
         self.df = df
 
@@ -362,7 +357,7 @@ class DataTransformationManager(DataTableManager):
 
                     if not df.empty:
                         if condition:
-                            matched_index = df.query(condition).index
+                            matched_index = self.apply_query(df, condition).index
                             if " " in name and name in df.columns:
                                 temp_key = name.replace(" ", "_")
                                 df.rename(columns={name: temp_key}, inplace=True)
@@ -933,7 +928,7 @@ class DataTransformationManager(DataTableManager):
             condition = self.change_expression_data_type(condition, gv_type_map)
             condition = self.change_space_variable(condition)
 
-        return df.query(condition).copy()
+        return self.apply_query(df, condition)
 
     def apply_cases(self, filtered_df: pd.DataFrame) -> pd.DataFrame:
         name = self.options["name"]
@@ -1044,3 +1039,43 @@ class DataTransformationManager(DataTableManager):
         for key in required_keys:
             if key not in case:
                 raise ERROR_REQUIRED_PARAMETER(key=f"options.VALUE_MAPPING.cases.{key}")
+
+    @staticmethod
+    def extract_fields_from_condition(condition: str) -> list:
+        return re.findall(r"`([^`]+)`", condition)
+
+    def convert_datetime_fields(self, df: pd.DataFrame, conditions: list) -> tuple:
+        converted_fields = set()
+
+        for condition in conditions:
+            converted_fields.update(self.extract_fields_from_condition(condition))
+
+        for field in converted_fields:
+            if field in df.columns:
+                df[field] = pd.to_datetime(df[field], errors="coerce")
+
+        return df, converted_fields
+
+    @staticmethod
+    def revert_datetime_to_string(df: pd.DataFrame, fields: set) -> pd.DataFrame:
+        for field in fields:
+            if field in df.columns:
+                df[field] = df[field].astype(str)
+        return df
+
+    def apply_query(self, df: pd.DataFrame, condition: str) -> pd.DataFrame:
+        try:
+            fields_in_condition = self.extract_fields_from_condition(condition)
+
+            if "Date" in fields_in_condition:
+                df, converted_fields = self.convert_datetime_fields(df, [condition])
+                df = df.query(condition).copy()
+                df = self.revert_datetime_to_string(df, converted_fields)
+            else:
+                df = df.query(condition).copy()
+
+        except Exception as e:
+            _LOGGER.error(f"[apply_query] query error: {e}")
+            raise ERROR_INVALID_PARAMETER(key="query.condition", reason=condition)
+
+        return df
