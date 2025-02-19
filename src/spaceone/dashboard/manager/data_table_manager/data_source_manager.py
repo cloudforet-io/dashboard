@@ -28,7 +28,7 @@ class DataSourceManager(DataTableManager):
     ):
         super().__init__(*args, **kwargs)
 
-        if source_type not in ["COST", "ASSET"]:
+        if source_type not in ["COST", "ASSET", "UNIFIED_COST"]:
             raise ERROR_NOT_SUPPORTED_SOURCE_TYPE(source_type=source_type)
 
         self.data_table_type = data_table_type
@@ -114,6 +114,8 @@ class DataSourceManager(DataTableManager):
                 self._analyze_cost(granularity, start, end, vars)
             elif self.source_type == "ASSET":
                 self._analyze_asset(granularity, start, end, vars)
+            elif self.source_type == "UNIFIED_COST":
+                self._analyze_unified_cost(granularity, start, end, vars)
 
             if self.timediff:
                 self.df = self._apply_timediff(granularity, start, end, vars)
@@ -199,6 +201,36 @@ class DataSourceManager(DataTableManager):
         params = {"data_source_id": data_source_id, "query": query}
 
         response = self.cost_analysis_mgr.analyze_cost(params)
+        results = response.get("results", [])
+
+        results = self._change_datetime_format(results)
+
+        self.df = pd.DataFrame(results)
+
+    def _analyze_unified_cost(
+        self,
+        granularity: str,
+        start: str,
+        end: str,
+        vars: dict = None,
+    ) -> None:
+        cost_info = self.options.get("UNIFIED_COST", {})
+        data_key = cost_info.get("data_key")
+
+        if data_key is None:
+            raise ERROR_REQUIRED_PARAMETER(parameter="options.COST.data_key")
+
+        query = self._make_query(
+            data_key,
+            granularity,
+            start,
+            end,
+            vars=vars,
+        )
+
+        params = {"query": query}
+
+        response = self.cost_analysis_mgr.analyze_unified_cost(params)
         results = response.get("results", [])
 
         results = self._change_datetime_format(results)

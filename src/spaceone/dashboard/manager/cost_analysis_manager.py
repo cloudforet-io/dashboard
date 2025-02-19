@@ -13,5 +13,8 @@ class CostAnalysisManager(BaseManager):
     def analyze_cost(self, params: dict) -> dict:
         return self.cost_analysis_conn.dispatch("Cost.analyze", params)
 
+    def analyze_unified_cost(self, params: dict) -> dict:
+        return self.cost_analysis_conn.dispatch("UnifiedCost.analyze", params)
+
     def list_data_sources(self, params: dict) -> dict:
         return self.cost_analysis_conn.dispatch("DataSource.list", params)
