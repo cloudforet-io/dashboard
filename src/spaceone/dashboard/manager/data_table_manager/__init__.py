@@ -30,6 +30,7 @@ class DataTableManager(BaseManager):
         self.jinja_variables_contain_space = []
         self.state = None
         self.error_message = None
+        self.currency = "USD"
 
     def get_data_and_labels_info(self) -> Tuple[dict, dict]:
         raise NotImplementedError()
@@ -89,7 +90,7 @@ class DataTableManager(BaseManager):
                     response["order"] = order
 
                 cache.set(
-                    f"dashboard:widget:load:{self.domain_id}:{self.widget_id}:{cache_hash_key}",
+                    f"dashboard:widget:load:{self.domain_id}:{self.widget_id}:{cache_hash_key}:{self.currency}",
                     response,
                     expire=600,
                 )
@@ -409,7 +410,7 @@ class DataTableManager(BaseManager):
 
     def _get_cached_response(self, cache_hash_key) -> dict:
         cache_data = cache.get(
-            f"dashboard:widget:load:{self.domain_id}:{self.widget_id}:{cache_hash_key}"
+            f"dashboard:widget:load:{self.domain_id}:{self.widget_id}:{cache_hash_key}:{self.currency}"
         )
         return cache_data if cache_data else None
 

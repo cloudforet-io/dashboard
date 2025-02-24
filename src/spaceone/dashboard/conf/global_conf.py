@@ -47,6 +47,7 @@ CONNECTORS = {
             "identity": "grpc://identity:50051",
             "inventory": "grpc://inventory:50051",
             "cost_analysis": "grpc://cost-analysis:50051",
+            "config": "grpc://config:50051",
         },
     }
 }
