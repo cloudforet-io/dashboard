@@ -9,6 +9,7 @@ from spaceone.dashboard.manager.data_table_manager import DataTableManager
 from spaceone.dashboard.manager.cost_analysis_manager import CostAnalysisManager
 from spaceone.dashboard.manager.inventory_manager import InventoryManager
 from spaceone.dashboard.manager.identity_manager import IdentityManager
+from spaceone.dashboard.manager.config_manager import ConfigManager
 from spaceone.dashboard.error.data_table import *
 
 _LOGGER = logging.getLogger(__name__)
@@ -35,6 +36,7 @@ class DataSourceManager(DataTableManager):
         self.cost_analysis_mgr = CostAnalysisManager()
         self.inventory_mgr = InventoryManager()
         self.identity_mgr = IdentityManager()
+        self.config_mgr = ConfigManager()
         self.source_type = source_type
         self.options = options
         self.widget_id = widget_id
@@ -219,6 +221,11 @@ class DataSourceManager(DataTableManager):
 
         if data_key is None:
             raise ERROR_REQUIRED_PARAMETER(parameter="options.COST.data_key")
+
+        if data_key == "cost":
+            currency = self._get_currency_from_domain_config()
+            self.currency = currency
+            data_key = f"{data_key}.{currency}"
 
         query = self._make_query(
             data_key,
@@ -473,3 +480,9 @@ class DataSourceManager(DataTableManager):
 
             fill_na = {f"tags.{key}": "" for key in service_account_keys}
             self.df = self.df.fillna(value=fill_na)
+
+    def _get_currency_from_domain_config(self):
+        request_params = {"name": "settings"}
+        domain_config = self.config_mgr.get_domain_config(request_params)
+        unified_cost_config = domain_config["data"].get("unified_cost_config")
+        return unified_cost_config.get("currency")
