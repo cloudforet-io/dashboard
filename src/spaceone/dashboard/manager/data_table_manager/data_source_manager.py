@@ -10,6 +10,7 @@ from spaceone.dashboard.manager.cost_analysis_manager import CostAnalysisManager
 from spaceone.dashboard.manager.inventory_manager import InventoryManager
 from spaceone.dashboard.manager.identity_manager import IdentityManager
 from spaceone.dashboard.manager.config_manager import ConfigManager
+from spaceone.dashboard.manager.public_dashboard_manager import PublicDashboardManager
 from spaceone.dashboard.error.data_table import *
 
 _LOGGER = logging.getLogger(__name__)
@@ -22,6 +23,7 @@ class DataSourceManager(DataTableManager):
         source_type: str,
         options: dict,
         widget_id: str,
+        dashboard_id: str,
         domain_id: str,
         workspace_id: str = None,
         *args,
@@ -37,9 +39,11 @@ class DataSourceManager(DataTableManager):
         self.inventory_mgr = InventoryManager()
         self.identity_mgr = IdentityManager()
         self.config_mgr = ConfigManager()
+        self.public_dashboard_mgr = PublicDashboardManager()
         self.source_type = source_type
         self.options = options
         self.widget_id = widget_id
+        self.dashboard_id = dashboard_id
         self.domain_id = domain_id
         self.workspace_id = workspace_id
 
@@ -255,6 +259,8 @@ class DataSourceManager(DataTableManager):
             self._analyze_cost(granularity, start, end, vars)
         elif self.source_type == "ASSET":
             self._analyze_asset(granularity, start, end, vars)
+        elif self.source_type == "UNIFIED_COST":
+            self._analyze_unified_cost(granularity, start, end, vars)
 
         if self.df.empty:
             _LOGGER.debug(
@@ -406,29 +412,45 @@ class DataSourceManager(DataTableManager):
         end: str,
         vars: dict = None,
     ):
-        if self.filter:
+        copied_vars = copy.deepcopy(vars) or {}
+        self.filter = self.filter or []
 
-            new_filter = []
-            for filter_info in self.filter:
+        for key, value in vars.items():
+            if key in ["workspace_id", "project_id", "service_account_id"]:
+                self.process_key(key, value)
+                del copied_vars[key]
+            elif key == "region_code":
+                label_key = (
+                    "labels.Region" if self.source_type != "COST" else "region_code"
+                )
+                self.process_key(key, value, label_key)
+                del copied_vars[key]
 
-                query_value = filter_info.get("v") or filter_info.get("value")
-                if self.is_jinja_expression(query_value):
-                    query_value, gv_type_map = self.change_global_variables(
-                        query_value, vars
-                    )
+        if copied_vars:
+            dashboard_info = self.public_dashboard_mgr.get_public_dashboard(
+                self.dashboard_id, self.domain_id
+            )
+            vars_schema = dashboard_info.vars_schema.get("properties", {})
+            vars_schema_keys = vars_schema.keys()
 
-                    query_value = self.remove_jinja_braces(query_value, gv_type_map)
-                    if isinstance(query_value, (str, int, float)):
-                        filter_info["v"] = [query_value]
-                    elif isinstance(query_value, list):
-                        filter_info["v"] = query_value
+            for filter_key, filter_value in copied_vars.items():
+                if filter_key in vars_schema_keys:
+                    origin_key = vars_schema[filter_key]["reference"]["dataKey"]
 
-                    if not gv_type_map:
-                        continue
+                    if self.is_jinja_expression(filter_value):
+                        filter_value, gv_type_map = self.change_global_variables(
+                            filter_value, vars
+                        )
+                        filter_value = self.remove_jinja_braces(
+                            filter_value, gv_type_map
+                        )
+                        if isinstance(filter_value, (str, int, float)):
+                            filter_value = [filter_value]
 
-                new_filter.append(filter_info)
+                        if not gv_type_map:
+                            continue
 
-            self.filter = new_filter
+                    self.add_filter(origin_key, filter_value, "in")
 
         return {
             "granularity": granularity,
@@ -488,3 +510,12 @@ class DataSourceManager(DataTableManager):
         )
         unified_cost_config = domain_config["data"].get("unified_cost_config")
         return unified_cost_config.get("currency")
+
+    def add_filter(self, key, value, operator):
+        self.filter.append({"key": key, "value": value, "operator": operator})
+
+    def process_key(self, key, value, label_key=None):
+        if isinstance(value, list):
+            self.add_filter(label_key or key, value, "in")
+        else:
+            self.add_filter(label_key or key, value, "eq")

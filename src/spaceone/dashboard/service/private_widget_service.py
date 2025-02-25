@@ -381,6 +381,7 @@ class PrivateWidgetService(BaseService):
                 pri_data_table_vo.source_type,
                 pri_data_table_vo.options,
                 pri_data_table_vo.widget_id,
+                pri_widget_vo.dashboard_id,
                 pri_data_table_vo.domain_id,
             )
             return ds_mgr.load_from_widget(
@@ -403,6 +404,7 @@ class PrivateWidgetService(BaseService):
                 pri_data_table_vo.operator,
                 options,
                 pri_data_table_vo.widget_id,
+                pri_widget_vo.dashboard_id,
                 pri_data_table_vo.domain_id,
             )
             return dt_mgr.load_from_widget(
