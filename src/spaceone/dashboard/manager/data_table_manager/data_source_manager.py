@@ -415,16 +415,17 @@ class DataSourceManager(DataTableManager):
         copied_vars = copy.deepcopy(vars) or {}
         self.filter = self.filter or []
 
-        for key, value in vars.items():
-            if key in ["workspace_id", "project_id", "service_account_id"]:
-                self.process_key(key, value)
-                del copied_vars[key]
-            elif key == "region_code":
-                label_key = (
-                    "labels.Region" if self.source_type != "COST" else "region_code"
-                )
-                self.process_key(key, value, label_key)
-                del copied_vars[key]
+        if copied_vars:
+            for key, value in vars.items():
+                if key in ["workspace_id", "project_id", "service_account_id"]:
+                    self.process_key(key, value)
+                    del copied_vars[key]
+                elif key == "region_code":
+                    label_key = (
+                        "labels.Region" if self.source_type != "COST" else "region_code"
+                    )
+                    self.process_key(key, value, label_key)
+                    del copied_vars[key]
 
         if copied_vars:
             dashboard_info = self.public_dashboard_mgr.get_public_dashboard(
