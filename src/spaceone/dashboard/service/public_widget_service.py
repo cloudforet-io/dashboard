@@ -403,7 +403,6 @@ class PublicWidgetService(BaseService):
                 pub_data_table_vo.source_type,
                 pub_data_table_vo.options,
                 pub_data_table_vo.widget_id,
-                pub_widget_vo.dashboard_id,
                 pub_data_table_vo.domain_id,
             )
             return ds_mgr.load_from_widget(
@@ -491,7 +490,6 @@ class PublicWidgetService(BaseService):
                 pub_data_table_vo.source_type,
                 pub_data_table_vo.options,
                 pub_data_table_vo.widget_id,
-                pub_widget_vo.dashboard_id,
                 pub_data_table_vo.domain_id,
             )
             return ds_mgr.load_from_widget(
