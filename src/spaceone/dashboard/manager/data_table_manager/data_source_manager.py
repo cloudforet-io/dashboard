@@ -483,6 +483,8 @@ class DataSourceManager(DataTableManager):
 
     def _get_currency_from_domain_config(self):
         request_params = {"name": "settings"}
-        domain_config = self.config_mgr.get_domain_config(request_params)
+        domain_config = self.config_mgr.get_domain_config(
+            request_params, self.domain_id
+        )
         unified_cost_config = domain_config["data"].get("unified_cost_config")
         return unified_cost_config.get("currency")
