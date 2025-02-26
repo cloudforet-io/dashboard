@@ -436,7 +436,12 @@ class DataSourceManager(DataTableManager):
 
         if vars:
             for key, value in vars.items():
-                if key in ["workspace_id", "project_id", "service_account_id"]:
+                if key in [
+                    "workspace_id",
+                    "project_id",
+                    "project_group_id",
+                    "service_account_id",
+                ]:
                     if isinstance(value, list):
                         self.filter.append(
                             {"key": key, "value": value, "operator": "in"}
