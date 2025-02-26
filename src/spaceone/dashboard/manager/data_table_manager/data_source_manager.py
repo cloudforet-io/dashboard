@@ -410,16 +410,6 @@ class DataSourceManager(DataTableManager):
     ):
         self.filter = self.filter or []
 
-        if vars:
-            for key, value in vars.items():
-                if key in ["workspace_id", "project_id", "service_account_id"]:
-                    self.process_key(key, value)
-                elif key == "region_code":
-                    label_key = (
-                        "labels.Region" if self.source_type != "COST" else "region_code"
-                    )
-                    self.process_key(key, value, label_key)
-
         if self.filter:
 
             new_filter = []
@@ -443,6 +433,51 @@ class DataSourceManager(DataTableManager):
                 new_filter.append(filter_info)
 
             self.filter = new_filter
+
+        if vars:
+            for key, value in vars.items():
+                if key in ["workspace_id", "project_id", "service_account_id"]:
+                    if isinstance(value, list):
+                        self.filter.append(
+                            {"key": key, "value": value, "operator": "in"}
+                        )
+                    else:
+                        self.filter.append(
+                            {"key": key, "value": value, "operator": "eq"}
+                        )
+                elif key == "region_code":
+                    if isinstance(value, list):
+                        if (
+                            self.source_type == "COST"
+                            or self.source_type == "UNIFIED_COST"
+                        ):
+                            self.filter.append(
+                                {"key": "region_code", "value": value, "operator": "in"}
+                            )
+                        else:
+                            self.filter.append(
+                                {
+                                    "key": "labels.Region",
+                                    "value": value,
+                                    "operator": "in",
+                                }
+                            )
+                    else:
+                        if (
+                            self.source_type == "COST"
+                            or self.source_type == "UNIFIED_COST"
+                        ):
+                            self.filter.append(
+                                {"key": "region_code", "value": value, "operator": "eq"}
+                            )
+                        else:
+                            self.filter.append(
+                                {
+                                    "key": "labels.Region",
+                                    "value": value,
+                                    "operator": "eq",
+                                }
+                            )
 
         return {
             "granularity": granularity,
@@ -502,12 +537,3 @@ class DataSourceManager(DataTableManager):
         )
         unified_cost_config = domain_config["data"].get("unified_cost_config")
         return unified_cost_config.get("currency")
-
-    def add_filter(self, key, value, operator):
-        self.filter.append({"key": key, "value": value, "operator": operator})
-
-    def process_key(self, key, value, label_key=None):
-        if isinstance(value, list):
-            self.add_filter(label_key or key, value, "in")
-        else:
-            self.add_filter(label_key or key, value, "eq")
