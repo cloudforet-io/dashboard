@@ -23,6 +23,7 @@ class PublicDashboard(MongoModel):
     )
     folder_id = StringField(max_length=40, default=None, null=True)
     project_id = StringField(max_length=40)
+    project_group_id = StringField(max_length=40)
     workspace_id = StringField(max_length=40)
     domain_id = StringField(max_length=40)
     created_at = DateTimeField(auto_now_add=True)
@@ -44,6 +45,7 @@ class PublicDashboard(MongoModel):
             "scope",
             "folder_id",
             "project_id",
+            "project_group_id",
             "workspace_id",
         ],
         "minimal_fields": [
@@ -53,6 +55,7 @@ class PublicDashboard(MongoModel):
             "shared",
             "resource_group",
             "project_id",
+            "project_group_id",
             "workspace_id",
             "domain_id",
         ],
@@ -64,6 +67,7 @@ class PublicDashboard(MongoModel):
             "scope",
             "resource_group",
             "project_id",
+            "project_group_id",
             "workspace_id",
             "domain_id",
         ],

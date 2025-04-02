@@ -25,6 +25,7 @@ class PrivateDashboardCreateRequest(BaseModel):
     tags: Union[dict, None] = None
     folder_id: Union[str, None] = None
     user_id: str
+    project_group_id: Union[str, None] = None
     workspace_id: Union[str, None] = None
     domain_id: str
 
@@ -72,6 +73,7 @@ class PrivateDashboardSearchQueryRequest(BaseModel):
     folder_id: Union[str, None] = None
     workspace_id: Union[str, None] = None
     user_id: str
+    project_group_id: Union[str, None] = None
     domain_id: str
 
 

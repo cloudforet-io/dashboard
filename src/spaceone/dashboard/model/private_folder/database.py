@@ -11,6 +11,7 @@ class PrivateFolder(MongoModel):
         max_length=40, choices=("DOMAIN", "WORKSPACE", "PROJECT")
     )
     user_id = StringField(max_length=40)
+    project_group_id = StringField(max_length=40)
     workspace_id = StringField(max_length=40, default=None, null=True)
     domain_id = StringField(max_length=40)
     created_at = DateTimeField(auto_now_add=True)
@@ -25,6 +26,7 @@ class PrivateFolder(MongoModel):
             "folder_id",
             "name",
             "user_id",
+            "project_group_id",
             "workspace_id",
             "domain_id",
         ],
@@ -32,6 +34,7 @@ class PrivateFolder(MongoModel):
         "indexes": [
             "name",
             "user_id",
+            "project_group_id",
             "workspace_id",
             "domain_id",
         ],

@@ -40,6 +40,7 @@ class PrivateFolderService(BaseService):
                 'tags': 'dict',
                 'dashboards': 'list',
                 'workspace_id': 'str',
+                'project_group_id': 'str',
                 'user_id': 'str',               # injected from auth (required)
                 'domain_id': 'str'              # injected from auth (required)
             }
@@ -148,7 +149,16 @@ class PrivateFolderService(BaseService):
         permission="dashboard:PrivateFolder.read",
         role_types=["USER"],
     )
-    @append_query_filter(["folder_id", "name", "domain_id", "workspace_id", "user_id"])
+    @append_query_filter(
+        [
+            "folder_id",
+            "name",
+            "domain_id",
+            "workspace_id",
+            "project_group_id",
+            "user_id",
+        ]
+    )
     @append_keyword_filter(["folder_id", "name"])
     @convert_model
     def list(
@@ -162,6 +172,7 @@ class PrivateFolderService(BaseService):
                 'folder_id': 'str',
                 'name': 'str',
                 'user_id': 'str',                               # injected from auth (required)
+                'project_group_id': 'str',
                 'workspace_id': 'str',
                 'domain_id': 'str',                             # injected from auth (required)
             }

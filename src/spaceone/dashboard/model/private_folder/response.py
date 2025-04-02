@@ -11,6 +11,7 @@ class PrivateFolderResponse(BaseModel):
     name: Union[str, None] = None
     tags: Union[dict, None] = None
     user_id: Union[str, None] = None
+    project_group_id: Union[str, None] = None
     workspace_id: Union[str, None] = None
     domain_id: Union[str, None] = None
     created_at: Union[datetime, None] = None

@@ -18,6 +18,7 @@ class PrivateDashboard(MongoModel):
     tags = DictField(default=None)
     folder_id = StringField(max_length=40, default=None, null=True)
     user_id = StringField(max_length=40)
+    project_group_id = StringField(max_length=40)
     workspace_id = StringField(max_length=40, default=None, null=True)
     domain_id = StringField(max_length=40)
     created_at = DateTimeField(auto_now_add=True)
@@ -42,6 +43,7 @@ class PrivateDashboard(MongoModel):
             "name",
             "version",
             "user_id",
+            "project_group_id",
             "workspace_id",
             "domain_id",
         ],
@@ -49,6 +51,7 @@ class PrivateDashboard(MongoModel):
         "indexes": [
             "name",
             "user_id",
+            "project_group_id",
             "workspace_id",
             "domain_id",
         ],

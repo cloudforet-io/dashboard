@@ -21,6 +21,7 @@ class PrivateDashboardResponse(BaseModel):
     tags: Union[dict, None] = None
     folder_id: Union[str, None] = None
     user_id: Union[str, None] = None
+    project_group_id: Union[str, None] = None
     workspace_id: Union[str, None] = None
     domain_id: Union[str, None] = None
     created_at: Union[datetime, None] = None

@@ -32,6 +32,7 @@ class PublicDashboardCreateRequest(BaseModel):
     folder_id: Union[str, None] = None
     resource_group: ResourceGroup
     project_id: Union[str, None] = None
+    project_group_id: Union[str, None] = None
     workspace_id: Union[str, None] = None
     domain_id: str
     user_projects: Union[list, None] = None
@@ -101,6 +102,7 @@ class PublicDashboardSearchQueryRequest(BaseModel):
     scope: Union[Scope, None] = None
     folder_id: Union[str, None] = None
     project_id: Union[str, None] = None
+    project_group_id: Union[str, None] = None
     workspace_id: Union[str, list, None] = None
     domain_id: str
     user_projects: Union[list, None] = None
