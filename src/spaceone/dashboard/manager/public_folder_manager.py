@@ -51,6 +51,7 @@ class PublicFolderManager(BaseManager):
         workspace_id: str = None,
         user_projects=None,
         resource_group=None,
+        project_group_id=None,
     ) -> PublicFolder:
         conditions = {
             "folder_id": folder_id,
@@ -65,6 +66,9 @@ class PublicFolderManager(BaseManager):
 
         if resource_group:
             conditions["resource_group"] = resource_group
+
+        if project_group_id:
+            conditions["project_group_id"] = project_group_id
 
         return self.folder_model.get(**conditions)
 

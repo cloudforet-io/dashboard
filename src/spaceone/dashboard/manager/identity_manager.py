@@ -19,6 +19,11 @@ class IdentityManager(BaseManager):
             token=system_token,
         )
 
+    def check_project_group(self, project_group_id: str) -> None:
+        self.identity_conn.dispatch(
+            "ProjectGroup.get", {"project_group_id": project_group_id}
+        )
+
     def get_project(self, project_id: str) -> dict:
         return self.identity_conn.dispatch("Project.get", {"project_id": project_id})
 

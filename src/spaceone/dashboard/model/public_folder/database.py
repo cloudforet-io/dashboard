@@ -13,6 +13,7 @@ class PublicFolder(MongoModel):
         max_length=40, choices=("DOMAIN", "WORKSPACE", "PROJECT")
     )
     project_id = StringField(max_length=40)
+    project_group_id = StringField(max_length=40)
     workspace_id = StringField(max_length=40)
     domain_id = StringField(max_length=40)
     created_at = DateTimeField(auto_now_add=True)
@@ -25,6 +26,7 @@ class PublicFolder(MongoModel):
             "shared",
             "scope",
             "project_id",
+            "project_group_id",
             "workspace_id",
         ],
         "minimal_fields": [
@@ -32,6 +34,7 @@ class PublicFolder(MongoModel):
             "name",
             "resource_group",
             "project_id",
+            "project_group_id",
             "workspace_id",
             "domain_id",
         ],
@@ -43,6 +46,7 @@ class PublicFolder(MongoModel):
             "scope",
             "resource_group",
             "project_id",
+            "project_group_id",
             "workspace_id",
             "domain_id",
         ],

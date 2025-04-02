@@ -53,6 +53,7 @@ class PublicDashboardService(BaseService):
                 'folder_id': 'str',
                 'resource_group': 'str',        # required
                 'project_id': 'str',
+                'project_group_id': 'str',
                 'workspace_id': 'str',          # injected from auth
                 'domain_id': 'str'              # injected from auth (required)
             }
@@ -70,6 +71,7 @@ class PublicDashboardService(BaseService):
         domain_id = params_dict["domain_id"]
         workspace_id = params_dict.get("workspace_id")
         user_projects = params_dict.get("user_projects")
+        project_group_id = params_dict.get("project_group_id")
 
         layouts = params_dict.get("layouts")
         if layouts:
@@ -88,6 +90,10 @@ class PublicDashboardService(BaseService):
                 params_dict["project_id"] = "*"
             else:
                 raise ERROR_REQUIRED_PARAMETER(key="workspace_id")
+
+            if project_group_id:
+                self.identity_mgr.check_project_group(project_group_id)
+                params_dict["project_group_id"] = project_group_id
         else:
             params_dict["workspace_id"] = "-"
             params_dict["project_id"] = "-"
@@ -100,6 +106,7 @@ class PublicDashboardService(BaseService):
                 workspace_id,
                 user_projects,
                 resource_group,
+                project_group_id,
             )
 
         pub_dashboard_vo = self.pub_dashboard_mgr.create_public_dashboard(params_dict)
@@ -533,6 +540,7 @@ class PublicDashboardService(BaseService):
             "domain_id",
             "workspace_id",
             "project_id",
+            "project_group_id",
             "folder_id",
             "user_projects",
         ]
@@ -551,6 +559,7 @@ class PublicDashboardService(BaseService):
                 'name': 'str',
                 'folder_id': 'str',
                 'project_id': 'str',
+                'project_group_id': 'str',
                 'workspace_id': 'str',                          # injected from auth
                 'domain_id': 'str',                             # injected from auth (required)
                 'user_projects': 'list',                        # injected from auth

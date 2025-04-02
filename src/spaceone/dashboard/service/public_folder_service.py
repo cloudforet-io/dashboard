@@ -43,6 +43,7 @@ class PublicFolderService(BaseService):
                 'dashboards': 'list',
                 'resource_group': 'str',        # required
                 'project_id': 'str',
+                'project_group_id': 'str',
                 'workspace_id': 'str',          # injected from auth
                 'domain_id': 'str'              # injected from auth (required)
             }
@@ -324,6 +325,7 @@ class PublicFolderService(BaseService):
             "domain_id",
             "workspace_id",
             "project_id",
+            "project_group_id",
             "user_projects",
         ]
     )
@@ -340,6 +342,7 @@ class PublicFolderService(BaseService):
                 'folder_id': 'str',
                 'name': 'str',
                 'project_id': 'str',
+                'project_group_id': 'str',
                 'workspace_id': 'str',                          # injected from auth
                 'domain_id': 'str',                             # injected from auth (required)
                 'user_projects': 'list',                        # injected from auth

@@ -16,6 +16,7 @@ class PrivateFolderCreateRequest(BaseModel):
     tags: Union[dict, None] = None
     dashboards: Union[list, None] = None
     user_id: str
+    project_group_id: Union[str, None] = None
     workspace_id: Union[str, None] = None
     domain_id: str
 
@@ -45,6 +46,7 @@ class PrivateFolderSearchQueryRequest(BaseModel):
     folder_id: Union[str, None] = None
     name: Union[str, None] = None
     user_id: str
+    project_group_id: Union[str, None] = None
     workspace_id: Union[str, None] = None
     domain_id: str
 

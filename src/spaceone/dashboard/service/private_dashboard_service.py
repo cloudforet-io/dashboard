@@ -50,6 +50,7 @@ class PrivateDashboardService(BaseService):
                 'tags': 'dict',
                 'folder_id': 'str',
                 'workspace_id': 'str',
+                'project_group_id': 'str',
                 'user_id': 'str',               # injected from auth (required)
                 'domain_id': 'str'              # injected from auth (required)
             }
@@ -66,6 +67,7 @@ class PrivateDashboardService(BaseService):
         domain_id = params_dict["domain_id"]
         user_id = params_dict["user_id"]
         workspace_id = params_dict.get("workspace_id")
+        project_group_id = params_dict.get("project_group_id")
 
         layouts = params_dict.get("layouts")
         if layouts:
@@ -77,6 +79,9 @@ class PrivateDashboardService(BaseService):
 
         if workspace_id:
             self.identity_mgr.check_workspace(workspace_id, domain_id)
+
+        if project_group_id:
+            self.identity_mgr.check_project_group(project_group_id)
 
         pri_dashboard_vo = self.pri_dashboard_mgr.create_private_dashboard(params_dict)
 
@@ -252,7 +257,15 @@ class PrivateDashboardService(BaseService):
         role_types=["USER"],
     )
     @append_query_filter(
-        ["dashboard_id", "name", "domain_id", "workspace_id", "user_id", "folder_id"]
+        [
+            "dashboard_id",
+            "name",
+            "domain_id",
+            "workspace_id",
+            "user_id",
+            "project_group_id",
+            "folder_id",
+        ]
     )
     @append_keyword_filter(["dashboard_id", "name"])
     @convert_model
@@ -268,6 +281,7 @@ class PrivateDashboardService(BaseService):
                 'name': 'str',
                 'folder_id': 'str',
                 'user_id': 'str',                               # injected from auth (required)
+                'project_group_id': 'str',
                 'workspace_id': 'str',
                 'domain_id': 'str',                             # injected from auth (required)
             }

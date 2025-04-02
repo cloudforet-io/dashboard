@@ -23,6 +23,7 @@ class PublicFolderCreateRequest(BaseModel):
     dashboards: Union[list, None] = None
     resource_group: ResourceGroup
     project_id: Union[str, None] = None
+    project_group_id: Union[str, None] = None
     workspace_id: Union[str, None] = None
     domain_id: str
 
@@ -72,6 +73,7 @@ class PublicFolderSearchQueryRequest(BaseModel):
     shared: Union[bool, None] = None
     scope: Union[Scope, None] = None
     project_id: Union[str, None] = None
+    project_group_id: Union[str, None] = None
     workspace_id: Union[str, list, None] = None
     domain_id: str
     user_projects: Union[list, None] = None
