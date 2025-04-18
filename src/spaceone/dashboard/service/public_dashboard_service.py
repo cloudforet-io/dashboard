@@ -356,27 +356,25 @@ class PublicDashboardService(BaseService):
             updated_params, pub_dashboard_vo
         )
 
-        # if pub_dashboard_vo.resource_group in ["DOMAIN", "WORKSPACE"]:
-        if pub_dashboard_vo.resource_group == "DOMAIN":
-            # Cascade update for widgets
-            pub_widget_mgr = PublicWidgetManager()
-            pub_widget_vos = pub_widget_mgr.filter_public_widgets(
-                dashboard_id=pub_dashboard_vo.dashboard_id,
-                domain_id=pub_dashboard_vo.domain_id,
-            )
-            for pub_widget_vo in pub_widget_vos:
-                pub_widget_mgr.update_public_widget_by_vo(updated_params, pub_widget_vo)
+        # Cascade update for widgets
+        pub_widget_mgr = PublicWidgetManager()
+        pub_widget_vos = pub_widget_mgr.filter_public_widgets(
+            dashboard_id=pub_dashboard_vo.dashboard_id,
+            domain_id=pub_dashboard_vo.domain_id,
+        )
+        for pub_widget_vo in pub_widget_vos:
+            pub_widget_mgr.update_public_widget_by_vo(updated_params, pub_widget_vo)
 
-            # Cascade update for data tables
-            pub_data_table_mgr = PublicDataTableManager()
-            pub_data_table_vos = pub_data_table_mgr.filter_public_data_tables(
-                dashboard_id=pub_dashboard_vo.dashboard_id,
-                domain_id=pub_dashboard_vo.domain_id,
+        # Cascade update for data tables
+        pub_data_table_mgr = PublicDataTableManager()
+        pub_data_table_vos = pub_data_table_mgr.filter_public_data_tables(
+            dashboard_id=pub_dashboard_vo.dashboard_id,
+            domain_id=pub_dashboard_vo.domain_id,
+        )
+        for pub_data_table_vo in pub_data_table_vos:
+            pub_data_table_mgr.update_public_data_table_by_vo(
+                updated_params, pub_data_table_vo
             )
-            for pub_data_table_vo in pub_data_table_vos:
-                pub_data_table_mgr.update_public_data_table_by_vo(
-                    updated_params, pub_data_table_vo
-                )
 
         return pub_dashboard_vo.to_dict()
 
@@ -441,27 +439,25 @@ class PublicDashboardService(BaseService):
             updated_params, pub_dashboard_vo
         )
 
-        # if pub_dashboard_vo.resource_group in ["DOMAIN", "WORKSPACE"]:
-        if pub_dashboard_vo.resource_group == "DOMAIN":
-            # Cascade update for widgets
-            pub_widget_mgr = PublicWidgetManager()
-            pub_widget_vos = pub_widget_mgr.filter_public_widgets(
-                dashboard_id=pub_dashboard_vo.dashboard_id,
-                domain_id=pub_dashboard_vo.domain_id,
-            )
-            for pub_widget_vo in pub_widget_vos:
-                pub_widget_mgr.update_public_widget_by_vo(updated_params, pub_widget_vo)
+        # Cascade update for widgets
+        pub_widget_mgr = PublicWidgetManager()
+        pub_widget_vos = pub_widget_mgr.filter_public_widgets(
+            dashboard_id=pub_dashboard_vo.dashboard_id,
+            domain_id=pub_dashboard_vo.domain_id,
+        )
+        for pub_widget_vo in pub_widget_vos:
+            pub_widget_mgr.update_public_widget_by_vo(updated_params, pub_widget_vo)
 
-            # Cascade update for data tables
-            pub_data_table_mgr = PublicDataTableManager()
-            pub_data_table_vos = pub_data_table_mgr.filter_public_data_tables(
-                dashboard_id=pub_dashboard_vo.dashboard_id,
-                domain_id=pub_dashboard_vo.domain_id,
+        # Cascade update for data tables
+        pub_data_table_mgr = PublicDataTableManager()
+        pub_data_table_vos = pub_data_table_mgr.filter_public_data_tables(
+            dashboard_id=pub_dashboard_vo.dashboard_id,
+            domain_id=pub_dashboard_vo.domain_id,
+        )
+        for pub_data_table_vo in pub_data_table_vos:
+            pub_data_table_mgr.update_public_data_table_by_vo(
+                updated_params, pub_data_table_vo
             )
-            for pub_data_table_vo in pub_data_table_vos:
-                pub_data_table_mgr.update_public_data_table_by_vo(
-                    updated_params, pub_data_table_vo
-                )
 
         return pub_dashboard_vo.to_dict()
 
