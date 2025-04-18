@@ -164,24 +164,23 @@ class PublicFolderService(BaseService):
             updated_params, pub_folder_vo
         )
 
-        if pub_folder_vo.resource_group == "DOMAIN":
-            pub_dashboard_svc = PublicDashboardService()
-            pub_dashboard_mgr = PublicDashboardManager()
-            pub_dashboard_vos = pub_dashboard_mgr.filter_public_dashboards(
-                folder_id=pub_folder_vo.folder_id, domain_id=pub_folder_vo.domain_id
-            )
+        pub_dashboard_svc = PublicDashboardService()
+        pub_dashboard_mgr = PublicDashboardManager()
+        pub_dashboard_vos = pub_dashboard_mgr.filter_public_dashboards(
+            folder_id=pub_folder_vo.folder_id, domain_id=pub_folder_vo.domain_id
+        )
 
-            for pub_dashboard_vo in pub_dashboard_vos:
-                pub_dashboard_svc.share_dashboard(
-                    {
-                        "dashboard_id": pub_dashboard_vo.dashboard_id,
-                        "scope": params.scope,
-                        "domain_id": params.domain_id,
-                        "workspace_id": params.workspace_id,
-                        "user_projects": params.user_projects,
-                        "cascade": True,
-                    }
-                )
+        for pub_dashboard_vo in pub_dashboard_vos:
+            pub_dashboard_svc.share_dashboard(
+                {
+                    "dashboard_id": pub_dashboard_vo.dashboard_id,
+                    "scope": params.scope,
+                    "domain_id": params.domain_id,
+                    "workspace_id": params.workspace_id,
+                    "user_projects": params.user_projects,
+                    "cascade": True,
+                }
+            )
 
         return PublicFolderResponse(**pub_folder_vo.to_dict())
 
@@ -232,23 +231,22 @@ class PublicFolderService(BaseService):
             updated_params, pub_folder_vo
         )
 
-        if pub_folder_vo.resource_group == "DOMAIN":
-            pub_dashboard_svc = PublicDashboardService()
-            pub_dashboard_mgr = PublicDashboardManager()
-            pub_dashboard_vos = pub_dashboard_mgr.filter_public_dashboards(
-                folder_id=pub_folder_vo.folder_id, domain_id=pub_folder_vo.domain_id
-            )
+        pub_dashboard_svc = PublicDashboardService()
+        pub_dashboard_mgr = PublicDashboardManager()
+        pub_dashboard_vos = pub_dashboard_mgr.filter_public_dashboards(
+            folder_id=pub_folder_vo.folder_id, domain_id=pub_folder_vo.domain_id
+        )
 
-            for pub_dashboard_vo in pub_dashboard_vos:
-                pub_dashboard_svc.unshare_dashboard(
-                    {
-                        "dashboard_id": pub_dashboard_vo.dashboard_id,
-                        "domain_id": params.domain_id,
-                        "workspace_id": params.workspace_id,
-                        "user_projects": params.user_projects,
-                        "cascade": True,
-                    }
-                )
+        for pub_dashboard_vo in pub_dashboard_vos:
+            pub_dashboard_svc.unshare_dashboard(
+                {
+                    "dashboard_id": pub_dashboard_vo.dashboard_id,
+                    "domain_id": params.domain_id,
+                    "workspace_id": params.workspace_id,
+                    "user_projects": params.user_projects,
+                    "cascade": True,
+                }
+            )
 
         return PublicFolderResponse(**pub_folder_vo.to_dict())
 
