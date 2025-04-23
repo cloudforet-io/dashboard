@@ -1,13 +1,13 @@
 from spaceone.core import config
 from spaceone.core.manager import BaseManager
 from spaceone.core.connector.space_connector import SpaceConnector
-
 from spaceone.dashboard.manager.identity_manager import IdentityManager
 
 
 class CostAnalysisManager(BaseManager):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.identity_mgr = IdentityManager()
         self.cost_analysis_conn: SpaceConnector = self.locator.get_connector(
             "SpaceConnector", service="cost_analysis"
         )
@@ -29,7 +29,6 @@ class CostAnalysisManager(BaseManager):
 
     def _change_filter_project_group_id(self, query: dict, domain_id: str) -> dict:
         change_filter = []
-        self.identity_mgr = None
 
         for condition in query.get("filter", []):
             key = condition.get("k", condition.get("key"))
@@ -37,10 +36,10 @@ class CostAnalysisManager(BaseManager):
             operator = condition.get("o", condition.get("operator"))
 
             if key == "project_group_id":
-                if self.identity_mgr is None:
-                    self.identity_mgr: IdentityManager = self.locator.get_manager(
-                        "IdentityManager"
-                    )
+                # if self.identity_mgr is None:
+                #     self.identity_mgr: IdentityManager = self.locator.get_manager(
+                #         "IdentityManager"
+                #     )
 
                 project_groups_info = self.identity_mgr.list_project_groups(
                     {
