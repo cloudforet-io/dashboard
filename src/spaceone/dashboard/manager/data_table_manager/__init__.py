@@ -403,7 +403,11 @@ class DataTableManager(BaseManager):
             "vars": vars,
         }
 
-        if role_type == "WORKSPACE_MEMBER":
+        if role_type == "WORKSPACE_OWNER":
+            workspace_id = self.transaction.get_meta("authorization.workspace_id")
+            query_data["vars"]["workspace_id"] = [workspace_id]
+
+        elif role_type == "WORKSPACE_MEMBER":
             query_data["user_id"] = user_id
 
         return query_data
