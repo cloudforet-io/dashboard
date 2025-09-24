@@ -1,13 +1,14 @@
-import logging
 import ast
+import logging
 import re
-import pandas as pd
-from markupsafe import escape
 from typing import Union, Tuple
-from jinja2 import Environment, meta
 
+import pandas as pd
+from jinja2 import Environment, meta
+from markupsafe import escape
 from spaceone.core import cache, utils
 from spaceone.core.manager import BaseManager
+
 from spaceone.dashboard.error.data_table import (
     ERROR_QUERY_OPTION,
     ERROR_QUERY_GROUP_BY_OPTION,
@@ -140,16 +141,20 @@ class DataTableManager(BaseManager):
                 for key in self.data_keys
             }
         else:
-            numeric_columns = {
-                key
-                for row in data
-                for key, value in row.items()
-                if isinstance(value, (int, float))
-            }
-            sum_data = {
-                key: sum(float(row.get(key, 0)) for row in data)
-                for key in numeric_columns
-            }
+            if data:
+                numeric_columns = {
+                    key
+                    for row in data
+                    for key, value in row.items()
+                    if isinstance(value, (int, float))
+                }
+                sum_data = {
+                    key: sum(float(row.get(key, 0)) for row in data)
+                    for key in numeric_columns
+                }
+            else:
+                keys_to_sum = list(response.get("data_info", {}).keys())
+                sum_data = {key: 0 for key in keys_to_sum}
 
         # results = [{column: sum_value} for column, sum_value in sum_data.items()]
         results = [sum_data]
