@@ -1,5 +1,5 @@
-import re
 import logging
+import re
 from typing import List, Union, Tuple
 
 import numpy as np
@@ -18,12 +18,12 @@ from spaceone.dashboard.manager.data_table_manager import DataTableManager
 from spaceone.dashboard.manager.data_table_manager.data_source_manager import (
     DataSourceManager,
 )
-from spaceone.dashboard.manager.public_data_table_manager import PublicDataTableManager
 from spaceone.dashboard.manager.private_data_table_manager import (
     PrivateDataTableManager,
 )
-from spaceone.dashboard.model.public_data_table.database import PublicDataTable
+from spaceone.dashboard.manager.public_data_table_manager import PublicDataTableManager
 from spaceone.dashboard.model.private_data_table.database import PrivateDataTable
+from spaceone.dashboard.model.public_data_table.database import PublicDataTable
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -212,6 +212,9 @@ class DataTransformationManager(DataTableManager):
         self.label_keys = group_by
 
         df = self._get_data_table(origin_vo, granularity, start, end, vars)
+        if df is None or df.empty:
+            self.df = pd.DataFrame(columns=self.label_keys + self.data_keys)
+            return
 
         for key in group_by:
             if key not in df.columns:
@@ -270,6 +273,17 @@ class DataTransformationManager(DataTableManager):
         self.label_keys = list(origin_vo.labels_info.keys())
 
         df = self._get_data_table(origin_vo, granularity, start, end, vars)
+        if df is None or df.empty:
+            new_keys = [
+                expression.get("name")
+                for expression in expressions
+                if isinstance(expression, dict) and expression.get("name")
+            ]
+
+            self.data_keys = list(set(self.data_keys) | set(new_keys))
+
+            self.df = pd.DataFrame(columns=self.label_keys + self.data_keys)
+            return
 
         for expression in expressions:
             if isinstance(expression, dict):
