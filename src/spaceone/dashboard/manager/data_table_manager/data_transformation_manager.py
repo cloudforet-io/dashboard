@@ -950,44 +950,44 @@ class DataTransformationManager(DataTableManager):
         else_value = self.options.get("else")
         cases = self.options.get("cases", [])
 
-        temp_key_column = f"_{key}_backup"
-        if temp_key_column not in filtered_df.columns:
-            filtered_df[temp_key_column] = filtered_df[key]
+        if key not in filtered_df.columns:
+            if name not in filtered_df.columns:
+                filtered_df[name] = pd.NA
+            return filtered_df
 
-        for case in cases:
-            self._validate_case(case)
-            operator = case["operator"]
-            value = case["value"]
-            match = case["match"].strip()
+        if name not in filtered_df.columns:
+            filtered_df[name] = pd.NA
 
-            if operator == "eq":
-                if name not in filtered_df.columns:
-                    filtered_df.loc[filtered_df[key] == match, name] = value
-                else:
-                    filtered_df.loc[
-                        (filtered_df[key] == match) & (filtered_df[name].isna()), name
-                    ] = value
+        if not filtered_df.empty:
+            temp_key_column = f"_{key}_backup"
+            if temp_key_column not in filtered_df.columns:
+                filtered_df[temp_key_column] = filtered_df[key]
 
-            elif operator == "regex":
-                if name not in filtered_df.columns:
-                    filtered_df.loc[
-                        filtered_df[key].str.contains(match, na=False), name
-                    ] = value
-                else:
-                    filtered_df.loc[
-                        (filtered_df[key].str.contains(match, na=False))
-                        & (filtered_df[name].isna()),
-                        name,
-                    ] = value
+            for case in cases:
+                self._validate_case(case)
+                operator = case["operator"]
+                value = case["value"]
+                match = case["match"].strip()
 
-        if else_value is not None:
-            filtered_df.loc[filtered_df[name].isna(), name] = else_value
-        else:
-            filtered_df.loc[filtered_df[name].isna(), name] = filtered_df[
-                temp_key_column
-            ]
+                if operator == "eq":
+                    condition = (filtered_df[key] == match) & (filtered_df[name].isna())
+                    filtered_df.loc[condition, name] = value
 
-        filtered_df.drop(columns=[temp_key_column], inplace=True)
+                elif operator == "regex":
+                    condition = (filtered_df[key].str.contains(match, na=False)) & (
+                        filtered_df[name].isna()
+                    )
+                    filtered_df.loc[condition, name] = value
+
+            if else_value is not None:
+                filtered_df.loc[filtered_df[name].isna(), name] = else_value
+            else:
+                if name in filtered_df.columns:
+                    filtered_df.loc[filtered_df[name].isna(), name] = filtered_df[
+                        temp_key_column
+                    ]
+
+            filtered_df.drop(columns=[temp_key_column], inplace=True)
 
         return filtered_df
 
