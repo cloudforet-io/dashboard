@@ -210,6 +210,22 @@ class DataSourceManager(DataTableManager):
 
         self.df = pd.DataFrame(results)
 
+        if self.df.empty:
+            expected_columns = []
+            if "group_by" in query and query.get("group_by"):
+                for group in query["group_by"]:
+                    if "name" in group:
+                        expected_columns.append(group["name"])
+
+            if "fields" in query and query.get("fields"):
+                expected_columns.extend(list(query["fields"].keys()))
+
+            if granularity:
+                expected_columns.append("Date")
+
+            if expected_columns:
+                self.df = pd.DataFrame(columns=expected_columns)
+
     def _analyze_unified_cost(
         self,
         granularity: str,
