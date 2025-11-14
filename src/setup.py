@@ -17,7 +17,7 @@ import os
 from setuptools import setup, find_packages
 
 setup(
-    name="spaceone-dashboard",
+    name="spaceone_dashboard",
     version=os.environ.get("PACKAGE_VERSION"),
     description="SpaceONE dashboard service",
     long_description="",
